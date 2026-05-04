@@ -106,6 +106,28 @@ export default function Comunidade() {
                     </div>
                 ))}
             </div>
+            {/* FAB - Criar Post */}
+            <button
+                onClick={() => {
+                    // TODO: navigate to CriarPost
+                    console.log("Criar post");
+                }}
+                className="absolute right-5 z-10 w-14 h-14 rounded-full flex items-center justify-center shadow-lg active:scale-90 transition-transform"
+                style={{
+                    bottom: "88px",
+                    backgroundColor: "#DB8B31",
+                    border: "none",
+                    cursor: "pointer",
+                    boxShadow: "0 6px 20px rgba(219,139,49,0.45)",
+                }}
+                aria-label="Criar post"
+            >
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                    <line x1="12" y1="5" x2="12" y2="19" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+                    <line x1="5" y1="12" x2="19" y2="12" stroke="white" strokeWidth="2.5" strokeLinecap="round" />
+                </svg>
+            </button>
+
             <BottomNav active={activeTab} onChange={setActiveTab} />
         </div>
     );
