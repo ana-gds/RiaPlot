@@ -3,11 +3,13 @@ import { NAV_ITEMS } from "../../constants/mockData.js";
 
 export function BottomNav({ active, onChange }) {
   return (
-    <nav
-      className="flex-shrink-0 flex items-center justify-around px-2"
-      style={{ height: "72px", borderTop: "1px solid rgba(0,77,108,0.06)" }}
-    >
-      {NAV_ITEMS.map((item) => {
+    <>
+      <div className="h-[72px] flex-shrink-0" aria-hidden="true" />
+      <nav
+        className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around px-2 bg-white"
+        style={{ height: "72px", borderTop: "1px solid rgba(0,77,108,0.06)" }}
+      >
+        {NAV_ITEMS.map((item) => {
         const isActive = active === item.key;
         return (
           <button
@@ -43,7 +45,8 @@ export function BottomNav({ active, onChange }) {
             </span>
           </button>
         );
-      })}
-    </nav>
+        })}
+      </nav>
+    </>
   );
 }
