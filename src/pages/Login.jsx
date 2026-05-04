@@ -67,7 +67,7 @@ export default function Login() {
           </SecondaryButton>
           <p className="text-center mt-5 text-sm" style={{ color: COLORS.muted }}>
             Não tem conta?
-            <TextLink className="font-semibold ml-1 text-sm">Criar conta</TextLink>
+            <TextLink className="font-semibold ml-1 text-sm">Criar conta!</TextLink>
           </p>
         </div>
       </div>
