@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import Login from "./pages/Login.jsx";
 import ProfileRegister from "./pages/ProfileRegister.jsx";
 import BoatRegister from "./pages/BoatRegister.jsx";
 import FinalRegister from "./pages/FinalRegister.jsx";
-import Routes from "./pages/Routes.jsx";
+import RoutesPage from "./pages/Routes.jsx";
 import RouteDetail from "./pages/RouteDetail.jsx";
 import Social from "./pages/Social.jsx";
 import PostDetail from "./pages/PostDetail.jsx";
@@ -13,39 +13,42 @@ import Profile from "./pages/Profile.jsx";
 import EditProfile from "./pages/EditProfile.jsx";
 import BoatSettings from "./pages/BoatSettings.jsx";
 
-const PAGES = {
-  login: "Login",
-  "profile-register": "Criar conta",
-  "boat-register": "Embarcação",
-  "final-register": "Concluir registo",
-  routes: "Rotas",
-  "route-detail": "Detalhe rota",
-  social: "Social",
-  "post-detail": "Detalhe post",
-  "add-post": "Novo post",
-  notifications: "Notificações",
-  profile: "Perfil",
-  "edit-profile": "Editar perfil",
-  "boat-settings": "Definições embarcação",
+const TAB_TO_PATH = {
+  rotas: "/routes",
+  social: "/social",
+  notificacoes: "/notifications",
+  mapa: "/routes",
 };
 
-const TAB_TO_PAGE = {
-  rotas: "routes",
-  social: "social",
-  notificacoes: "notifications",
-  mapa: "routes",
-};
+// Only rendered in development builds
+function DevPicker() {
+  const navigate = useNavigate();
+  if (!import.meta.env.DEV) return null;
 
-function DevPicker({ current, onPick }) {
+  const PAGES = {
+    "/login": "Login",
+    "/register/profile": "Criar conta",
+    "/register/boat": "Embarcação",
+    "/register/final": "Concluir registo",
+    "/routes": "Rotas",
+    "/routes/detail": "Detalhe rota",
+    "/social": "Social",
+    "/social/post": "Detalhe post",
+    "/social/new": "Novo post",
+    "/notifications": "Notificações",
+    "/profile": "Perfil",
+    "/profile/edit": "Editar perfil",
+    "/profile/boat": "Definições embarcação",
+  };
+
   return (
     <select
-      value={current}
-      onChange={(e) => onPick(e.target.value)}
+      onChange={(e) => navigate(e.target.value)}
       className="fixed top-2 right-2 z-[1000] text-xs px-2 py-1 rounded shadow"
       style={{ background: "#0e2c38", color: "white", border: "none", cursor: "pointer" }}
     >
-      {Object.entries(PAGES).map(([key, label]) => (
-        <option key={key} value={key}>
+      {Object.entries(PAGES).map(([path, label]) => (
+        <option key={path} value={path}>
           {label}
         </option>
       ))}
@@ -53,76 +56,104 @@ function DevPicker({ current, onPick }) {
   );
 }
 
-export default function App() {
-  const [page, setPage] = useState("routes");
-
-  const onChangeTab = (tabKey) => {
-    const next = TAB_TO_PAGE[tabKey];
-    if (next) setPage(next);
-  };
-
-  const renderPage = () => {
-    switch (page) {
-      case "login":
-        return <Login />;
-      case "profile-register":
-        return <ProfileRegister onContinue={() => setPage("boat-register")} />;
-      case "boat-register":
-        return <BoatRegister onContinue={() => setPage("final-register")} />;
-      case "final-register":
-        return (
-          <FinalRegister
-            onStart={() => setPage("routes")}
-            onExplore={() => setPage("routes")}
-          />
-        );
-      case "routes":
-        return (
-          <Routes
-            onOpenMenu={() => setPage("profile")}
-            onOpenRoute={() => setPage("route-detail")}
-            activeTab="rotas"
-            onChangeTab={onChangeTab}
-          />
-        );
-      case "route-detail":
-        return <RouteDetail onBack={() => setPage("routes")} />;
-      case "social":
-        return (
-          <Social
-            onOpenMenu={() => setPage("profile")}
-            onOpenPost={() => setPage("post-detail")}
-            onCreatePost={() => setPage("add-post")}
-            activeTab="social"
-            onChangeTab={onChangeTab}
-          />
-        );
-      case "post-detail":
-        return <PostDetail onBack={() => setPage("social")} />;
-      case "add-post":
-        return <AddPost onBack={() => setPage("social")} />;
-      case "notifications":
-        return <Notifications activeTab="notificacoes" onChangeTab={onChangeTab} />;
-      case "profile":
-        return (
-          <Profile
-            onBack={() => setPage("routes")}
-            onEditProfile={() => setPage("edit-profile")}
-          />
-        );
-      case "edit-profile":
-        return <EditProfile onBack={() => setPage("profile")} />;
-      case "boat-settings":
-        return <BoatSettings onBack={() => setPage("profile")} />;
-      default:
-        return <Routes activeTab="rotas" onChangeTab={onChangeTab} />;
-    }
+function AppRoutes() {
+  const navigate = useNavigate();
+  const changeTab = (tabKey) => {
+    const path = TAB_TO_PATH[tabKey];
+    if (path) navigate(path);
   };
 
   return (
-    <div className="w-full min-h-screen">
-      {renderPage()}
-      <DevPicker current={page} onPick={setPage} />
-    </div>
+    <>
+      <DevPicker />
+      <Routes>
+        <Route path="/login" element={<Login />} />
+        <Route
+          path="/register/profile"
+          element={<ProfileRegister onContinue={() => navigate("/register/boat")} />}
+        />
+        <Route
+          path="/register/boat"
+          element={<BoatRegister onContinue={() => navigate("/register/final")} />}
+        />
+        <Route
+          path="/register/final"
+          element={
+            <FinalRegister
+              onStart={() => navigate("/routes")}
+              onExplore={() => navigate("/routes")}
+            />
+          }
+        />
+        <Route
+          path="/routes"
+          element={
+            <RoutesPage
+              onOpenMenu={() => navigate("/profile")}
+              onOpenRoute={() => navigate("/routes/detail")}
+              activeTab="rotas"
+              onChangeTab={changeTab}
+            />
+          }
+        />
+        <Route
+          path="/routes/detail"
+          element={<RouteDetail onBack={() => navigate("/routes")} />}
+        />
+        <Route
+          path="/social"
+          element={
+            <Social
+              onOpenMenu={() => navigate("/profile")}
+              onOpenPost={() => navigate("/social/post")}
+              onCreatePost={() => navigate("/social/new")}
+              activeTab="social"
+              onChangeTab={changeTab}
+            />
+          }
+        />
+        <Route
+          path="/social/post"
+          element={<PostDetail onBack={() => navigate("/social")} />}
+        />
+        <Route
+          path="/social/new"
+          element={<AddPost onBack={() => navigate("/social")} />}
+        />
+        <Route
+          path="/notifications"
+          element={<Notifications activeTab="notificacoes" onChangeTab={changeTab} />}
+        />
+        <Route
+          path="/profile"
+          element={
+            <Profile
+              onBack={() => navigate("/routes")}
+              onEditProfile={() => navigate("/profile/edit")}
+            />
+          }
+        />
+        <Route
+          path="/profile/edit"
+          element={<EditProfile onBack={() => navigate("/profile")} />}
+        />
+        <Route
+          path="/profile/boat"
+          element={<BoatSettings onBack={() => navigate("/profile")} />}
+        />
+        {/* Catch-all: redirect unknown paths to routes */}
+        <Route path="*" element={<Navigate to="/routes" replace />} />
+      </Routes>
+    </>
+  );
+}
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <div className="w-full min-h-screen">
+        <AppRoutes />
+      </div>
+    </BrowserRouter>
   );
 }

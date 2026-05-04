@@ -4,25 +4,26 @@ export function PrimaryButton({
   children,
   onClick,
   disabled = false,
+  loading = false,
   className = "",
   width,
   height = 48,
   type = "button",
   ...rest
 }) {
-  const enabledShadow = SHADOWS.primaryButton;
+  const isDisabled = disabled || loading;
   return (
     <button
       type={type}
       onClick={onClick}
-      disabled={disabled}
-      className={`text-white font-semibold rounded-2xl active:scale-[0.98] transition-all ${className}`}
+      disabled={isDisabled}
+      className={`text-white font-semibold rounded-2xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${className}`}
       style={{
         backgroundColor: COLORS.primarySoft,
-        boxShadow: disabled ? "none" : enabledShadow,
+        boxShadow: isDisabled ? "none" : SHADOWS.primaryButton,
         border: "none",
-        cursor: disabled ? "not-allowed" : "pointer",
-        opacity: disabled ? 0.5 : 1,
+        cursor: isDisabled ? "not-allowed" : "pointer",
+        opacity: isDisabled ? 0.5 : 1,
         fontFamily: FONTS.manrope,
         fontSize: "16px",
         width: width ?? undefined,
@@ -30,6 +31,18 @@ export function PrimaryButton({
       }}
       {...rest}
     >
+      {loading && (
+        <svg
+          className="animate-spin"
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+        >
+          <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="3" strokeOpacity="0.3" />
+          <path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round" />
+        </svg>
+      )}
       {children}
     </button>
   );
