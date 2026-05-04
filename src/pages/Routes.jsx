@@ -23,10 +23,18 @@ export default function Routes({ onOpenMenu, onOpenRoute, activeTab = "rotas", o
   const filtered = routes.filter((r) => {
     const q = search.toLowerCase();
     if (search && !r.title.toLowerCase().includes(q) && !r.route.toLowerCase().includes(q)) return false;
-    if (activeFilters.includes("facil") && r.difficulty !== 1) return false;
-    if (activeFilters.includes("moderado") && r.difficulty !== 2) return false;
-    if (activeFilters.includes("dificil") && r.difficulty !== 3) return false;
+    // Difficulty filters are now additive: if any difficulty chip is active,
+    // the route must match at least one of them
+    const difficultyMap = { facil: 1, moderado: 2, dificil: 3 };
+    const activeDifficulties = Object.entries(difficultyMap)
+      .filter(([key]) => activeFilters.includes(key))
+      .map(([, val]) => val);
+
+    if (activeDifficulties.length > 0 && !activeDifficulties.includes(r.difficulty))
+      return false;
+
     if (activeFilters.includes("guardadas") && !r.saved) return false;
+
     return true;
   });
 
