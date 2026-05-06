@@ -1,36 +1,15 @@
 import { useState } from "react";
-import { COLORS, FONTS } from "../../constants/theme.js";
 import { EyeIcon } from "./Icons.jsx";
 
-const baseClass =
-  "w-full h-[43px] rounded-lg px-3 text-sm font-medium outline-none transition-all";
+const fieldBase =
+  "w-full h-[44px] rounded-lg px-3 text-sm font-medium bg-cream text-dark border border-border-soft outline-none transition-shadow focus:border-border-focus focus:ring-3 focus:ring-ring-focus";
+
 const noSpinnerClass =
-  " [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
-
-const baseStyle = (borderWidth = "1.18px") => ({
-  background: COLORS.cream,
-  border: `${borderWidth} solid ${COLORS.borderSoft}`,
-  fontFamily: FONTS.manrope,
-  color: COLORS.dark,
-});
-
-const focusHandlers = {
-  onFocus: (e) => {
-    e.target.style.borderColor = COLORS.borderFocus;
-    e.target.style.boxShadow = `0 0 0 3px ${COLORS.ringFocus}`;
-  },
-  onBlur: (e) => {
-    e.target.style.borderColor = COLORS.borderSoft;
-    e.target.style.boxShadow = "none";
-  },
-};
+  "[appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none";
 
 export function Label({ children, className = "" }) {
   return (
-    <label
-      className={`text-sm font-medium mb-1.5 block ${className}`}
-      style={{ color: COLORS.dark, fontFamily: FONTS.manrope }}
-    >
+    <label className={`block text-sm font-medium text-dark mb-1.5 ${className}`}>
       {children}
     </label>
   );
@@ -38,25 +17,14 @@ export function Label({ children, className = "" }) {
 
 export function Input({
   type = "text",
-  value,
-  onChange,
-  placeholder,
-  borderWidth,
   noSpinner = false,
-  style: extraStyle,
-  className: extraClass = "",
-  paddingRight,
+  className = "",
   ...rest
 }) {
   return (
     <input
       type={type}
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      className={baseClass + (noSpinner ? noSpinnerClass : "") + (extraClass ? " " + extraClass : "")}
-      style={{ ...baseStyle(borderWidth), ...(paddingRight ? { paddingRight } : {}), ...extraStyle }}
-      {...focusHandlers}
+      className={`${fieldBase} ${noSpinner ? noSpinnerClass : ""} ${className}`}
       {...rest}
     />
   );
@@ -68,6 +36,7 @@ export function PasswordInput({
   placeholder = "Introduza a sua palavra-passe",
   iconSize = 20,
   letterSpacing,
+  className = "",
   ...rest
 }) {
   const [visible, setVisible] = useState(false);
@@ -76,22 +45,16 @@ export function PasswordInput({
       <Input
         type={visible ? "text" : "password"}
         value={value}
-        onChange={(e) => (typeof onChange === "function" ? onChange(e) : null)}
+        onChange={onChange}
         placeholder={placeholder}
-        paddingRight="44px"
+        className={`pr-11 ${className}`}
         style={letterSpacing ? { letterSpacing: visible ? "normal" : letterSpacing } : undefined}
         {...rest}
       />
       <button
         type="button"
         onClick={() => setVisible((v) => !v)}
-        className="absolute right-3 top-1/2 -translate-y-1/2"
-        style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          color: visible ? COLORS.primary : COLORS.muted,
-        }}
+        className={`absolute right-3 top-1/2 -translate-y-1/2 ${visible ? "text-primary" : "text-muted"}`}
         aria-label={visible ? "Ocultar palavra-passe" : "Mostrar palavra-passe"}
       >
         <EyeIcon visible={visible} size={iconSize} color="currentColor" />
@@ -100,47 +63,29 @@ export function PasswordInput({
   );
 }
 
-export function Textarea({
-  value,
-  onChange,
-  placeholder,
-  minHeight = "100px",
-  className: extraClass = "",
-  style: extraStyle,
-  ...rest
-}) {
+export function Textarea({ minHeight = 100, className = "", style, ...rest }) {
   return (
     <textarea
-      value={value}
-      onChange={onChange}
-      placeholder={placeholder}
-      className={"w-full rounded-lg p-3 text-sm font-medium outline-none transition-all resize-y " + extraClass}
-      style={{ ...baseStyle("1.18px"), minHeight, lineHeight: "1.5", ...extraStyle }}
-      {...focusHandlers}
+      className={`w-full rounded-lg px-3 py-3 text-sm font-medium leading-relaxed bg-cream text-dark border border-border-soft outline-none transition-shadow resize-y focus:border-border-focus focus:ring-3 focus:ring-ring-focus ${className}`}
+      style={{ minHeight, ...style }}
       {...rest}
     />
   );
 }
 
-export function Select({ value, onChange, children, className: extraClass = "", style: extraStyle, ...rest }) {
-  const chevron =
-    "data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%2386969c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
+const chevronBg =
+  "data:image/svg+xml,%3Csvg width='12' height='12' viewBox='0 0 24 24' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M6 9l6 6 6-6' stroke='%2386969c' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E";
+
+export function Select({ className = "", style, children, ...rest }) {
   return (
     <select
-      value={value}
-      onChange={onChange}
-      className={baseClass + " " + extraClass}
+      className={`${fieldBase} appearance-none cursor-pointer pr-9 ${className}`}
       style={{
-        ...baseStyle("1.18px"),
-        appearance: "none",
-        WebkitAppearance: "none",
-        cursor: "pointer",
-        backgroundImage: `url("${chevron}")`,
+        backgroundImage: `url("${chevronBg}")`,
         backgroundRepeat: "no-repeat",
         backgroundPosition: "right 12px center",
-        ...extraStyle,
+        ...style,
       }}
-      {...focusHandlers}
       {...rest}
     >
       {children}

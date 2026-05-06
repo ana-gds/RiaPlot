@@ -1,19 +1,14 @@
-import { COLORS } from "../../constants/theme.js";
+import { useNavigate } from "react-router-dom";
 import { ChevronLeftIcon } from "./Icons.jsx";
 
 export function BackButton({ onClick, className = "", size = 40 }) {
-  const handleClick = onClick ?? (() => window.history.back());
+  const navigate = useNavigate();
+  const handleClick = onClick ?? (() => navigate(-1));
   return (
     <button
       onClick={handleClick}
-      className={`rounded-full flex items-center justify-center shadow-md transition-transform active:scale-95 ${className}`}
-      style={{
-        width: size,
-        height: size,
-        backgroundColor: COLORS.secondary,
-        border: "none",
-        cursor: "pointer",
-      }}
+      className={`rounded-full flex items-center justify-center bg-secondary shadow-secondary-button transition-transform active:scale-95 ${className}`}
+      style={{ width: size, height: size }}
       aria-label="Voltar"
     >
       <ChevronLeftIcon />

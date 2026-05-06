@@ -1,4 +1,5 @@
-import { COLORS, SHADOWS, FONTS } from "../../constants/theme.js";
+const baseBtn =
+  "inline-flex items-center justify-center gap-2 rounded-2xl font-semibold transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed";
 
 export function PrimaryButton({
   children,
@@ -17,18 +18,8 @@ export function PrimaryButton({
       type={type}
       onClick={onClick}
       disabled={isDisabled}
-      className={`text-white font-semibold rounded-2xl active:scale-[0.98] transition-all flex items-center justify-center gap-2 ${className}`}
-      style={{
-        backgroundColor: COLORS.primarySoft,
-        boxShadow: isDisabled ? "none" : SHADOWS.primaryButton,
-        border: "none",
-        cursor: isDisabled ? "not-allowed" : "pointer",
-        opacity: isDisabled ? 0.5 : 1,
-        fontFamily: FONTS.manrope,
-        fontSize: "16px",
-        width: width ?? undefined,
-        height,
-      }}
+      className={`${baseBtn} bg-primary-soft text-white text-base shadow-primary-button disabled:shadow-none ${className}`}
+      style={{ width, height }}
       {...rest}
     >
       {loading && (
@@ -38,6 +29,7 @@ export function PrimaryButton({
           height="18"
           viewBox="0 0 24 24"
           fill="none"
+          aria-hidden="true"
         >
           <circle cx="12" cy="12" r="10" stroke="white" strokeWidth="3" strokeOpacity="0.3" />
           <path d="M12 2a10 10 0 0 1 10 10" stroke="white" strokeWidth="3" strokeLinecap="round" />
@@ -60,17 +52,8 @@ export function SecondaryButton({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-2xl flex items-center justify-center gap-3 hover:bg-gray-50 ${className}`}
-      style={{
-        background: "#fff",
-        border: `1.18px solid ${COLORS.divider}`,
-        fontSize: "14px",
-        fontWeight: 500,
-        color: COLORS.dark,
-        cursor: "pointer",
-        height,
-        width: width ?? undefined,
-      }}
+      className={`${baseBtn} bg-white text-dark text-sm font-medium border border-divider hover:bg-gray-50 ${className}`}
+      style={{ width, height }}
       {...rest}
     >
       {children}
@@ -82,8 +65,6 @@ export function CircularButton({
   children,
   onClick,
   size = 46,
-  background = COLORS.secondary,
-  shadow = SHADOWS.secondaryButton,
   className = "",
   ariaLabel,
   ...rest
@@ -93,15 +74,8 @@ export function CircularButton({
       type="button"
       onClick={onClick}
       aria-label={ariaLabel}
-      className={`rounded-full flex items-center justify-center flex-shrink-0 active:scale-95 transition-transform ${className}`}
-      style={{
-        width: size,
-        height: size,
-        backgroundColor: background,
-        border: "none",
-        cursor: "pointer",
-        boxShadow: shadow,
-      }}
+      className={`rounded-full flex items-center justify-center flex-shrink-0 bg-secondary shadow-secondary-button transition-transform active:scale-95 ${className}`}
+      style={{ width: size, height: size }}
       {...rest}
     >
       {children}
@@ -109,13 +83,12 @@ export function CircularButton({
   );
 }
 
-export function TextLink({ children, onClick, color = COLORS.primary, className = "", ...rest }) {
+export function TextLink({ children, onClick, className = "", ...rest }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`font-medium hover:opacity-80 ${className}`}
-      style={{ color, background: "none", border: "none", cursor: "pointer" }}
+      className={`text-primary font-medium hover:opacity-80 transition-opacity ${className}`}
       {...rest}
     >
       {children}

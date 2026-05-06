@@ -1,27 +1,27 @@
 import { useRef } from "react";
-import { COLORS } from "../../constants/theme.js";
 import { CameraIcon } from "./Icons.jsx";
 
 export function CircleAvatarUpload({ preview, fallbackImage, onFileChange, label = "Adicionar foto" }) {
   const inputRef = useRef(null);
   const showImage = preview ?? fallbackImage;
+
   return (
     <div className="flex flex-col items-center gap-2">
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="relative w-[100px] h-[100px] rounded-full overflow-hidden group flex items-center justify-center transition-all hover:opacity-80"
-        style={{
-          border: showImage ? `3px solid ${COLORS.primary}` : `1.18px dashed ${COLORS.primary}`,
-          background: showImage ? "transparent" : COLORS.sand,
-          boxShadow: showImage && fallbackImage ? "0 4px 16px rgba(219,139,49,0.3)" : undefined,
-        }}
+        className={[
+          "relative w-[100px] h-[100px] rounded-full overflow-hidden group flex items-center justify-center transition-all hover:opacity-90",
+          showImage
+            ? "border-[3px] border-primary shadow-[0_4px_16px_rgba(219,139,49,0.3)]"
+            : "border border-dashed border-primary bg-sand",
+        ].join(" ")}
         aria-label={label}
       >
         {showImage ? (
           <>
             <img src={showImage} alt="" className="w-full h-full object-cover" />
-            <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
+            <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
               <CameraIcon size={24} color="white" strokeWidth={2} />
             </div>
           </>
@@ -29,7 +29,7 @@ export function CircleAvatarUpload({ preview, fallbackImage, onFileChange, label
           <CameraIcon />
         )}
       </button>
-      <span className="text-[10px]" style={{ color: COLORS.muted }}>{label}</span>
+      <span className="text-[10px] text-muted">{label}</span>
       <input
         ref={inputRef}
         type="file"
@@ -51,13 +51,13 @@ export function RectanglePhotoUpload({ preview, onFileChange, height = 220 }) {
       <button
         type="button"
         onClick={() => inputRef.current?.click()}
-        className="w-full rounded-2xl flex flex-col items-center justify-center gap-2.5 transition-all relative overflow-hidden group"
-        style={{
-          height,
-          border: preview ? "none" : `2px dashed rgba(219,139,49,0.35)`,
-          background: preview ? "transparent" : "#faf6f0",
-          cursor: "pointer",
-        }}
+        className={[
+          "w-full rounded-2xl flex flex-col items-center justify-center gap-2.5 transition-all relative overflow-hidden group",
+          preview
+            ? ""
+            : "border-2 border-dashed border-primary/35 bg-cream",
+        ].join(" ")}
+        style={{ height }}
       >
         {preview ? (
           <>
@@ -70,8 +70,8 @@ export function RectanglePhotoUpload({ preview, onFileChange, height = 220 }) {
         ) : (
           <>
             <CameraIcon />
-            <span className="text-[13px] font-medium" style={{ color: COLORS.muted }}>Adicionar foto</span>
-            <span className="text-[11px]" style={{ color: COLORS.mutedSoft }}>Toca para selecionar uma imagem</span>
+            <span className="text-[13px] font-medium text-muted">Adicionar foto</span>
+            <span className="text-[11px] text-muted-soft">Toca para selecionar uma imagem</span>
           </>
         )}
       </button>
