@@ -1,9 +1,19 @@
 import { useState } from "react";
+import { COLORS } from "../constants/theme.js";
 import { Input, PasswordInput, Label } from "../components/ui/Input.jsx";
 import { PrimaryButton } from "../components/ui/Button.jsx";
 import { CircleAvatarUpload } from "../components/ui/PhotoUpload.jsx";
 import { ProgressIndicator } from "../components/shared/ProgressIndicator.jsx";
 import { PageShell } from "../layouts/AppLayout.jsx";
+
+function FieldError({ message }) {
+  if (!message) return null;
+  return (
+    <p className="text-[11px] mt-1" style={{ color: "#e53935" }}>
+      {message}
+    </p>
+  );
+}
 
 export default function ProfileRegister({ onContinue }) {
   const [form, setForm] = useState({
@@ -13,14 +23,26 @@ export default function ProfileRegister({ onContinue }) {
     password: "",
     confirmPassword: "",
   });
+  const [errors, setErrors] = useState({});
   const [avatarPreview, setAvatarPreview] = useState(null);
   const set = (field) => (val) =>
     setForm((p) => ({ ...p, [field]: typeof val === "string" ? val : val.target.value }));
 
+  const validate = () => {
+    const e = {};
+    if (!form.nome.trim()) e.nome = "O nome é obrigatório.";
+    if (!form.email.trim()) e.email = "O email é obrigatório.";
+    else if (!/\S+@\S+\.\S+/.test(form.email)) e.email = "Email inválido.";
+    if (!form.username.trim()) e.username = "O nome de utilizador é obrigatório.";
+    if (form.password.length < 8) e.password = "A palavra-passe deve ter pelo menos 8 caracteres.";
+    if (form.password !== form.confirmPassword) e.confirmPassword = "As palavras-passe não coincidem.";
+    return e;
+  };
+
   const handleContinue = () => {
-    if (!form.nome.trim() || !form.email.trim() || !form.username.trim()) return;
-    if (form.password.length < 8) return;
-    if (form.password !== form.confirmPassword) return;
+    const e = validate();
+    setErrors(e);
+    if (Object.keys(e).length > 0) return;
     console.log("Continuar:", form);
     onContinue?.();
   };
@@ -37,14 +59,17 @@ export default function ProfileRegister({ onContinue }) {
         <div className="mb-3">
           <Label>Nome completo</Label>
           <Input placeholder="Ex: João Silva" value={form.nome} onChange={set("nome")} />
+          <FieldError message={errors.nome} />
         </div>
         <div className="mb-3">
           <Label>Email</Label>
           <Input type="email" placeholder="exemplo@email.com" value={form.email} onChange={set("email")} />
+          <FieldError message={errors.email} />
         </div>
         <div className="mb-3">
           <Label>Nome de utilizador</Label>
           <Input placeholder="@utilizador" value={form.username} onChange={set("username")} />
+          <FieldError message={errors.username} />
         </div>
         <div className="mb-3">
           <Label>Palavra-passe</Label>
@@ -54,6 +79,7 @@ export default function ProfileRegister({ onContinue }) {
             onChange={set("password")}
             iconSize={18}
           />
+          <FieldError message={errors.password} />
         </div>
         <div className="mb-3">
           <Label>Confirmar palavra-passe</Label>
@@ -63,6 +89,7 @@ export default function ProfileRegister({ onContinue }) {
             onChange={set("confirmPassword")}
             iconSize={18}
           />
+          <FieldError message={errors.confirmPassword} />
         </div>
       </div>
 

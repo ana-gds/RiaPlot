@@ -1,10 +1,9 @@
-import { useState, useRef } from "react";
-import { COLORS } from "../constants/theme.js";
+import { useState } from "react";
 import { IMAGES } from "../constants/images.js";
 import { Input, Label } from "../components/ui/Input.jsx";
 import { PrimaryButton } from "../components/ui/Button.jsx";
 import { BackButton } from "../components/ui/BackButton.jsx";
-import { CameraIcon } from "../components/ui/Icons.jsx";
+import { CircleAvatarUpload } from "../components/ui/PhotoUpload.jsx";
 import { PageShell } from "../layouts/AppLayout.jsx";
 
 export default function BoatSettings({ onBack }) {
@@ -19,10 +18,21 @@ export default function BoatSettings({ onBack }) {
     folgaInferior: "",
   });
   const [preview, setPreview] = useState(null);
-  const inputRef = useRef(null);
-  const set = (f) => (e) => setForm((p) => ({ ...p, [f]: e.target.value }));
+  const [loading, setLoading] = useState(false);
 
+  const set = (f) => (e) => setForm((p) => ({ ...p, [f]: e.target.value }));
   const numberProps = { type: "number", step: "0.1", min: "0", noSpinner: true, placeholder: "0.0" };
+
+  const handleSave = async () => {
+    setLoading(true);
+    try {
+      // Replace with real API call
+      await new Promise((resolve) => setTimeout(resolve, 1200));
+      console.log("save", form);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <PageShell>
@@ -31,30 +41,12 @@ export default function BoatSettings({ onBack }) {
       </div>
 
       <div className="flex flex-col items-center gap-2 pt-12">
-        <button
-          type="button"
-          onClick={() => inputRef.current?.click()}
-          className="relative w-[100px] h-[100px] rounded-full overflow-hidden group"
-          style={{
-            border: `3px solid ${COLORS.primary}`,
-            boxShadow: "0 4px 16px rgba(219,139,49,0.3)",
-          }}
-        >
-          <img src={preview ?? IMAGES.boats.default} alt="Barco" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-full">
-            <CameraIcon color="white" size={24} strokeWidth={2} />
-          </div>
-        </button>
-        <span className="text-[10px]" style={{ color: COLORS.muted }}>Alterar foto</span>
-        <input
-          ref={inputRef}
-          type="file"
-          accept="image/*"
-          className="hidden"
-          onChange={(e) => {
-            const f = e.target.files?.[0];
-            if (f) setPreview(URL.createObjectURL(f));
-          }}
+        {/* Reusing shared CircleAvatarUpload instead of duplicating the logic */}
+        <CircleAvatarUpload
+          preview={preview}
+          fallbackImage={IMAGES.boats.default}
+          onFileChange={setPreview}
+          label="Alterar foto"
         />
       </div>
 
@@ -101,7 +93,8 @@ export default function BoatSettings({ onBack }) {
 
       <div className="flex justify-center px-4 py-8 mt-4">
         <PrimaryButton
-          onClick={() => console.log("save", form)}
+          onClick={handleSave}
+          loading={loading}
           width={188}
           height={40}
           className="text-[15px]"
