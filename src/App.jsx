@@ -13,6 +13,7 @@ import Notifications from "./pages/Notifications.jsx";
 import Profile from "./pages/Profile.jsx";
 import EditProfile from "./pages/EditProfile.jsx";
 import BoatSettings from "./pages/BoatSettings.jsx";
+import MapPage from "./pages/Map.jsx";
 
 const DEV_PAGES = [
   ["/login", "Login"],
@@ -77,6 +78,7 @@ export default function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/edit" element={<EditProfile />} />
             <Route path="/profile/boat" element={<BoatSettings />} />
+            <Route path="/map" element={<MapPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/routes" replace />} />
