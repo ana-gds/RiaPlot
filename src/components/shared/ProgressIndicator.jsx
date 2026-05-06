@@ -1,4 +1,3 @@
-import { COLORS, FONTS } from "../../constants/theme.js";
 import { REGISTRATION_STEPS } from "../../constants/mockData.js";
 
 export function ProgressIndicator({ step, steps = REGISTRATION_STEPS }) {
@@ -10,22 +9,18 @@ export function ProgressIndicator({ step, steps = REGISTRATION_STEPS }) {
         return (
           <div key={s.key} className="contents">
             {i > 0 && (
-              <div
-                className="w-10 h-px"
-                style={{ background: lineActive ? "#df9746" : COLORS.divider }}
+              <span
+                className={`w-10 h-px transition-colors ${lineActive ? "bg-primary" : "bg-divider"}`}
               />
             )}
             <div className="flex items-center gap-2">
-              <div
-                className="w-2 h-2 rounded-full"
-                style={{ background: isActive ? "#df9746" : COLORS.divider }}
+              <span
+                className={`w-2 h-2 rounded-full transition-colors ${isActive ? "bg-primary" : "bg-divider"}`}
               />
               <span
-                className="text-xs font-medium whitespace-nowrap"
-                style={{
-                  color: isActive ? "#df9746" : COLORS.mutedSoft,
-                  fontFamily: FONTS.manrope,
-                }}
+                className={`text-xs font-medium whitespace-nowrap transition-colors ${
+                  isActive ? "text-primary" : "text-muted-soft"
+                }`}
               >
                 {s.label}
               </span>

@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
-import { COLORS, FONTS } from "../constants/theme.js";
+import { useNavigate } from "react-router-dom";
+import { COLORS } from "../constants/theme.js";
 import { PrimaryButton, TextLink } from "../components/ui/Button.jsx";
 import { ProgressIndicator } from "../components/shared/ProgressIndicator.jsx";
-import { PageShell } from "../layouts/AppLayout.jsx";
 
 function AnimatedCheck() {
   const [show, setShow] = useState(false);
@@ -13,18 +13,11 @@ function AnimatedCheck() {
 
   return (
     <div
-      className="w-[120px] h-[120px] rounded-full flex items-center justify-center relative transition-all duration-500"
-      style={{
-        border: `3px solid ${COLORS.primary}`,
-        transform: show ? "scale(1)" : "scale(0)",
-        opacity: show ? 1 : 0,
-      }}
+      className="w-[120px] h-[120px] rounded-full flex items-center justify-center relative border-[3px] border-primary transition-all duration-500"
+      style={{ transform: show ? "scale(1)" : "scale(0)", opacity: show ? 1 : 0 }}
     >
-      <div
-        className="absolute rounded-full"
-        style={{ inset: "8px", background: "rgba(219,139,49,0.08)" }}
-      />
-      <svg width="48" height="48" viewBox="0 0 24 24" fill="none">
+      <div className="absolute inset-2 rounded-full bg-primary/10" />
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path
           d="M5 13l4 4L19 7"
           stroke={COLORS.primary}
@@ -52,18 +45,10 @@ function SummaryRow({ icon, iconBg, label, value }) {
         {icon}
       </div>
       <div className="text-left">
-        <div
-          className="text-[11px] font-medium uppercase"
-          style={{ color: COLORS.muted, letterSpacing: "0.3px", fontFamily: FONTS.manrope }}
-        >
+        <div className="text-[11px] font-medium uppercase text-muted tracking-[0.3px]">
           {label}
         </div>
-        <div
-          className="text-sm font-semibold mt-px"
-          style={{ color: COLORS.dark, fontFamily: FONTS.manrope }}
-        >
-          {value}
-        </div>
+        <div className="text-sm font-semibold text-dark mt-px">{value}</div>
       </div>
     </div>
   );
@@ -71,17 +56,20 @@ function SummaryRow({ icon, iconBg, label, value }) {
 
 function SummaryCard({ userName, boatName, boatType }) {
   return (
-    <div
-      className="w-full rounded-2xl p-5 flex flex-col gap-3 mt-9"
-      style={{ background: COLORS.sand }}
-    >
+    <div className="w-full rounded-2xl p-5 mt-9 bg-sand flex flex-col gap-3">
       <SummaryRow
         iconBg="rgba(0,77,108,0.12)"
         label="Conta"
         value={userName}
         icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke={COLORS.secondary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"
+              stroke={COLORS.secondary}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
             <circle cx="12" cy="7" r="4" stroke={COLORS.secondary} strokeWidth="2" />
           </svg>
         }
@@ -92,7 +80,13 @@ function SummaryCard({ userName, boatName, boatType }) {
         value={`${boatName} · ${boatType}`}
         icon={
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path d="M2 20h20M4 17l2-7h12l2 7M8 10V6a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v4" stroke={COLORS.primary} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+            <path
+              d="M2 20h20M4 17l2-7h12l2 7M8 10V6a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v4"
+              stroke={COLORS.primary}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
           </svg>
         }
       />
@@ -104,9 +98,8 @@ export default function FinalRegister({
   userName = "João Silva",
   boatName = "Gaivota",
   boatType = "Veleiro",
-  onStart,
-  onExplore,
 }) {
+  const navigate = useNavigate();
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 100);
@@ -121,24 +114,25 @@ export default function FinalRegister({
   });
 
   return (
-    <PageShell>
+    <div className="flex flex-col flex-1 pt-4 pb-10">
       <ProgressIndicator step={3} />
 
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
         <AnimatedCheck />
 
         <h1
-          className="mt-8 text-[26px] font-bold leading-tight"
-          style={{ color: COLORS.dark, fontFamily: FONTS.manrope, ...fade("0.4s") }}
+          className="mt-8 text-[26px] font-bold leading-tight text-dark"
+          style={fade("0.4s")}
         >
           Tudo pronto!
         </h1>
 
         <p
-          className="mt-3 text-sm leading-relaxed max-w-[280px]"
-          style={{ color: COLORS.muted, fontFamily: FONTS.manrope, ...fade("0.55s") }}
+          className="mt-3 text-sm leading-relaxed max-w-[280px] text-muted"
+          style={fade("0.55s")}
         >
-          A tua conta foi criada com sucesso. Estás pronto para explorar a Ria de Aveiro em segurança.
+          A tua conta foi criada com sucesso. Estás pronto para explorar a Ria de Aveiro em
+          segurança.
         </p>
 
         <div className="w-full" style={fade("0.7s")}>
@@ -146,18 +140,21 @@ export default function FinalRegister({
         </div>
       </div>
 
-      <div className="flex flex-col items-center gap-3 px-8 py-5 pb-10 flex-shrink-0">
+      <div className="flex flex-col items-center gap-3 px-8 pt-5">
         <div className="w-full" style={fade("0.9s")}>
-          <PrimaryButton onClick={onStart} className="w-full">
+          <PrimaryButton onClick={() => navigate("/routes")} className="w-full">
             Começar a navegar
           </PrimaryButton>
         </div>
         <div style={fade("1s")}>
-          <TextLink onClick={onExplore} color={COLORS.muted} className="text-[13px]">
+          <TextLink
+            onClick={() => navigate("/routes")}
+            className="text-[13px] text-muted hover:text-dark"
+          >
             Explorar primeiro
           </TextLink>
         </div>
       </div>
-    </PageShell>
+    </div>
   );
 }

@@ -1,51 +1,44 @@
-import { COLORS } from "../../constants/theme.js";
+import { NavLink } from "react-router-dom";
 import { NAV_ITEMS } from "../../constants/mockData.js";
 
-export function BottomNav({ active, onChange }) {
+export function BottomNav() {
   return (
     <>
-      <div className="h-[72px] flex-shrink-0" aria-hidden="true" />
-      <nav
-        className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-around px-2 bg-white"
-        style={{ height: "72px", borderTop: "1px solid rgba(0,77,108,0.06)" }}
-      >
-        {NAV_ITEMS.map((item) => {
-        const isActive = active === item.key;
-        return (
-          <button
+      {/* Spacer — mobile only */}
+      <div className="h-[72px] flex-shrink-0 md:hidden" aria-hidden="true" />
+
+      <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 h-[72px] bg-white border-t border-secondary/10 flex items-stretch">
+        {NAV_ITEMS.map((item) => (
+          <NavLink
             key={item.key}
-            type="button"
-            onClick={() => onChange?.(item.key)}
-            className="relative flex flex-col items-center gap-1 px-3 py-1.5"
-            style={{ background: "none", border: "none", cursor: "pointer" }}
+            to={item.path}
+            className={({ isActive }) =>
+              [
+                "relative flex-1 flex flex-col items-center justify-center gap-1 text-xs",
+                isActive ? "text-dark font-medium" : "text-muted-soft",
+              ].join(" ")
+            }
+            aria-label={item.label}
           >
-            {isActive && (
-              <div
-                className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-[3px] rounded-b"
-                style={{ backgroundColor: COLORS.primary }}
-              />
+            {({ isActive }) => (
+              <>
+                {isActive && (
+                  <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-[3px] rounded-b bg-primary" />
+                )}
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path
+                    d={item.d}
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+                <span>{item.label}</span>
+              </>
             )}
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-              <path
-                d={item.d}
-                stroke={isActive ? COLORS.dark : COLORS.mutedSoft}
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            </svg>
-            <span
-              className="text-xs"
-              style={{
-                fontWeight: isActive ? 500 : 400,
-                color: isActive ? COLORS.dark : COLORS.mutedSoft,
-              }}
-            >
-              {item.label}
-            </span>
-          </button>
-        );
-        })}
+          </NavLink>
+        ))}
       </nav>
     </>
   );
