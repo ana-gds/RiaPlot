@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useOutletContext } from "react-router-dom";
 import { MapContainer, ZoomControl, ScaleControl, Polyline } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
@@ -13,6 +14,7 @@ import { SimulationSheet } from "../components/map/SimulationSheet.jsx";
 import { LocatingToast } from "../components/map/LocatingToast.jsx";
 
 export default function MapPage() {
+  const { openSidebar } = useOutletContext();
   const [baseLayer, setBaseLayer] = useState("osm");
   const [nauticalVisible, setNauticalVisible] = useState(true);
   const [simOpen, setSimOpen] = useState(false);
@@ -39,6 +41,7 @@ export default function MapPage() {
         onChangeLayer={setBaseLayer}
         nautical={nauticalVisible}
         onToggleNautical={() => setNauticalVisible((v) => !v)}
+        onOpenMenu={openSidebar}
       />
 
       <div className="map-page__canvas">

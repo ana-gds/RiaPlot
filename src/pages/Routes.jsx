@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { MOCK_ROUTES } from "../constants/mockData.js";
 import { CircularButton } from "../components/ui/Button.jsx";
 import { MenuIcon, FilterIcon, ClockIcon, BookmarkIcon } from "../components/ui/Icons.jsx";
@@ -15,6 +15,7 @@ const DIFFICULTY_FILTERS = [
 
 export default function Routes() {
   const navigate = useNavigate();
+  const { openSidebar } = useOutletContext();
   const [search, setSearch] = useState("");
   const [activeFilters, setActiveFilters] = useState(["facil"]);
   const [advancedFilters, setAdvancedFilters] = useState(0);
@@ -48,7 +49,7 @@ export default function Routes() {
         <div className="flex items-center gap-2.5 mb-3">
           {/* Hamburger — only needed on mobile (desktop has the sidebar) */}
           <CircularButton
-            onClick={() => navigate("/profile")}
+            onClick={openSidebar}
             ariaLabel="Menu"
             className="md:hidden"
           >

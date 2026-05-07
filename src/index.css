@@ -95,11 +95,12 @@ body,
 /* ── Map page ─────────────────────────────────────────────────────────── */
 
 .map-page {
-  position: fixed;
-  inset: 0;
+  flex: 1;
+  position: relative;
   display: flex;
   flex-direction: column;
   overflow: hidden;
+  min-height: 0;
 }
 
 .map-page__canvas {

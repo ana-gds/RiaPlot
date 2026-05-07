@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useOutletContext } from "react-router-dom";
 import { MOCK_SOCIAL_POSTS } from "../constants/mockData.js";
 import { CircularButton } from "../components/ui/Button.jsx";
 import { MenuIcon, PlusIcon, CommentIcon } from "../components/ui/Icons.jsx";
@@ -8,6 +8,7 @@ import { FeedPostCard } from "../components/shared/PostCard.jsx";
 
 export default function Social() {
   const navigate = useNavigate();
+  const { openSidebar } = useOutletContext();
   const [posts, setPosts] = useState(MOCK_SOCIAL_POSTS);
   const [search, setSearch] = useState("");
 
@@ -28,7 +29,7 @@ export default function Social() {
     <>
       {/* Sticky toolbar */}
       <div className="flex items-center gap-3 px-4 pb-3 flex-shrink-0 sticky top-0 bg-white z-10 border-b border-secondary/5">
-        <CircularButton onClick={() => navigate("/profile")} ariaLabel="Menu" className="md:hidden">
+        <CircularButton onClick={openSidebar} ariaLabel="Menu" className="md:hidden">
           <MenuIcon />
         </CircularButton>
         <h1 className="hidden md:block text-xl font-bold text-dark shrink-0">Social</h1>
