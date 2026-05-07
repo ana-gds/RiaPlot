@@ -1,0 +1,21 @@
+### Registar utilizador
+POST http://localhost/riaplot-api/public/api/register
+Content-Type: application/json
+
+{
+    "name": "Lourenço Soares",
+    "email": "teste@riaplot.com",
+    "username": "lourencosoares",
+    "password": "123456"
+}
+
+###
+
+### Login
+POST http://localhost/riaplot-api/public/api/login
+Content-Type: application/json
+
+{
+    "email": "teste@riaplot.com",
+    "password": "123456"
+}
