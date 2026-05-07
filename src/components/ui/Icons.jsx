@@ -161,3 +161,30 @@ export function PlayIcon({ size = 30, color = "white", className = "" }) {
     </svg>
   );
 }
+
+export function MapIcon({ size = 16, color = "currentColor", className = "" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path d="M9 3L3 5v16l6-2 6 2 6-2V3l-6 2-6-2z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M9 3v16M15 5v16" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function SatelliteIcon({ size = 16, color = "currentColor", className = "" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <path d="M5 19l-2-2 4-4 2 2-4 4zM13 11l4-4M9 7l8 8M11 5l8 8" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M14 4l6 6-3 3-6-6 3-3z" stroke={color} strokeWidth="2" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function AnchorIcon({ size = 16, color = "currentColor", className = "" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
+      <circle cx="12" cy="5" r="2" stroke={color} strokeWidth="2" />
+      <path d="M12 7v15M5 12h14M5 17a7 7 0 007 4 7 7 0 007-4" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
