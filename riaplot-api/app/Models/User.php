@@ -28,4 +28,5 @@ class User extends Authenticatable
     {
         return $this->hasMany(Boat::class, 'user_id');
     }
+    /* texto teste para commit */
 }
