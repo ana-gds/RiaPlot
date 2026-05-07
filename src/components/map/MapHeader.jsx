@@ -1,12 +1,17 @@
-import { BackButton } from "../ui/BackButton.jsx";
 import { MapSearchBar } from "./MapSearchBar.jsx";
 import { LayerSwitcher } from "./LayerSwitcher.jsx";
+import { CircularButton } from "../ui/Button.jsx";
+import { MenuIcon } from "../ui/Icons.jsx";
 
-export function MapHeader({ baseLayer, onChangeLayer, nautical, onToggleNautical }) {
+export function MapHeader({ baseLayer, onChangeLayer, nautical, onToggleNautical, onOpenMenu }) {
   return (
     <div className="map-header">
       <div className="map-header__row">
-        <BackButton className="flex-shrink-0" />
+        {onOpenMenu && (
+          <CircularButton onClick={onOpenMenu} ariaLabel="Menu" className="md:hidden">
+            <MenuIcon />
+          </CircularButton>
+        )}
         <MapSearchBar />
         <LayerSwitcher
           activeLayer={baseLayer}

@@ -62,6 +62,7 @@ export default function App() {
           {/* Tab pages share the bottom navigation */}
           <Route element={<AppShell />}>
             <Route path="/routes" element={<RoutesPage />} />
+            <Route path="/map" element={<MapPage />} />
             <Route path="/social" element={<Social />} />
             <Route path="/notifications" element={<Notifications />} />
           </Route>
@@ -78,7 +79,6 @@ export default function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/profile/edit" element={<EditProfile />} />
             <Route path="/profile/boat" element={<BoatSettings />} />
-            <Route path="/map" element={<MapPage />} />
           </Route>
 
           <Route path="*" element={<Navigate to="/routes" replace />} />

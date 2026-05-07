@@ -1,4 +1,7 @@
+import { useOutletContext } from "react-router-dom";
 import { MOCK_NOTIFICATIONS } from "../constants/mockData.js";
+import { CircularButton } from "../components/ui/Button.jsx";
+import { MenuIcon } from "../components/ui/Icons.jsx";
 
 const ICON_BG = {
   like: "rgba(219,139,49,0.12)",
@@ -80,9 +83,13 @@ function NotifItem({ n }) {
 }
 
 export default function Notifications() {
+  const { openSidebar } = useOutletContext();
   return (
     <>
-      <div className="px-4 pt-3 pb-2 flex-shrink-0 border-b border-secondary/5">
+      <div className="flex items-center gap-3 px-4 pt-3 pb-2 flex-shrink-0 border-b border-secondary/5">
+        <CircularButton onClick={openSidebar} ariaLabel="Menu" className="md:hidden">
+          <MenuIcon />
+        </CircularButton>
         <h1 className="text-2xl font-bold text-dark">Notificações</h1>
       </div>
       <div className="flex-1 overflow-y-auto pb-4">

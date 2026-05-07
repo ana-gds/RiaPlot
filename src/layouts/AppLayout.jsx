@@ -1,9 +1,18 @@
-import { NavLink } from "react-router-dom";
-import { Outlet } from "react-router-dom";
+import { useState } from "react";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { StatusBar } from "../components/ui/StatusBar.jsx";
 import { BottomNav } from "../components/shared/BottomNav.jsx";
+import Sidebar from "../components/shared/SideBar.jsx";
 import { NAV_ITEMS } from "../constants/mockData.js";
 import { IMAGES } from "../constants/images.js";
+
+const SIDEBAR_NAV_MAP = {
+  rotas: "/routes",
+  mapa: "/map",
+  defConta: "/profile",
+  defBarco: "/profile/boat",
+  editarPerfil: "/profile/edit",
+};
 
 function DesktopSidebar() {
   return (
@@ -96,13 +105,26 @@ function DesktopSidebar() {
  * Layout for tab pages — sidebar on desktop, bottom nav on mobile.
  */
 export function AppShell() {
+  const navigate = useNavigate();
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
+  const handleSidebarNavigate = (key) => {
+    const path = SIDEBAR_NAV_MAP[key];
+    if (path) navigate(path);
+  };
+
   return (
     <div className="flex flex-1 min-h-svh">
       <DesktopSidebar />
+      <Sidebar
+        open={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
+        onNavigate={handleSidebarNavigate}
+      />
       <div className="flex flex-col flex-1 min-h-svh min-w-0">
         <StatusBar className="md:hidden" />
         <main className="flex-1 flex flex-col min-h-0">
-          <Outlet />
+          <Outlet context={{ openSidebar: () => setSidebarOpen(true) }} />
         </main>
         <BottomNav />
       </div>
