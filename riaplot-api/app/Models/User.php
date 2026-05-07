@@ -3,10 +3,11 @@ namespace App\Models;
 
 use MongoDB\Laravel\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
+use Illuminate\Database\Eloquent\Factories\HasFactory; // ← adicionar
 
 class User extends Authenticatable
 {
-    use HasApiTokens;
+    use HasApiTokens, HasFactory; // ← adicionar HasFactory aqui
 
     protected $connection = 'mongodb';
     protected $collection = 'users';
@@ -28,5 +29,4 @@ class User extends Authenticatable
     {
         return $this->hasMany(Boat::class, 'user_id');
     }
-    /* texto teste para commit */
 }
