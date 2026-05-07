@@ -84,4 +84,22 @@ return [
         'validate_csrf_token' => ValidateCsrfToken::class,
     ],
 
+    // config/auth.php — guards
+    'guards' => [
+        'api' => [
+            'driver'   => 'sanctum',
+            'provider' => 'users',
+        ],
+    ],
+
+// providers
+    'providers' => [
+        'users' => [
+            'driver' => 'eloquent',
+            'model'  => App\Models\User::class,
+        ],
+    ],
+
 ];
+
+
