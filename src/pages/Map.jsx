@@ -8,10 +8,12 @@ import {
     ScaleControl,
     Marker,
     Popup,
+    Polyline,
     useMap,
 } from "react-leaflet";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
+import { useDocks, useRoutes, fetchRoute } from '../hooks/useApi';
 
 // ─── Leaflet icon fix (Vite) ──────────────────────────────────────────────
 delete L.Icon.Default.prototype._getIconUrl;
@@ -42,17 +44,7 @@ const MOCK_TIDES = [
     { type: "BM", label: "Baixa-Mar", time: "23:12", height: 0.8 },
 ];
 
-// Cais da Ria de Aveiro (mock — virão da BD MongoDB via API Laravel)
-const MOCK_DOCKS = [
-    { id: 1, name: "Terminal de Aveiro", lat: 40.6404, lng: -8.6538, type: "principal" },
-    { id: 2, name: "Cais da Murtosa", lat: 40.7341, lng: -8.6253, type: "principal" },
-    { id: 3, name: "Cais de Torreira", lat: 40.7637, lng: -8.6897, type: "secundario" },
-    { id: 4, name: "São Jacinto", lat: 40.6617, lng: -8.7342, type: "turistico" },
-    { id: 5, name: "Costa Nova", lat: 40.6131, lng: -8.7465, type: "turistico" },
-    { id: 6, name: "Cais de Ílhavo", lat: 40.5989, lng: -8.6847, type: "secundario" },
-    { id: 7, name: "Bico", lat: 40.7180, lng: -8.6450, type: "secundario" },
-    { id: 8, name: "ANGE", lat: 40.6386, lng: -8.6505, type: "principal" },
-];
+// Cais da Ria de Aveiro
 
 // Cais disponíveis para simulação (partida + chegada)
 const DOCK_OPTIONS = [
@@ -187,9 +179,9 @@ function FloatingControls({ onLocate, onRecenter }) {
 function DockMarkers({ docks, onSelect }) {
     return docks.map((dock) => (
         <Marker
-            key={dock.id}
-            position={[dock.lat, dock.lng]}
-            icon={createDockIcon(dock.type)}
+            key={dock.id || dock._id}
+            position={[dock.latitude, dock.longitude]}
+            icon={createDockIcon(dock.tipo)}
             eventHandlers={{ click: () => onSelect?.(dock) }}
         >
             <Popup>
@@ -197,7 +189,7 @@ function DockMarkers({ docks, onSelect }) {
                     <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
                         <div style={{
                             width: 28, height: 28, borderRadius: "50%",
-                            background: dock.type === "turistico" ? "#DB8B31" : "#004D6C",
+                            background: dock.tipo === "turistico" ? "#DB8B31" : "#004D6C",
                             display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
                         }}>
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none">
@@ -205,10 +197,10 @@ function DockMarkers({ docks, onSelect }) {
                                       stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </div>
-                        <span style={{ fontWeight: 700, fontSize: 13, color: "#0e2c38" }}>{dock.name}</span>
+                        <span style={{ fontWeight: 700, fontSize: 13, color: "#0e2c38" }}>{dock.nome}</span>
                     </div>
                     <div style={{ fontSize: 11, color: "#86969c", textTransform: "capitalize", marginBottom: 8 }}>
-                        Cais {dock.type}
+                        Cais {dock.tipo}
                     </div>
                     <button
                         type="button"
@@ -730,6 +722,18 @@ export default function MapPage() {
     const [simOpen, setSimOpen] = useState(false);
     const [locating, setLocating] = useState(false);
     const [selectedDock, setSelectedDock] = useState(null);
+    const { docks } = useDocks();
+    const routes = useRoutes(true);                    // rotas recomendadas
+    const [routePath, setRoutePath] = useState(null); // path da rota ativa
+    const [loadingRoute, setLoadingRoute] = useState(false);
+
+    async function handleSelectRoute(id) {
+        setLoadingRoute(true);
+        const rota = await fetchRoute(id);
+        const positions = rota.path.map(p => [p.lat, p.lng]);
+        setRoutePath(positions);
+        setLoadingRoute(false);
+    }
 
     const handleLocate = () => {
         setLocating(true);
@@ -795,7 +799,14 @@ export default function MapPage() {
                         onLocate={handleLocate}
                     />
 
-                    <DockMarkers docks={MOCK_DOCKS} onSelect={setSelectedDock} />
+                    <DockMarkers docks={docks} onSelect={setSelectedDock} />
+
+                    {routePath && (
+                        <Polyline
+                            positions={routePath}
+                            pathOptions={{ color: '#004D6C', weight: 5, opacity: 0.85 }}
+                        />
+                    )}
 
                     <ZoomControl position="bottomright" />
                     <ScaleControl position="bottomleft" imperial={false} />
@@ -816,6 +827,25 @@ export default function MapPage() {
                 {/* Painel de marés */}
                 <div style={{ pointerEvents: "auto" }}>
                     <TidesPanel />
+                </div>
+
+                {/* Botões de teste de rota — remover depois */}
+                <div style={{ pointerEvents: 'auto', display: 'flex', gap: 8 }}>
+                    {routes.map(r => (
+                        <button
+                            key={r.id}
+                            type="button"
+                            onClick={() => handleSelectRoute(r.id)}
+                            style={{
+                                padding: '8px 14px', borderRadius: 10,
+                                background: 'white', border: '1px solid #004D6C',
+                                color: '#004D6C', fontSize: 12, fontWeight: 600,
+                                cursor: 'pointer',
+                            }}
+                        >
+                            {r.descricao}
+                        </button>
+                    ))}
                 </div>
 
                 {/* Botão Simular Rota */}
