@@ -6,12 +6,15 @@ use App\Http\Controllers\RouteController;
 use App\Http\Controllers\PoiController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\Api\DockController;
 
 // Auth (público)
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
 
-// Rotas e POIs (públicos — o mapa não precisa de login)
+// Cais, Rotas e POIs (públicos — o mapa não precisa de login)
+Route::get('/docks',       [DockController::class, 'index']);
+Route::get('/docks/{id}',  [DockController::class, 'show']);
 Route::get('/routes',      [RouteController::class, 'index']);
 Route::get('/routes/{id}', [RouteController::class, 'show']);
 Route::get('/pois',        [PoiController::class, 'index']);

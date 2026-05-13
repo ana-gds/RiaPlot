@@ -116,8 +116,8 @@ return [
 
         'mongodb' => [
             'driver'   => 'mongodb',
-            'dsn'      => env('DB_URI'),
-            'database' => env('DB_DATABASE', 'riaplot_db'),
+            'dsn'      => env('MONGODB_URI'),
+            'database' => env('MONGODB_DATABASE', 'riaplot_db'),
         ],
 
     ],
