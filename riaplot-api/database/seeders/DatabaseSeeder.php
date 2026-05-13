@@ -25,3 +25,5 @@ class DatabaseSeeder extends Seeder
         ]);
     }
 }
+
+$this->call(DockSeeder::class);
