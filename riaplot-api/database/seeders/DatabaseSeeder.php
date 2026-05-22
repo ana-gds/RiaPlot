@@ -10,20 +10,20 @@ class DatabaseSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Seed the application's database.
-     */
     public function run(): void
     {
         User::factory()->create([
-            'name'          => 'Test User',
-            'email'         => 'test@example.com',
-            'username'      => 'testuser',
-            'saved_routes'  => [],
-            'followers'     => [],
-            'following'     => [],
+            'name'         => 'Test User',
+            'email'        => 'test@example.com',
+            'username'     => 'testuser',
+            'saved_routes' => [],
+            'followers'    => [],
+            'following'    => [],
+        ]);
+
+        $this->call([
+            DockSeeder::class,
+            RouteSeeder::class,
         ]);
     }
 }
-
-$this->call(DockSeeder::class);
