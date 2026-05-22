@@ -26,6 +26,7 @@ export default function MapPage() {
     setTimeout(() => setLocating(false), 3000);
   };
 
+
   return (
     <div className="map-page">
       <MapHeader
