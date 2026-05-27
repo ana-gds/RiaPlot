@@ -3,20 +3,36 @@ import { useNavigate } from "react-router-dom";
 import { Input, PasswordInput, Label } from "../components/ui/Input.jsx";
 import { PrimaryButton, SecondaryButton, TextLink } from "../components/ui/Button.jsx";
 import { GoogleLogo, WarningIcon } from "../components/ui/Icons.jsx";
+import { useAuth } from "../contexts/AuthContext.jsx";
+import { loginUser } from "../services/api.js";
 
 export default function Login() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async (e) => {
+    e?.preventDefault();
     setError("");
+
     if (!email.trim() || !password.trim()) {
       setError("Por favor, preenche o email e a palavra-passe.");
       return;
     }
-    navigate("/routes");
+
+    setLoading(true);
+    try {
+      const data = await loginUser({ email, password });
+      login(data.user, data.token);
+      navigate("/routes");
+    } catch (err) {
+      setError(err?.message ?? "Erro ao iniciar sessão. Tenta novamente.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -44,13 +60,7 @@ export default function Login() {
         </div>
       )}
 
-      <form
-        className="flex flex-col gap-4"
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleLogin();
-        }}
-      >
+      <form className="flex flex-col gap-4" onSubmit={handleLogin}>
         <div>
           <Label>Email ou nome de utilizador</Label>
           <Input
@@ -74,8 +84,8 @@ export default function Login() {
           </div>
         </div>
 
-        <PrimaryButton type="submit" className="w-full mt-4">
-          Entrar
+        <PrimaryButton type="submit" className="w-full mt-4" disabled={loading}>
+          {loading ? "A entrar…" : "Entrar"}
         </PrimaryButton>
       </form>
 

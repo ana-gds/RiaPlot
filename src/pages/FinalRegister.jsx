@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { COLORS } from "../constants/theme.js";
 import { PrimaryButton, TextLink } from "../components/ui/Button.jsx";
 import { ProgressIndicator } from "../components/shared/ProgressIndicator.jsx";
@@ -94,12 +94,12 @@ function SummaryCard({ userName, boatName, boatType }) {
   );
 }
 
-export default function FinalRegister({
-  userName = "João Silva",
-  boatName = "Gaivota",
-  boatType = "Veleiro",
-}) {
+export default function FinalRegister() {
   const navigate = useNavigate();
+  const { state } = useLocation();
+  const userName = state?.userName ?? "Navegador";
+  const boatName = state?.boatName ?? "—";
+  const boatType = state?.boatType ?? "—";
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     const t = setTimeout(() => setVisible(true), 100);
