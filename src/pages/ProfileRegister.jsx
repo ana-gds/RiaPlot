@@ -4,6 +4,8 @@ import { Input, PasswordInput, Label } from "../components/ui/Input.jsx";
 import { PrimaryButton } from "../components/ui/Button.jsx";
 import { CircleAvatarUpload } from "../components/ui/PhotoUpload.jsx";
 import { ProgressIndicator } from "../components/shared/ProgressIndicator.jsx";
+import { useAuth } from "../contexts/AuthContext.jsx";
+import { registerUser } from "../services/api.js";
 
 function FieldError({ message }) {
   if (!message) return null;
@@ -30,18 +32,50 @@ function validate(form) {
   return e;
 }
 
+// Maps Laravel validation field names back to our form field names
+const API_FIELD_MAP = { name: "nome", email: "email", username: "username", password: "password" };
+
 export default function ProfileRegister() {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState("");
+  const [loading, setLoading] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState(null);
 
   const set = (field) => (e) => setForm((p) => ({ ...p, [field]: e.target.value }));
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     const e = validate(form);
     setErrors(e);
-    if (Object.keys(e).length === 0) navigate("/register/boat");
+    setApiError("");
+    if (Object.keys(e).length > 0) return;
+
+    setLoading(true);
+    try {
+      const data = await registerUser({
+        name: form.nome,
+        email: form.email,
+        username: form.username,
+        password: form.password,
+      });
+      login(data.user, data.token);
+      navigate("/register/boat");
+    } catch (err) {
+      if (err?.errors) {
+        const mapped = {};
+        for (const [apiField, messages] of Object.entries(err.errors)) {
+          const localField = API_FIELD_MAP[apiField];
+          if (localField) mapped[localField] = messages[0];
+        }
+        setErrors((prev) => ({ ...prev, ...mapped }));
+      } else {
+        setApiError(err?.message ?? "Erro ao criar conta. Tenta novamente.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -53,6 +87,10 @@ export default function ProfileRegister() {
       </div>
 
       <div className="flex-1 px-5 mt-6 flex flex-col gap-3 overflow-y-auto">
+        {apiError && (
+          <p className="text-[11px] text-danger text-center">{apiError}</p>
+        )}
+
         <div>
           <Label>Nome completo</Label>
           <Input placeholder="Ex: João Silva" value={form.nome} onChange={set("nome")} />
@@ -96,8 +134,14 @@ export default function ProfileRegister() {
       </div>
 
       <div className="flex justify-center px-5 pt-4">
-        <PrimaryButton onClick={handleContinue} width={188} height={44} className="text-[15px]">
-          Continuar
+        <PrimaryButton
+          onClick={handleContinue}
+          width={188}
+          height={44}
+          className="text-[15px]"
+          disabled={loading}
+        >
+          {loading ? "A criar conta…" : "Continuar"}
         </PrimaryButton>
       </div>
     </div>

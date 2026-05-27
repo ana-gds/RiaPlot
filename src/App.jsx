@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { AuthProvider } from "./contexts/AuthContext.jsx";
 import { AppShell, PageShell } from "./layouts/AppLayout.jsx";
 import Login from "./pages/Login.jsx";
 import ProfileRegister from "./pages/ProfileRegister.jsx";
@@ -55,6 +56,7 @@ function DevPicker() {
 
 export default function App() {
   return (
+    <AuthProvider>
     <BrowserRouter>
       <div className="app-frame">
         <DevPicker />
@@ -85,5 +87,6 @@ export default function App() {
         </Routes>
       </div>
     </BrowserRouter>
+    </AuthProvider>
   );
 }
