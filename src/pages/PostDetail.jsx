@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { IMAGES } from "../constants/images.js";
-import { MOCK_POST_COMMENTS } from "../constants/mockData.js";
 import { BackButton } from "../components/ui/BackButton.jsx";
 import { HeartIcon, CommentIcon, SendIcon } from "../components/ui/Icons.jsx";
+import { useAuth } from "../contexts/AuthContext.jsx";
+import { likePost, addComment } from "../services/api.js";
 
-const myAvatar = IMAGES.avatars.me;
+function formatDate(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" });
+}
 
 function CommentsSheet({ open, onClose, comments, onAddComment }) {
   const [text, setText] = useState("");
@@ -48,7 +53,7 @@ function CommentsSheet({ open, onClose, comments, onAddComment }) {
                       <img src={c.avatar} alt={c.username} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white bg-primary-soft">
-                        {c.username.charAt(0).toUpperCase()}
+                        {c.username?.charAt(0)?.toUpperCase() ?? "?"}
                       </div>
                     )}
                   </div>
@@ -64,8 +69,8 @@ function CommentsSheet({ open, onClose, comments, onAddComment }) {
             </div>
           </div>
           <div className="flex items-center gap-3 px-4 py-3 border-t border-white/10">
-            <div className="w-[30px] h-[30px] rounded-full overflow-hidden flex-shrink-0">
-              <img src={myAvatar} alt="Eu" className="w-full h-full object-cover" />
+            <div className="w-[30px] h-[30px] rounded-full overflow-hidden flex-shrink-0 bg-primary-soft flex items-center justify-center text-white text-xs font-bold">
+              {/* user initial */}
             </div>
             <div className="flex-1 h-[42px] rounded-full bg-white/10 flex items-center px-4">
               <input
@@ -95,26 +100,54 @@ function CommentsSheet({ open, onClose, comments, onAddComment }) {
 }
 
 export default function PostDetail() {
-  const [liked, setLiked] = useState(false);
-  const [commentsOpen, setCommentsOpen] = useState(false);
-  const [comments, setComments] = useState(MOCK_POST_COMMENTS);
+  const { state } = useLocation();
+  const { user, token } = useAuth();
+  const post = state?.post;
 
-  const addComment = (text) =>
-    setComments((p) => [
-      ...p,
-      {
-        id: Date.now(),
-        username: "anacarol1na",
-        avatar: myAvatar,
-        date: new Date().toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" }),
-        text,
-      },
-    ]);
+  const [liked, setLiked] = useState(() =>
+    post ? (post.likes ?? []).includes(user?._id ?? user?.id) : false,
+  );
+  const [commentsOpen, setCommentsOpen] = useState(false);
+  const [comments, setComments] = useState([]);
+
+  const handleLike = async () => {
+    setLiked((l) => !l);
+    if (post) {
+      try {
+        await likePost(token, post.id);
+      } catch {
+        setLiked((l) => !l);
+      }
+    }
+  };
+
+  const handleAddComment = async (text) => {
+    const newComment = {
+      id: Date.now(),
+      username: user?.username ?? "eu",
+      avatar: null,
+      date: new Date().toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" }),
+      text,
+    };
+    setComments((p) => [...p, newComment]);
+    if (post) {
+      try {
+        await addComment(token, post.id, text);
+      } catch {}
+    }
+  };
+
+  const image = post?.image ?? IMAGES.posts.detail;
+  const username = post?.username ?? "";
+  const date = post?.date ?? "";
+  const location = post?.location ?? "";
+  const title = post?.title ?? "";
+  const description = post?.description ?? "";
 
   return (
     <div className="flex flex-col flex-1">
       <div className="relative w-full h-[328px] flex-shrink-0">
-        <img src={IMAGES.posts.detail} alt="Post" className="w-full h-full object-cover" />
+        <img src={image} alt={title} className="w-full h-full object-cover" />
         <div className="absolute left-4 top-4">
           <BackButton />
         </div>
@@ -128,29 +161,22 @@ export default function PostDetail() {
 
       <article className="flex-1 -mt-4 rounded-t-2xl bg-white relative z-10 px-4 pt-6 pb-8 shadow-top-sheet">
         <header className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-[#E6A45A]">
-            <img
-              src={IMAGES.avatars.postUser}
-              alt="marilia_lucia"
-              className="w-full h-full object-cover"
-            />
+          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-[#E6A45A] bg-primary-soft flex items-center justify-center text-white font-bold">
+            {username.charAt(0).toUpperCase()}
           </div>
           <div className="flex flex-col gap-px">
-            <span className="text-sm text-dark">marilia_lucia</span>
-            <span className="text-xs text-dark/70">07/04 · Costa Nova</span>
+            <span className="text-sm text-dark">{username}</span>
+            <span className="text-xs text-dark/70">{[date, location].filter(Boolean).join(" · ")}</span>
           </div>
         </header>
 
-        <h2 className="text-base font-bold mb-2 text-dark">Manhã de passeio na ria</h2>
-        <p className="text-xs leading-relaxed mb-6 text-dark/80">
-          O espelho de água estava perfeito e as cores das casas tradicionais nunca desiludem.
-          Recomendo vivamente esta rota para quem procura relaxar!
-        </p>
+        <h2 className="text-base font-bold mb-2 text-dark">{title}</h2>
+        <p className="text-xs leading-relaxed mb-6 text-dark/80">{description}</p>
 
         <div className="flex items-center gap-4">
           <button
             type="button"
-            onClick={() => setLiked((l) => !l)}
+            onClick={handleLike}
             className="p-1 active:scale-90"
             aria-label={liked ? "Não gostar" : "Gostar"}
           >
@@ -171,7 +197,7 @@ export default function PostDetail() {
         open={commentsOpen}
         onClose={() => setCommentsOpen(false)}
         comments={comments}
-        onAddComment={addComment}
+        onAddComment={handleAddComment}
       />
     </div>
   );

@@ -1,9 +1,13 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Input, Textarea, Select, Label } from "../components/ui/Input.jsx";
 import { PrimaryButton } from "../components/ui/Button.jsx";
 import { BackButton } from "../components/ui/BackButton.jsx";
 import { RectanglePhotoUpload } from "../components/ui/PhotoUpload.jsx";
 import { PinIcon } from "../components/ui/Icons.jsx";
+import { useAuth } from "../contexts/AuthContext.jsx";
+import { createPost, uploadFile } from "../services/api.js";
+import { useRoutes } from "../hooks/useApi.js";
 
 function CharCount({ current, max }) {
   const warn = current > max * 0.9;
@@ -15,15 +19,42 @@ function CharCount({ current, max }) {
 }
 
 export default function AddPost() {
+  const navigate = useNavigate();
+  const { token } = useAuth();
+  const apiRoutes = useRoutes();
+
   const [form, setForm] = useState({ title: "", description: "", location: "", route: "" });
-  const [photoPreview, setPhotoPreview] = useState(null);
+  const [photoFile, setPhotoFile] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+
   const set = (field) => (e) => setForm((p) => ({ ...p, [field]: e.target.value }));
 
-  const canPublish = !!form.title.trim() && !!photoPreview;
+  const canPublish = !!form.title.trim();
 
-  const handlePublish = () => {
+  const handlePublish = async () => {
     if (!canPublish) return;
-    console.log("Publicar:", { ...form, photo: photoPreview });
+    setLoading(true);
+    setError("");
+    try {
+      let postUrls = [];
+      if (photoFile) {
+        const uploaded = await uploadFile(token, photoFile);
+        postUrls = [uploaded.url];
+      }
+      await createPost(token, {
+        title: form.title,
+        description: form.description,
+        location: form.location || null,
+        route_doc: form.route || null,
+        post_url: postUrls.length > 0 ? postUrls : null,
+      });
+      navigate("/social");
+    } catch (err) {
+      setError(err?.message ?? "Erro ao publicar. Tenta novamente.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -37,8 +68,10 @@ export default function AddPost() {
 
       <div className="flex-1 px-4 pt-4 overflow-y-auto flex flex-col">
         <div className="mb-5">
-          <RectanglePhotoUpload preview={photoPreview} onFileChange={setPhotoPreview} />
+          <RectanglePhotoUpload onFileChange={setPhotoFile} />
         </div>
+
+        {error && <p className="text-xs text-danger text-center mb-3">{error}</p>}
 
         <div className="mb-4">
           <Label>Título</Label>
@@ -84,15 +117,17 @@ export default function AddPost() {
           </Label>
           <Select value={form.route} onChange={set("route")}>
             <option value="">Nenhuma rota</option>
-            <option value="1">Rio Novo do Príncipe</option>
-            <option value="2">Canal Central</option>
-            <option value="3">Costa Nova - Barra</option>
+            {apiRoutes.map((r) => (
+              <option key={r._id} value={r._id}>
+                {r.nome}
+              </option>
+            ))}
           </Select>
         </div>
       </div>
 
       <div className="px-4 py-4 pb-8 flex-shrink-0">
-        <PrimaryButton onClick={handlePublish} disabled={!canPublish} className="w-full">
+        <PrimaryButton onClick={handlePublish} disabled={!canPublish} loading={loading} className="w-full">
           Publicar
         </PrimaryButton>
       </div>

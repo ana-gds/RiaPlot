@@ -23,7 +23,8 @@ export function useRoutes(recomendada = false) {
         const qs = recomendada ? '?recomendada=true' : '';
         fetch(`${API}/routes${qs}`)
             .then(r => r.json())
-            .then(setRoutes);
+            .then(data => setRoutes(Array.isArray(data) ? data : []))
+            .catch(() => {});
     }, [recomendada]);
 
     return routes;

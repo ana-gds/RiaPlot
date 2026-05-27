@@ -1,11 +1,14 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
-import { MOCK_ROUTES } from "../constants/mockData.js";
+import { IMAGES } from "../constants/images.js";
 import { CircularButton } from "../components/ui/Button.jsx";
 import { MenuIcon, FilterIcon, ClockIcon, BookmarkIcon } from "../components/ui/Icons.jsx";
 import { Chip } from "../components/ui/Chip.jsx";
 import { SearchBar } from "../components/shared/SearchBar.jsx";
 import { RouteCard } from "../components/shared/RouteCard.jsx";
+import { useAuth } from "../contexts/AuthContext.jsx";
+import { useRoutes } from "../hooks/useApi.js";
+import { saveRoute } from "../services/api.js";
 
 const DIFFICULTY_FILTERS = [
   { key: "facil", label: "Fácil", level: 1, color: "#4caf50" },
@@ -13,19 +16,68 @@ const DIFFICULTY_FILTERS = [
   { key: "dificil", label: "Difícil", level: 3, color: "#f57c00" },
 ];
 
+function calaoDifficulty(calado) {
+  if (!calado || calado <= 0.5) return 1;
+  if (calado <= 1.0) return 2;
+  return 3;
+}
+
+function extractId(raw) {
+  if (!raw) return null;
+  if (typeof raw === 'object') return raw.$oid ?? String(raw);
+  return raw;
+}
+
+const ROUTE_IMAGES = [
+  IMAGES.routes.caleDoOuro,
+  IMAGES.routes.rioNovo,
+  IMAGES.routes.monteFarinha,
+];
+
 export default function Routes() {
   const navigate = useNavigate();
   const { openSidebar } = useOutletContext();
+  const { user, token } = useAuth();
+  const apiRoutes = useRoutes();
+
+  const [savedIds, setSavedIds] = useState(() => user?.saved_routes ?? []);
   const [search, setSearch] = useState("");
-  const [activeFilters, setActiveFilters] = useState(["facil"]);
+  const [activeFilters, setActiveFilters] = useState([]);
   const [advancedFilters, setAdvancedFilters] = useState(0);
-  const [routes, setRoutes] = useState(MOCK_ROUTES);
+
+  useEffect(() => {
+    setSavedIds(user?.saved_routes ?? []);
+  }, [user]);
+
+  const routes = useMemo(() =>
+    apiRoutes.map((r, i) => {
+      const id = extractId(r._id ?? r.id);
+      return {
+        id,
+        title: r.nome ?? "Rota",
+        route: [r.cais_partida?.nome, r.cais_chegada?.nome].filter(Boolean).join(" → ") || "",
+        image: ROUTE_IMAGES[i % ROUTE_IMAGES.length],
+        difficulty: calaoDifficulty(r.calado_max),
+        saved: savedIds.includes(id),
+      };
+    }),
+  [apiRoutes, savedIds]);
 
   const toggleFilter = (key) =>
     setActiveFilters((f) => (f.includes(key) ? f.filter((x) => x !== key) : [...f, key]));
 
-  const toggleSave = (id) =>
-    setRoutes((rs) => rs.map((r) => (r.id === id ? { ...r, saved: !r.saved } : r)));
+  const toggleSave = async (id) => {
+    setSavedIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+    );
+    try {
+      await saveRoute(token, id);
+    } catch {
+      setSavedIds((prev) =>
+        prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
+      );
+    }
+  };
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -44,23 +96,13 @@ export default function Routes() {
 
   return (
     <>
-      {/* Sticky toolbar */}
       <div className="px-4 pb-3 flex-shrink-0 bg-white sticky top-0 z-10 border-b border-secondary/5">
         <div className="flex items-center gap-2.5 mb-3">
-          {/* Hamburger — only needed on mobile (desktop has the sidebar) */}
-          <CircularButton
-            onClick={openSidebar}
-            ariaLabel="Menu"
-            className="md:hidden"
-          >
+          <CircularButton onClick={openSidebar} ariaLabel="Menu" className="md:hidden">
             <MenuIcon />
           </CircularButton>
-
-          {/* Page title — desktop only */}
           <h1 className="hidden md:block text-xl font-bold text-dark shrink-0">Rotas</h1>
-
           <SearchBar value={search} onChange={setSearch} onClear={() => setSearch("")} />
-
           <button
             type="button"
             onClick={() => setAdvancedFilters((n) => (n > 0 ? 0 : 2))}
@@ -109,7 +151,6 @@ export default function Routes() {
         </div>
       </div>
 
-      {/* Cards — single column on mobile, 2-col on md, 3-col on xl */}
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6">
         {filtered.length > 0 ? (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
@@ -118,7 +159,7 @@ export default function Routes() {
                 key={route.id}
                 route={route}
                 onToggleSave={toggleSave}
-                onClick={() => navigate("/routes/detail")}
+                onClick={() => navigate(`/routes/${route.id}`)}
               />
             ))}
           </div>

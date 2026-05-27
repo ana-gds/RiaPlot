@@ -25,6 +25,18 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Perfil
     Route::get('/user',    fn(\Illuminate\Http\Request $r) => $r->user());
+    Route::patch('/user',  [AuthController::class, 'update']);
+
+    // Upload de imagens
+    Route::post('/upload', function(\Illuminate\Http\Request $request) {
+        $request->validate(['image' => 'required|image|max:5120']);
+        $dir = public_path('uploads');
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+        $ext      = $request->file('image')->getClientOriginalExtension();
+        $filename = uniqid('img_', true) . '.' . $ext;
+        $request->file('image')->move($dir, $filename);
+        return response()->json(['url' => url('uploads/' . $filename)]);
+    });
 
     // Embarcações
     Route::apiResource('boats', BoatController::class);

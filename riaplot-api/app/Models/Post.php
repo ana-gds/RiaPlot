@@ -9,7 +9,7 @@ class Post extends Model
     protected $collection = 'posts';
 
     protected $fillable = [
-        'user_id', 'title', 'description',
+        'user_id', 'username', 'title', 'description',
         'route_doc', 'location', 'post_url', 'likes', 'comments',
     ];
 

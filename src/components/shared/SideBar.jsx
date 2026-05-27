@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
-
-const imgAvatar = "https://www.figma.com/api/mcp/asset/e1744c6a-476b-493f-ba48-8fbc7a07250c";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "../../contexts/AuthContext.jsx";
+import { logoutUser } from "../../services/api.js";
 
 // ─── Icons ─────────────────────────────────────────────────────
 
@@ -87,6 +88,8 @@ function SectionLabel({ children }) {
 // ─── Main Component ────────────────────────────────────────────
 
 export default function Sidebar({ open, onClose, onNavigate }) {
+    const { user, token, logout } = useAuth();
+    const navigate = useNavigate();
     const [activeItem, setActiveItem] = useState("rotas");
 
     // Lock body scroll when open
@@ -153,18 +156,22 @@ export default function Sidebar({ open, onClose, onNavigate }) {
                     {/* User info */}
                     <div className="flex items-center gap-3.5 relative z-10">
                         <div
-                            className="w-[52px] h-[52px] rounded-full overflow-hidden flex-shrink-0"
+                            className="w-[52px] h-[52px] rounded-full overflow-hidden flex-shrink-0 bg-primary-soft flex items-center justify-center text-white font-bold text-xl"
                             style={{
                                 border: "2.5px solid rgba(219,139,49,0.8)",
                                 boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
                             }}
                         >
-                            <img src={imgAvatar} alt="Avatar" className="w-full h-full object-cover" />
+                            {user?.photo_url ? (
+                                <img src={user.photo_url} alt="Avatar" className="w-full h-full object-cover" />
+                            ) : (
+                                user?.name?.charAt(0)?.toUpperCase() ?? "?"
+                            )}
                         </div>
                         <div>
-                            <div className="text-base font-bold text-white leading-tight">Ana Guedes</div>
+                            <div className="text-base font-bold text-white leading-tight">{user?.name ?? ""}</div>
                             <div className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.65)" }}>
-                                @anacarol1na
+                                @{user?.username ?? ""}
                             </div>
                             <button
                                 onClick={() => handleNav("editarPerfil")}
@@ -207,9 +214,11 @@ export default function Sidebar({ open, onClose, onNavigate }) {
                     style={{ borderTop: "1px solid rgba(0,77,108,0.08)" }}
                 >
                     <button
-                        onClick={() => {
-                            console.log("Logout");
+                        onClick={async () => {
+                            try { await logoutUser(token); } catch {}
+                            logout();
                             onClose?.();
+                            navigate("/login");
                         }}
                         className="flex items-center gap-3 w-full py-2.5"
                         style={{
