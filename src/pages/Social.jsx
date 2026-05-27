@@ -1,19 +1,56 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
-import { MOCK_SOCIAL_POSTS } from "../constants/mockData.js";
+import { IMAGES } from "../constants/images.js";
 import { CircularButton } from "../components/ui/Button.jsx";
 import { MenuIcon, PlusIcon, CommentIcon } from "../components/ui/Icons.jsx";
 import { CompactSearch } from "../components/shared/SearchBar.jsx";
 import { FeedPostCard } from "../components/shared/PostCard.jsx";
+import { useAuth } from "../contexts/AuthContext.jsx";
+import { getPosts, likePost } from "../services/api.js";
+
+function formatDate(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" });
+}
 
 export default function Social() {
   const navigate = useNavigate();
   const { openSidebar } = useOutletContext();
-  const [posts, setPosts] = useState(MOCK_SOCIAL_POSTS);
+  const { user, token } = useAuth();
+  const [posts, setPosts] = useState([]);
   const [search, setSearch] = useState("");
 
-  const toggleLike = (id) =>
+  useEffect(() => {
+    getPosts(token)
+      .then((data) => {
+        setPosts(
+          data.map((p) => ({
+            id: p._id,
+            username: p.username ?? "unknown",
+            avatar: IMAGES.avatars.user1,
+            date: formatDate(p.created_at),
+            location: p.location ?? "",
+            image: p.post_url?.[0] ?? IMAGES.posts.feed1,
+            title: p.title,
+            description: p.description,
+            liked: (p.likes ?? []).includes(user?._id ?? user?.id),
+            saved: false,
+            route: p.route_doc ? { distance: "—", duration: "—" } : null,
+          })),
+        );
+      })
+      .catch(() => {});
+  }, [token]);
+
+  const toggleLike = async (id) => {
     setPosts((p) => p.map((x) => (x.id === id ? { ...x, liked: !x.liked } : x)));
+    try {
+      await likePost(token, id);
+    } catch {
+      setPosts((p) => p.map((x) => (x.id === id ? { ...x, liked: !x.liked } : x)));
+    }
+  };
+
   const toggleSave = (id) =>
     setPosts((p) => p.map((x) => (x.id === id ? { ...x, saved: !x.saved } : x)));
 
@@ -27,7 +64,6 @@ export default function Social() {
 
   return (
     <>
-      {/* Sticky toolbar */}
       <div className="flex items-center gap-3 px-4 pb-3 flex-shrink-0 sticky top-0 bg-white z-10 border-b border-secondary/5">
         <CircularButton onClick={openSidebar} ariaLabel="Menu" className="md:hidden">
           <MenuIcon />
@@ -36,7 +72,6 @@ export default function Social() {
         <CompactSearch value={search} onChange={setSearch} />
       </div>
 
-      {/* Feed — centered with max-width on desktop */}
       <div className="flex-1 overflow-y-auto pt-2 pb-4">
         <div className="w-full md:max-w-xl md:mx-auto">
           {filtered.length > 0 ? (
@@ -47,23 +82,22 @@ export default function Social() {
                   post={post}
                   onToggleLike={toggleLike}
                   onToggleSave={toggleSave}
-                  onOpenComments={() => navigate("/social/post")}
+                  onOpenComments={() => navigate("/social/post", { state: { post } })}
                 />
               </div>
             ))
           ) : (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
               <CommentIcon size={48} color="var(--color-muted-soft)" className="mb-3" />
-              <p className="text-sm font-semibold text-dark">Sem resultados</p>
+              <p className="text-sm font-semibold text-dark">Sem publicações</p>
               <p className="text-xs mt-1 text-muted">
-                Tenta pesquisar por um título ou utilizador diferente
+                Sê o primeiro a partilhar uma aventura!
               </p>
             </div>
           )}
         </div>
       </div>
 
-      {/* FAB */}
       <button
         type="button"
         onClick={() => navigate("/social/new")}

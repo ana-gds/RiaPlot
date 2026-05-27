@@ -5,7 +5,7 @@ import { PrimaryButton } from "../components/ui/Button.jsx";
 import { CircleAvatarUpload } from "../components/ui/PhotoUpload.jsx";
 import { ProgressIndicator } from "../components/shared/ProgressIndicator.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { createBoat } from "../services/api.js";
+import { createBoat, uploadFile } from "../services/api.js";
 
 function FieldError({ message }) {
   if (!message) return null;
@@ -45,7 +45,7 @@ export default function BoatRegister() {
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [boatPreview, setBoatPreview] = useState(null);
+  const [boatFile, setBoatFile] = useState(null);
 
   const set = (f) => (e) => setForm((p) => ({ ...p, [f]: e.target.value }));
 
@@ -57,6 +57,11 @@ export default function BoatRegister() {
 
     setLoading(true);
     try {
+      let photoUrl = null;
+      if (boatFile) {
+        const uploaded = await uploadFile(token, boatFile);
+        photoUrl = uploaded.url;
+      }
       const boat = await createBoat(token, {
         name: form.nome,
         type: form.tipo,
@@ -66,6 +71,7 @@ export default function BoatRegister() {
         speed: parseFloat(form.velocidade),
         upper_clearance: parseFloat(form.folgaSuperior),
         lower_clearance: parseFloat(form.folgaInferior),
+        ...(photoUrl && { photo_url: photoUrl }),
       });
       navigate("/register/final", {
         state: {
@@ -86,7 +92,7 @@ export default function BoatRegister() {
       <ProgressIndicator step={2} />
 
       <div className="mt-8 flex-shrink-0">
-        <CircleAvatarUpload preview={boatPreview} onFileChange={setBoatPreview} />
+        <CircleAvatarUpload onFileChange={setBoatFile} />
       </div>
 
       <div className="flex-1 px-5 mt-6 flex flex-col gap-3 overflow-y-auto">

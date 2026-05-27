@@ -9,7 +9,9 @@ class PostController extends Controller
 {
     public function index()
     {
-        return response()->json(Post::orderBy('created_at', 'desc')->get());
+        return response()->json(
+            Post::orderBy('created_at', 'desc')->get()
+        );
     }
 
     public function store(Request $request)
@@ -25,6 +27,7 @@ class PostController extends Controller
         $post = Post::create([
             ...$data,
             'user_id'  => $request->user()->id,
+            'username' => $request->user()->username,
             'likes'    => [],
             'comments' => [],
         ]);

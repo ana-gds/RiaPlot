@@ -1,9 +1,10 @@
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { CameraIcon } from "./Icons.jsx";
 
 export function CircleAvatarUpload({ preview, fallbackImage, onFileChange, label = "Adicionar foto" }) {
   const inputRef = useRef(null);
-  const showImage = preview ?? fallbackImage;
+  const [localPreview, setLocalPreview] = useState(null);
+  const showImage = localPreview ?? preview ?? fallbackImage;
 
   return (
     <div className="flex flex-col items-center gap-2">
@@ -37,7 +38,10 @@ export function CircleAvatarUpload({ preview, fallbackImage, onFileChange, label
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];
-          if (f) onFileChange(URL.createObjectURL(f));
+          if (f) {
+            setLocalPreview(URL.createObjectURL(f));
+            onFileChange?.(f);
+          }
         }}
       />
     </div>
@@ -46,6 +50,9 @@ export function CircleAvatarUpload({ preview, fallbackImage, onFileChange, label
 
 export function RectanglePhotoUpload({ preview, onFileChange, height = 220 }) {
   const inputRef = useRef(null);
+  const [localPreview, setLocalPreview] = useState(null);
+  const showPreview = localPreview ?? preview;
+
   return (
     <div>
       <button
@@ -53,15 +60,15 @@ export function RectanglePhotoUpload({ preview, onFileChange, height = 220 }) {
         onClick={() => inputRef.current?.click()}
         className={[
           "w-full rounded-2xl flex flex-col items-center justify-center gap-2.5 transition-all relative overflow-hidden group",
-          preview
+          showPreview
             ? ""
             : "border-2 border-dashed border-primary/35 bg-cream",
         ].join(" ")}
         style={{ height }}
       >
-        {preview ? (
+        {showPreview ? (
           <>
-            <img src={preview} alt="Preview" className="absolute inset-0 w-full h-full object-cover rounded-2xl" />
+            <img src={showPreview} alt="Preview" className="absolute inset-0 w-full h-full object-cover rounded-2xl" />
             <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity rounded-2xl">
               <CameraIcon color="white" size={28} />
               <span className="text-xs font-medium text-white">Alterar foto</span>
@@ -82,7 +89,10 @@ export function RectanglePhotoUpload({ preview, onFileChange, height = 220 }) {
         className="hidden"
         onChange={(e) => {
           const f = e.target.files?.[0];
-          if (f) onFileChange(URL.createObjectURL(f));
+          if (f) {
+            setLocalPreview(URL.createObjectURL(f));
+            onFileChange?.(f);
+          }
         }}
       />
     </div>

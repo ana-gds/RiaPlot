@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { IMAGES } from "../constants/images.js";
-import { MOCK_PROFILE_POSTS, MOCK_PROFILE_ROUTES } from "../constants/mockData.js";
+import { MOCK_PROFILE_ROUTES } from "../constants/mockData.js";
 import { BackButton } from "../components/ui/BackButton.jsx";
 import { ProfilePostCard } from "../components/shared/PostCard.jsx";
 import { RouteCardCompact } from "../components/shared/RouteCard.jsx";
+import { useAuth } from "../contexts/AuthContext.jsx";
 
 const TABS = [
   { key: "posts", label: "Posts" },
@@ -22,8 +22,9 @@ function StatItem({ value, label }) {
 
 export default function Profile() {
   const navigate = useNavigate();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("posts");
-  const [posts, setPosts] = useState(MOCK_PROFILE_POSTS);
+  const [posts, setPosts] = useState([]);
 
   const toggleLike = (id) =>
     setPosts((p) =>
@@ -40,14 +41,20 @@ export default function Profile() {
 
       <div className="flex flex-col items-center px-4 gap-1">
         <div className="w-[100px] h-[100px] rounded-full overflow-hidden border-[3px] border-primary shadow-[0_4px_16px_rgba(219,139,49,0.3)]">
-          <img src={IMAGES.avatars.me} alt="Avatar" className="w-full h-full object-cover" />
+          {user?.photo_url ? (
+            <img src={user.photo_url} alt="Avatar" className="w-full h-full object-cover" />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center bg-primary-soft text-white text-3xl font-bold">
+              {user?.name?.charAt(0)?.toUpperCase() ?? "?"}
+            </div>
+          )}
         </div>
-        <h1 className="text-xl font-bold mt-3 text-dark font-inter">Ana Guedes</h1>
-        <p className="text-[11px] text-dark/60">anacarol1na</p>
+        <h1 className="text-xl font-bold mt-3 text-dark font-inter">{user?.name ?? ""}</h1>
+        <p className="text-[11px] text-dark/60">@{user?.username ?? ""}</p>
         <div className="flex items-center gap-12 mt-3 mb-4">
-          <StatItem value={12} label="Posts" />
-          <StatItem value={245} label="Seguidores" />
-          <StatItem value={189} label="Seguindo" />
+          <StatItem value={posts.length} label="Posts" />
+          <StatItem value={user?.followers?.length ?? 0} label="Seguidores" />
+          <StatItem value={user?.following?.length ?? 0} label="Seguindo" />
         </div>
         <button
           type="button"

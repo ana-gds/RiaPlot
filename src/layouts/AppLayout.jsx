@@ -4,7 +4,9 @@ import { StatusBar } from "../components/ui/StatusBar.jsx";
 import { BottomNav } from "../components/shared/BottomNav.jsx";
 import Sidebar from "../components/shared/SideBar.jsx";
 import { NAV_ITEMS } from "../constants/mockData.js";
-import { IMAGES } from "../constants/images.js";
+import { useAuth } from "../contexts/AuthContext.jsx";
+import { logoutUser } from "../services/api.js";
+
 
 const SIDEBAR_NAV_MAP = {
   rotas: "/routes",
@@ -15,6 +17,15 @@ const SIDEBAR_NAV_MAP = {
 };
 
 function DesktopSidebar() {
+  const { user, token, logout } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try { await logoutUser(token); } catch {}
+    logout();
+    navigate("/login");
+  };
+
   return (
     <aside className="hidden md:flex flex-col w-64 shrink-0 sticky top-0 h-screen border-r border-secondary/10 bg-white overflow-y-auto">
       {/* Brand */}
@@ -76,7 +87,7 @@ function DesktopSidebar() {
       </nav>
 
       {/* Profile shortcut */}
-      <div className="px-3 pb-5">
+      <div className="px-3 pb-5 flex flex-col gap-1">
         <NavLink
           to="/profile"
           className={({ isActive }) =>
@@ -86,16 +97,28 @@ function DesktopSidebar() {
             ].join(" ")
           }
         >
-          <img
-            src={IMAGES.avatars.me}
-            alt="Perfil"
-            className="w-8 h-8 rounded-full object-cover border-2 border-primary/40 shrink-0"
-          />
+          <div className="w-8 h-8 rounded-full overflow-hidden border-2 border-primary/40 shrink-0 bg-primary-soft flex items-center justify-center text-white text-sm font-bold">
+            {user?.photo_url ? (
+              <img src={user.photo_url} alt="Perfil" className="w-full h-full object-cover" />
+            ) : (
+              user?.name?.charAt(0)?.toUpperCase() ?? "?"
+            )}
+          </div>
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-dark truncate">Ana Guedes</div>
-            <div className="text-xs text-muted truncate">@anacarol1na</div>
+            <div className="text-sm font-semibold text-dark truncate">{user?.name ?? ""}</div>
+            <div className="text-xs text-muted truncate">@{user?.username ?? ""}</div>
           </div>
         </NavLink>
+        <button
+          type="button"
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-3 py-2 rounded-xl text-sm text-muted hover:bg-cream hover:text-dark transition-colors w-full text-left"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="shrink-0">
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+          </svg>
+          Terminar sessão
+        </button>
       </div>
     </aside>
   );
