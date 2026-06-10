@@ -135,6 +135,30 @@ body,
   box-shadow: 0 2px 8px rgba(0, 77, 108, 0.1) !important;
 }
 
+/* ── Discreet attribution ─────────────────────────────────────────────── */
+
+.leaflet-bottom.leaflet-left {
+  bottom: 0 !important;
+  left: 0 !important;
+}
+
+.leaflet-bottom.leaflet-left .leaflet-control-attribution {
+  margin: 0 !important;
+}
+
+.leaflet-control-attribution {
+  background: rgba(255, 255, 255, 0.55) !important;
+  color: var(--color-muted-soft) !important;
+  font-size: 9px !important;
+  padding: 1px 6px !important;
+  border-radius: 0 6px 0 0 !important;
+  box-shadow: none !important;
+}
+
+.leaflet-control-attribution a {
+  color: var(--color-muted-soft) !important;
+}
+
 /* ── Map page ─────────────────────────────────────────────────────────── */
 
 .map-page {
@@ -159,7 +183,7 @@ body,
   top: 0;
   inset-inline: 0;
   z-index: 30;
-  padding: 14px 16px 28px;
+  padding: max(env(safe-area-inset-top, 0px), 24px) 16px 28px;
   pointer-events: none;
   background: linear-gradient(to bottom, rgba(14, 44, 56, 0.55) 0%, transparent 100%);
 }
@@ -367,37 +391,6 @@ body,
   transform: translateX(16px);
 }
 
-/* ── Map search bar ───────────────────────────────────────────────────── */
-
-.map-search {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  height: 44px;
-  background: white;
-  border-radius: 14px;
-  padding: 0 14px;
-  box-shadow: 0 4px 16px rgba(0, 77, 108, 0.18);
-  flex: 1;
-}
-.map-search__input {
-  flex: 1;
-  background: transparent;
-  outline: none;
-  font-size: 13px;
-  color: var(--color-dark);
-}
-.map-search__clear {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background: rgba(14, 44, 56, 0.08);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-}
-
 /* ── Tides panel ──────────────────────────────────────────────────────── */
 
 .tides-panel {
@@ -408,8 +401,7 @@ body,
   border-radius: 14px;
   overflow: hidden;
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-}
-.tides-panel__cell {
+}.tides-panel__cell {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -477,22 +469,6 @@ body,
   font-size: 13px;
   font-weight: 500;
   color: white;
-}
-
-/* ── Route test buttons (temporary) ───────────────────────────────────── */
-
-.route-test {
-  display: flex;
-  gap: 8px;
-}
-.route-test__btn {
-  padding: 8px 14px;
-  border-radius: 10px;
-  background: white;
-  border: 1px solid var(--color-secondary);
-  color: var(--color-secondary);
-  font-size: 12px;
-  font-weight: 600;
 }
 
 /* ── Simulation sheet ─────────────────────────────────────────────────── */

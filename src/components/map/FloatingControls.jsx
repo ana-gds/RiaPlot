@@ -1,7 +1,32 @@
-export function FloatingControls({ onLocate, onRecenter }) {
+export function FloatingControls({ onLocate, onRecenter, tidesVisible, onToggleTides }) {
   return (
     <div className="leaflet-bottom leaflet-right mb-57 z-[1000]">
       <div className="leaflet-control flex flex-col gap-[8px] mb-[220px]">
+        <button
+          type="button"
+          onClick={onToggleTides}
+          aria-label={tidesVisible ? "Esconder marés" : "Mostrar marés"}
+          aria-pressed={tidesVisible}
+          className={`map-floating-btn${tidesVisible ? " map-floating-btn--active" : ""}`}
+        >
+          <svg width="19" height="19" viewBox="0 0 24 24" fill="none">
+            <path
+              d="M3 14c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2"
+              stroke={tidesVisible ? "white" : "#004D6C"}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+            <path
+              d="M3 19c2 0 2-2 4-2s2 2 4 2 2-2 4-2 2 2 4 2"
+              stroke={tidesVisible ? "white" : "#004D6C"}
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity="0.55"
+            />
+          </svg>
+        </button>
         <button
           type="button"
           onClick={onLocate}
