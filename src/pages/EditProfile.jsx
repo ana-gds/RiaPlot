@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { IMAGES } from "../constants/images.js";
 import { Input, PasswordInput, Label } from "../components/ui/Input.jsx";
 import { PrimaryButton, TextLink } from "../components/ui/Button.jsx";
 import { BackButton } from "../components/ui/BackButton.jsx";
@@ -62,7 +61,7 @@ export default function EditProfile() {
 
       <div className="flex flex-col items-center gap-2 pt-2">
         <CircleAvatarUpload
-          preview={user?.photo_url ?? IMAGES.avatars.profile}
+          preview={user?.photo_url}
           onFileChange={setAvatarFile}
           label="Alterar foto"
         />

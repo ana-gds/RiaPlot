@@ -9,6 +9,7 @@ import { IMAGES } from "../constants/images.js";
 const SIDEBAR_NAV_MAP = {
   rotas: "/routes",
   mapa: "/map",
+  perfil: "/profile",
   defConta: "/profile",
   defBarco: "/profile/boat",
   editarPerfil: "/profile/edit",

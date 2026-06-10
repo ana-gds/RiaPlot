@@ -27,11 +27,15 @@ class RouteController extends Controller
         $user = $request->user();
         $saved = $user->saved_routes ?? [];
 
-        if (!in_array($id, $saved)) {
-            $saved[] = $id;
+        if (in_array($id, $saved)) {
+            $saved = array_values(array_filter($saved, fn ($r) => $r !== $id));
             $user->update(['saved_routes' => $saved]);
+            return response()->json(['message' => 'Rota removida', 'saved' => false, 'saved_routes' => $saved]);
         }
 
-        return response()->json(['message' => 'Rota guardada']);
+        $saved[] = $id;
+        $user->update(['saved_routes' => $saved]);
+
+        return response()->json(['message' => 'Rota guardada', 'saved' => true, 'saved_routes' => $saved]);
     }
 }
