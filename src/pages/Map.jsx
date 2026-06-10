@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLocation, useOutletContext } from "react-router-dom";
+import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import {
   MapContainer,
   ZoomControl,
@@ -14,6 +14,7 @@ import { MapHeader } from "../components/map/MapHeader.jsx";
 import { MapInner } from "../components/map/MapInner.jsx";
 import { DockMarkers } from "../components/map/DockMarkers.jsx";
 import { RoutePolylines } from "../components/map/RoutePolylines.jsx";
+import { SimulationPolyline } from "../components/map/SimulationPolyline.jsx";
 import { RoutePath } from "../components/map/RoutePath.jsx";
 import { TidesPanel } from "../components/map/TidesPanel.jsx";
 import { SimulationSheet } from "../components/map/SimulationSheet.jsx";
@@ -22,20 +23,33 @@ import { LocatingToast } from "../components/map/LocatingToast.jsx";
 export default function MapPage() {
   const { openSidebar } = useOutletContext();
   const { state } = useLocation();
+  const navigate = useNavigate();
+
   const gpxUrl = state?.gpxUrl ?? null;
   const gpxPoints = state?.gpxPoints ?? null;
+  const selectedRouteId = state?.selectedRouteId ?? null;
+
   const [baseLayer, setBaseLayer] = useState("osm");
   const [nauticalVisible, setNauticalVisible] = useState(true);
   const [simOpen, setSimOpen] = useState(false);
+  const [simResults, setSimResults] = useState(null);
   const [locating, setLocating] = useState(false);
   const [tidesVisible, setTidesVisible] = useState(true);
 
   const { docks } = useDocks();
   const routes = useRoutes();
 
+  const selectedRoute = selectedRouteId
+    ? routes.find((r) => (r.id ?? r._id?.$oid ?? r._id) === selectedRouteId)
+    : null;
+
   const handleLocate = () => {
     setLocating(true);
     setTimeout(() => setLocating(false), 3000);
+  };
+
+  const handleClearRoute = () => {
+    navigate("/map", { replace: true, state: {} });
   };
 
   return (
@@ -64,7 +78,8 @@ export default function MapPage() {
             onToggleTides={() => setTidesVisible((v) => !v)}
           />
 
-          <RoutePolylines routes={routes} />
+          <RoutePolylines routes={routes} selectedRouteId={selectedRouteId} />
+          {simResults && <SimulationPolyline positions={simResults.positions} />}
           <DockMarkers docks={docks} />
 
           {(gpxPoints?.length || gpxUrl) && (
@@ -77,7 +92,36 @@ export default function MapPage() {
       </div>
 
       <div className="map-bottom-bar">
-        {tidesVisible && <TidesPanel />}
+        {selectedRoute && (
+          <div className="w-full bg-white rounded-2xl shadow-top-sheet px-4 py-3 flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-dark truncate">
+                {selectedRoute.nome ?? "Rota seleccionada"}
+              </p>
+              {selectedRoute.distancia_nm && (
+                <p className="text-xs text-muted">{selectedRoute.distancia_nm} nm</p>
+              )}
+            </div>
+            <div className="flex gap-2 flex-shrink-0">
+              <button
+                type="button"
+                onClick={() => navigate(`/routes/${selectedRouteId}`)}
+                className="text-xs font-medium px-3 py-1.5 rounded-xl border border-border-soft text-dark active:scale-95"
+              >
+                Detalhes
+              </button>
+              <button
+                type="button"
+                onClick={handleClearRoute}
+                className="text-xs font-medium px-3 py-1.5 rounded-xl bg-danger/10 text-danger active:scale-95"
+              >
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
+
+        {!selectedRoute && tidesVisible && <TidesPanel />}
 
         <PrimaryButton onClick={() => setSimOpen(true)} className="px-6">
           Simular Rota
@@ -85,8 +129,12 @@ export default function MapPage() {
       </div>
 
       <LocatingToast visible={locating} />
-
-      <SimulationSheet open={simOpen} onClose={() => setSimOpen(false)} />
+      <SimulationSheet
+        open={simOpen}
+        onClose={() => setSimOpen(false)}
+        route={selectedRoute}
+        onResults={(r) => { setSimResults(r); }}
+      />
     </div>
   );
 }

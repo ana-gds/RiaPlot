@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { COLORS } from "../constants/theme.js";
 import { IMAGES } from "../constants/images.js";
 import { BackButton } from "../components/ui/BackButton.jsx";
@@ -116,6 +116,7 @@ function InfoModal({ title, children, onClose }) {
 
 export default function RouteDetail() {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user, token, updateUser } = useAuth();
   const [route, setRoute] = useState(null);
   const [image, setImage] = useState(null);
@@ -304,7 +305,12 @@ export default function RouteDetail() {
 
         {warningText && <WarningAlert text={warningText} />}
 
-        <PrimaryButton className="w-full">Iniciar Navegação</PrimaryButton>
+        <PrimaryButton
+          className="w-full"
+          onClick={() => navigate("/map", { state: { selectedRouteId: id } })}
+        >
+          Iniciar Navegação
+        </PrimaryButton>
       </div>
     </div>
   );

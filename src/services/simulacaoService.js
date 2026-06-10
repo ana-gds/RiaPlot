@@ -20,7 +20,7 @@
  *   const mares = await obterMares({ latitude: 40.64, longitude: -8.73 });
  */
 
-const API_BASE = '/api/simulacao';
+const API_BASE = 'http://127.0.0.1:8000/api/simulacao';
 const POLL_INTERVAL_MS = 500;   // polling a cada 500ms (API é rápida)
 const POLL_MAX_TENTATIVAS = 60; // max 30 segundos antes de desistir
 
