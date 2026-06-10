@@ -23,6 +23,8 @@ import {
   DIFFICULTY_EXPLANATION,
   boatCompatibility,
 } from "../utils/routeDifficulty.js";
+import { RouteMap } from "../components/map/RouteMap.jsx";
+import "leaflet/dist/leaflet.css";
 
 function StatCard({ icon, value, label }) {
   return (
@@ -282,6 +284,12 @@ export default function RouteDetail() {
             <p className="text-sm leading-[22.4px] mb-6 text-muted">{description}</p>
           </>
         )}
+
+        <RouteMap
+          trackpoints={route.trackpoints}
+          caisPartida={route.cais_partida}
+          caisChegada={route.cais_chegada}
+        />
 
         {pois.length > 0 && (
           <>

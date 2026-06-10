@@ -123,3 +123,29 @@ export async function uploadFile(token, file) {
     if (!res.ok) throw data;
     return data;
 }
+
+// --- Valida4D / Hidromod Reader API ---
+
+export function getValida4DRoutes() {
+    return request("/hidromod/routes");
+}
+
+// id = UUID devolvido pelo /hidromod/routes
+export function getValida4DRoute(id, reverse = 0) {
+    return request(`/hidromod/routes/${id}?reverse=${reverse}`);
+}
+
+export function getValida4DRouteDados(id) {
+    return request(`/hidromod/routes/${id}/dados`);
+}
+
+export function processValida4DGpxFiles() {
+    return request("/hidromod/routes/process-gpx");
+}
+
+// Dado o gpx_file de uma rota MongoDB, devolve o UUID da Valida4D (ou null)
+export async function getValida4DIdByGpxFile(gpxFile) {
+    const routes = await getValida4DRoutes();
+    const match = routes.find((r) => r.file === gpxFile);
+    return match ? match.id : null;
+}
