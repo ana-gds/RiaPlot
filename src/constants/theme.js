@@ -15,6 +15,9 @@ export const COLORS = {
   muted: "#86969c",
   mutedSoft: "#bfbbb7",
   divider: "#dfdddb",
+  success: "#4caf50",
+  warning: "#f57c00",
+  danger: "#e53935",
 };
 
 export const DIFFICULTY = {

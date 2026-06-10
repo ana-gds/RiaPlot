@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { IMAGES } from "../constants/images.js";
 import { CircularButton } from "../components/ui/Button.jsx";
-import { MenuIcon, FilterIcon, ClockIcon, BookmarkIcon } from "../components/ui/Icons.jsx";
+import { MenuIcon, FilterIcon, BookmarkIcon } from "../components/ui/Icons.jsx";
 import { Chip } from "../components/ui/Chip.jsx";
 import { SearchBar } from "../components/shared/SearchBar.jsx";
 import { RouteCard } from "../components/shared/RouteCard.jsx";
@@ -10,18 +10,14 @@ import { useAuth } from "../contexts/AuthContext.jsx";
 import { useRoutes } from "../hooks/useApi.js";
 import { saveRoute } from "../services/api.js";
 import { getRouteImage } from "../services/routeImages.js";
+import { routeDifficulty } from "../utils/routeDifficulty.js";
 
 const DIFFICULTY_FILTERS = [
   { key: "facil", label: "Fácil", level: 1, color: "#4caf50" },
   { key: "moderado", label: "Moderado", level: 2, color: "#ffb74d" },
   { key: "dificil", label: "Difícil", level: 3, color: "#f57c00" },
+  { key: "muito_dificil", label: "Muito difícil", level: 4, color: "#e53935" },
 ];
-
-function calaoDifficulty(calado) {
-  if (!calado || calado <= 0.5) return 1;
-  if (calado <= 1.0) return 2;
-  return 3;
-}
 
 function extractId(raw) {
   if (!raw) return null;
@@ -72,7 +68,7 @@ export default function Routes() {
         title: r.nome ?? "Rota",
         route: [r.cais_partida?.nome, r.cais_chegada?.nome].filter(Boolean).join(" → ") || "",
         image: imagesById[id] ?? ROUTE_IMAGES[i % ROUTE_IMAGES.length],
-        difficulty: calaoDifficulty(r.calado_max),
+        difficulty: routeDifficulty(r.calado_max, r.condicoes_mare),
         saved: savedIds.includes(id),
       };
     }),
@@ -102,13 +98,17 @@ export default function Routes() {
       (d) => d.level,
     );
     const onlySaved = activeFilters.includes("guardadas");
-    return routes.filter((r) => {
+    const result = routes.filter((r) => {
       if (q && !r.title.toLowerCase().includes(q) && !r.route.toLowerCase().includes(q))
         return false;
       if (activeLevels.length > 0 && !activeLevels.includes(r.difficulty)) return false;
       if (onlySaved && !r.saved) return false;
       return true;
     });
+    if (activeFilters.includes("az")) {
+      result.sort((a, b) => a.title.localeCompare(b.title, "pt", { sensitivity: "base" }));
+    }
+    return result;
   }, [routes, search, activeFilters]);
 
   return (
@@ -144,11 +144,16 @@ export default function Routes() {
         {showFilters && (
           <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-1 scroll-x-hidden">
             <Chip
-              active={activeFilters.includes("duracao")}
-              onClick={() => toggleFilter("duracao")}
-              icon={<ClockIcon />}
+              active={activeFilters.includes("az")}
+              onClick={() => toggleFilter("az")}
+              icon={
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                  <path d="M7 4v15m0 0l-3-3m3 3l3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  <path d="M13 6h7M13 11h5M13 16h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                </svg>
+              }
             >
-              Duração
+              A-Z
             </Chip>
             {DIFFICULTY_FILTERS.map((d) => (
               <Chip

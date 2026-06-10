@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { StatusBar } from "../components/ui/StatusBar.jsx";
 import { BottomNav } from "../components/shared/BottomNav.jsx";
 import Sidebar from "../components/shared/SideBar.jsx";
@@ -107,6 +107,8 @@ function DesktopSidebar() {
  */
 export function AppShell() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isMap = location.pathname === "/map";
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
   const handleSidebarNavigate = (key) => {
@@ -123,7 +125,7 @@ export function AppShell() {
         onNavigate={handleSidebarNavigate}
       />
       <div className="flex flex-col flex-1 min-h-svh min-w-0">
-        <StatusBar className="md:hidden" />
+        {!isMap && <StatusBar className="md:hidden" />}
         <main className="flex-1 flex flex-col min-h-0">
           <Outlet context={{ openSidebar: () => setSidebarOpen(true) }} />
         </main>

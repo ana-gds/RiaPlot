@@ -28,18 +28,3 @@ export function SearchBar({ value, onChange, onClear, placeholder = "Procura uma
     </div>
   );
 }
-
-export function CompactSearch({ value, onChange, placeholder = "Procura um post" }) {
-  return (
-    <div className="flex-1 h-12 rounded-[18px] bg-cream shadow-card-soft flex items-center px-4 gap-2.5 focus-within:ring-2 focus-within:ring-primary/30 transition-shadow">
-      <input
-        type="text"
-        placeholder={placeholder}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        className="flex-1 bg-transparent border-none outline-none text-sm font-light text-dark"
-      />
-      <SearchIcon size={20} color="var(--color-secondary)" />
-    </div>
-  );
-}

@@ -1,4 +1,3 @@
-import { IMAGES } from "../../constants/images.js";
 import { BookmarkIcon } from "../ui/Icons.jsx";
 import { DifficultyBadge } from "./DifficultyBadge.jsx";
 
@@ -28,9 +27,7 @@ export function RouteCard({ route, onToggleSave, onClick }) {
         <BookmarkIcon filled={route.saved} size={16} />
       </button>
 
-      <div className="absolute left-4 top-[91px] w-[138px] h-[77px] rounded-lg overflow-hidden border-2 border-dark bg-secondary">
-        <img src={IMAGES.routes.mapThumb} alt="" className="w-full h-full object-cover" />
-      </div>
+      {/* Mini-mapa da rota — escondido até termos os dados do GPX/traçado */}
 
       <div className="absolute left-4 bottom-4 px-3.5 py-2.5 rounded-lg w-fit max-w-[calc(100%-2rem)] bg-black/45 backdrop-blur-[2px]">
         <div className="text-lg font-bold text-white leading-tight">{route.title}</div>

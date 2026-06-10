@@ -54,10 +54,11 @@ class AuthController extends Controller
         $user = $request->user();
 
         $data = $request->validate([
-            'name'     => 'sometimes|string',
-            'username' => 'sometimes|string|unique:users,username,' . $user->id . ',_id',
-            'email'    => 'sometimes|email|unique:users,email,' . $user->id . ',_id',
-            'password' => 'sometimes|min:6',
+            'name'      => 'sometimes|string',
+            'username'  => 'sometimes|string|unique:users,username,' . $user->id . ',_id',
+            'email'     => 'sometimes|email|unique:users,email,' . $user->id . ',_id',
+            'password'  => 'sometimes|min:6',
+            'photo_url' => 'sometimes|string',
         ]);
 
         if (isset($data['password'])) {

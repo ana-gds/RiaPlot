@@ -5,6 +5,7 @@ import { PrimaryButton, SecondaryButton, TextLink } from "../components/ui/Butto
 import { GoogleLogo, WarningIcon } from "../components/ui/Icons.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { loginUser } from "../services/api.js";
+import logo from "../assets/logotipo/logotipo.png";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -38,17 +39,7 @@ export default function Login() {
   return (
     <div className="flex flex-col flex-1 px-5 pt-10 pb-10">
       <header className="flex flex-col items-center text-center mb-10">
-        <div className="w-16 h-16 rounded-2xl flex items-center justify-center bg-secondary mb-4 shadow-secondary-button">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <path
-              d="M3 17l4-8 4 5 3-3 4 6"
-              stroke="white"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
+        <img src={logo} alt="RiaPlot" className="w-32 h-32 mb-4 object-contain" />
         <h1 className="text-[32px] font-bold leading-tight text-dark">Bem-vindo!</h1>
         <p className="text-base text-muted mt-2">Inicie sessão para continuar</p>
       </header>

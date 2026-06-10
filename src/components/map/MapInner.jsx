@@ -4,7 +4,14 @@ import { MapController } from "./MapController.jsx";
 import { FloatingControls } from "./FloatingControls.jsx";
 import { RIA_CENTER, INITIAL_ZOOM } from "./mapHelpers.js";
 
-export function MapInner({ baseLayer, nauticalVisible, onLocate, onRecenter }) {
+export function MapInner({
+  baseLayer,
+  nauticalVisible,
+  onLocate,
+  onRecenter,
+  tidesVisible,
+  onToggleTides,
+}) {
   const map = useMap();
 
   const handleLocate = useCallback(() => {
@@ -20,7 +27,12 @@ export function MapInner({ baseLayer, nauticalVisible, onLocate, onRecenter }) {
   return (
     <>
       <MapController baseLayer={baseLayer} nauticalVisible={nauticalVisible} />
-      <FloatingControls onLocate={handleLocate} onRecenter={handleRecenter} />
+      <FloatingControls
+        onLocate={handleLocate}
+        onRecenter={handleRecenter}
+        tidesVisible={tidesVisible}
+        onToggleTides={onToggleTides}
+      />
     </>
   );
 }

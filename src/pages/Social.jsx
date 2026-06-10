@@ -3,7 +3,7 @@ import { useNavigate, useOutletContext } from "react-router-dom";
 import { IMAGES } from "../constants/images.js";
 import { CircularButton } from "../components/ui/Button.jsx";
 import { MenuIcon, PlusIcon, CommentIcon } from "../components/ui/Icons.jsx";
-import { CompactSearch } from "../components/shared/SearchBar.jsx";
+import { SearchBar } from "../components/shared/SearchBar.jsx";
 import { FeedPostCard } from "../components/shared/PostCard.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { getPosts, likePost } from "../services/api.js";
@@ -69,7 +69,12 @@ export default function Social() {
           <MenuIcon />
         </CircularButton>
         <h1 className="hidden md:block text-xl font-bold text-dark shrink-0">Social</h1>
-        <CompactSearch value={search} onChange={setSearch} />
+        <SearchBar
+          value={search}
+          onChange={setSearch}
+          onClear={() => setSearch("")}
+          placeholder="Procura um post ou utilizador"
+        />
       </div>
 
       <div className="flex-1 overflow-y-auto pt-2 pb-4">

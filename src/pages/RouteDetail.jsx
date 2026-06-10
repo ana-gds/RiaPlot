@@ -10,12 +10,19 @@ import {
   ClockIcon,
   WarningIcon,
   PlayIcon,
+  InfoIcon,
+  CloseIcon,
 } from "../components/ui/Icons.jsx";
 import { DifficultyBar } from "../components/shared/DifficultyBadge.jsx";
 import { fetchRoute } from "../hooks/useApi.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { saveRoute } from "../services/api.js";
+import { saveRoute, getBoats } from "../services/api.js";
 import { getRouteImage } from "../services/routeImages.js";
+import {
+  routeDifficulty,
+  DIFFICULTY_EXPLANATION,
+  boatCompatibility,
+} from "../utils/routeDifficulty.js";
 
 function StatCard({ icon, value, label }) {
   return (
@@ -53,10 +60,56 @@ function WarningAlert({ text }) {
   );
 }
 
-function calaoDifficulty(calado) {
-  if (!calado || calado <= 0.5) return 1;
-  if (calado <= 1.0) return 2;
-  return 3;
+const COMPAT_STYLES = {
+  ok: { color: COLORS.success, label: "O teu barco" },
+  limite: { color: COLORS.warning, label: "Atenção ao calado" },
+  incompativel: { color: COLORS.danger, label: "Barco incompatível" },
+};
+
+function CompatibilityNote({ status, message }) {
+  const { color, label } = COMPAT_STYLES[status];
+  return (
+    <div
+      className="rounded-xl p-3 mb-2"
+      style={{ background: `${color}14`, border: `1px solid ${color}55` }}
+    >
+      <div className="text-xs font-semibold leading-[18px] mb-1" style={{ color }}>
+        {label}
+      </div>
+      <div className="text-[11px] leading-[16.5px] text-muted">{message}</div>
+    </div>
+  );
+}
+
+function InfoModal({ title, children, onClose }) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-6 bg-dark/40"
+      onClick={onClose}
+      role="presentation"
+    >
+      <div
+        className="w-full max-w-sm rounded-2xl bg-white p-5 shadow-[0_20px_25px_rgba(0,0,0,0.15)]"
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+      >
+        <div className="flex items-start justify-between mb-2">
+          <h3 className="text-base font-semibold text-dark">{title}</h3>
+          <button
+            type="button"
+            onClick={onClose}
+            className="p-1 -mr-1 active:scale-90"
+            aria-label="Fechar"
+          >
+            <CloseIcon size={16} color="var(--color-muted)" />
+          </button>
+        </div>
+        <div className="text-[13px] leading-5 text-muted">{children}</div>
+      </div>
+    </div>
+  );
 }
 
 export default function RouteDetail() {
@@ -66,6 +119,20 @@ export default function RouteDetail() {
   const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
+  const [boatCalado, setBoatCalado] = useState(null);
+  const [showDifficultyInfo, setShowDifficultyInfo] = useState(false);
+
+  // Calado do barco registado do utilizador, para avaliar a compatibilidade.
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    getBoats(token)
+      .then((boats) => {
+        if (!cancelled) setBoatCalado(boats?.[0]?.height ?? null);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [token]);
 
   useEffect(() => {
     let cancelled = false;
@@ -114,7 +181,8 @@ export default function RouteDetail() {
   const title = route.nome ?? "";
   const description = route.descricao_turistica ?? route.descricao ?? "";
   const distance = route.distancia_nm ? `${route.distancia_nm} nm` : "—";
-  const difficulty = calaoDifficulty(route.calado_max);
+  const difficulty = routeDifficulty(route.calado_max, route.condicoes_mare);
+  const compatibility = boatCompatibility(route.calado_max, boatCalado);
   const pois = route.pontos_interesse ?? [];
   const warnings = route.warnings ?? [];
   const warningText = warnings.join(" ");
@@ -182,10 +250,31 @@ export default function RouteDetail() {
           )}
         </div>
 
-        <h2 className="text-sm font-semibold mb-2 text-dark">Dificuldade</h2>
-        <div className="mb-6">
+        <div className="flex items-center gap-1.5 mb-2">
+          <h2 className="text-sm font-semibold text-dark">Dificuldade</h2>
+          <button
+            type="button"
+            onClick={() => setShowDifficultyInfo(true)}
+            className="p-0.5 active:scale-90"
+            aria-label="Como é calculada a dificuldade?"
+          >
+            <InfoIcon size={15} color="var(--color-muted)" />
+          </button>
+        </div>
+        <div className={compatibility ? "mb-2" : "mb-6"}>
           <DifficultyBar level={difficulty} />
         </div>
+        {compatibility && (
+          <div className="mb-6">
+            <CompatibilityNote status={compatibility.status} message={compatibility.message} />
+          </div>
+        )}
+
+        {showDifficultyInfo && (
+          <InfoModal title="Como é calculada a dificuldade?" onClose={() => setShowDifficultyInfo(false)}>
+            {DIFFICULTY_EXPLANATION}
+          </InfoModal>
+        )}
 
         {description && (
           <>
