@@ -7,12 +7,13 @@ import {
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
-import { useDocks } from "../hooks/useApi";
+import { useDocks, useRoutes } from "../hooks/useApi";
 import { PrimaryButton } from "../components/ui/Button.jsx";
 import { RIA_CENTER, INITIAL_ZOOM } from "../components/map/mapHelpers.js";
 import { MapHeader } from "../components/map/MapHeader.jsx";
 import { MapInner } from "../components/map/MapInner.jsx";
 import { DockMarkers } from "../components/map/DockMarkers.jsx";
+import { RoutePolylines } from "../components/map/RoutePolylines.jsx";
 import { RoutePath } from "../components/map/RoutePath.jsx";
 import { TidesPanel } from "../components/map/TidesPanel.jsx";
 import { SimulationSheet } from "../components/map/SimulationSheet.jsx";
@@ -30,6 +31,7 @@ export default function MapPage() {
   const [tidesVisible, setTidesVisible] = useState(true);
 
   const { docks } = useDocks();
+  const routes = useRoutes();
 
   const handleLocate = () => {
     setLocating(true);
@@ -62,6 +64,7 @@ export default function MapPage() {
             onToggleTides={() => setTidesVisible((v) => !v)}
           />
 
+          <RoutePolylines routes={routes} />
           <DockMarkers docks={docks} />
 
           {(gpxPoints?.length || gpxUrl) && (

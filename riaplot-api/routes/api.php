@@ -8,6 +8,7 @@ use App\Http\Controllers\PostController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Api\DockController;
 use App\Http\Controllers\SimulacaoController;
+use App\Http\Controllers\Api\HidromodController;
 
 // Auth (público)
 Route::post('/register', [AuthController::class, 'register']);
@@ -85,4 +86,11 @@ Route::prefix('simulacao')->group(function () {
     Route::post ('mares',                [SimulacaoController::class, 'maresIniciar']);
     Route::get  ('mares/{id}/status',    [SimulacaoController::class, 'maresStatus']);
     Route::get  ('mares/{id}/dados',     [SimulacaoController::class, 'maresDados']);
+});
+
+Route::prefix('hidromod')->group(function () {
+    Route::get('routes',              [HidromodController::class, 'index']);
+    Route::get('routes/process-gpx',  [HidromodController::class, 'processGpxFiles']);
+    Route::get('routes/{id}',         [HidromodController::class, 'show']);
+    Route::get('routes/{id}/dados',   [HidromodController::class, 'dados']);
 });

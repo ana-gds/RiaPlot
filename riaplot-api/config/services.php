@@ -34,6 +34,10 @@ return [
         'timeout'    => env('SISMAR_TIMEOUT',    30),
     ],
 
+    'hidromod' => [
+        'base_url' => env('HIDROMOD_BASE_URL', 'https://sismarservices.hidromod.com/reader'),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
