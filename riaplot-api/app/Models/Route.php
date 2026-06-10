@@ -39,6 +39,7 @@ class Route extends Model
         'video_url',         // URL de vídeo (Fase 6)
         'pontos_interesse',  // array de { poi_id, nome, km_do_inicio }
         'simulation_data',   // { startDate, positions, waterLevels } — preenchido pela API Hidromod
+        'trackpoints',
     ];
 
     protected $casts = [
@@ -48,6 +49,7 @@ class Route extends Model
         'warnings'          => 'array',
         'pontos_interesse'  => 'array',
         'simulation_data'   => 'array',
+        'trackpoints' => 'array',
         'distancia_nm'      => 'float',
         'calado_max'        => 'float',
         'routinav_id'       => 'integer',

@@ -7,6 +7,7 @@ use App\Http\Controllers\PoiController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Api\DockController;
+use App\Http\Controllers\SimulacaoController;
 
 // Auth (público)
 Route::post('/register', [AuthController::class, 'register']);
@@ -70,4 +71,18 @@ Route::middleware('auth:sanctum')->group(function () {
     // Notificações
     Route::get('/notifications',          [NotificationController::class, 'index']);
     Route::patch('/notifications/{id}/read', [NotificationController::class, 'markRead']);
+});
+
+Route::prefix('simulacao')->group(function () {
+
+    // Rota principal: nível de água + cores
+    Route::post ('iniciar',              [SimulacaoController::class, 'iniciar']);
+    Route::get  ('{id}/status',          [SimulacaoController::class, 'status']);
+    Route::get  ('{id}/dados',           [SimulacaoController::class, 'dados']);
+    Route::delete('{id}',                [SimulacaoController::class, 'apagar']);
+
+    // Marés (PM/BM)
+    Route::post ('mares',                [SimulacaoController::class, 'maresIniciar']);
+    Route::get  ('mares/{id}/status',    [SimulacaoController::class, 'maresStatus']);
+    Route::get  ('mares/{id}/dados',     [SimulacaoController::class, 'maresDados']);
 });
