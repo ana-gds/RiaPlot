@@ -1,7 +1,7 @@
 export function FloatingControls({ onLocate, onRecenter }) {
   return (
-    <div className="leaflet-bottom leaflet-right z-40">
-      <div className="leaflet-control flex flex-col gap-2 mr-3 mb-[104px]">
+    <div className="leaflet-bottom leaflet-right mb-57 z-[1000]">
+      <div className="leaflet-control flex flex-col gap-[8px] mb-[220px]">
         <button
           type="button"
           onClick={onLocate}
