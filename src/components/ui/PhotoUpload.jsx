@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { CameraIcon } from "./Icons.jsx";
+import { CameraIcon, CloseIcon, PlusIcon, RoutesNavIcon } from "./Icons.jsx";
 
 export function CircleAvatarUpload({ preview, fallbackImage, onFileChange, label = "Adicionar foto" }) {
   const inputRef = useRef(null);
@@ -91,6 +91,169 @@ export function RectanglePhotoUpload({ preview, onFileChange, height = 220 }) {
           const f = e.target.files?.[0];
           if (f) {
             setLocalPreview(URL.createObjectURL(f));
+            onFileChange?.(f);
+          }
+        }}
+      />
+    </div>
+  );
+}
+
+let photoUid = 0;
+
+/**
+ * Multi-image picker. Calls `onFilesChange` with the current array of File
+ * objects whenever the selection changes.
+ */
+export function MultiPhotoUpload({ onFilesChange, max = 8 }) {
+  const inputRef = useRef(null);
+  const [items, setItems] = useState([]); // { id, file, preview }
+
+  const emit = (next) => {
+    setItems(next);
+    onFilesChange?.(next.map((i) => i.file));
+  };
+
+  const addFiles = (fileList) => {
+    const incoming = Array.from(fileList ?? []);
+    if (incoming.length === 0) return;
+    const room = max - items.length;
+    const next = [
+      ...items,
+      ...incoming.slice(0, room).map((file) => ({
+        id: ++photoUid,
+        file,
+        preview: URL.createObjectURL(file),
+      })),
+    ];
+    emit(next);
+  };
+
+  const removeAt = (id) => {
+    const target = items.find((i) => i.id === id);
+    if (target) URL.revokeObjectURL(target.preview);
+    emit(items.filter((i) => i.id !== id));
+  };
+
+  const canAddMore = items.length < max;
+
+  return (
+    <div>
+      {items.length === 0 ? (
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          className="w-full rounded-2xl flex flex-col items-center justify-center gap-2.5 border-2 border-dashed border-primary/35 bg-cream"
+          style={{ height: 220 }}
+        >
+          <CameraIcon />
+          <span className="text-[13px] font-medium text-muted">Adicionar fotos</span>
+          <span className="text-[11px] text-muted-soft">Podes selecionar várias imagens</span>
+        </button>
+      ) : (
+        <div className="grid grid-cols-3 gap-2">
+          {items.map((item) => (
+            <div key={item.id} className="relative aspect-square rounded-xl overflow-hidden">
+              <img src={item.preview} alt="" className="w-full h-full object-cover" />
+              <button
+                type="button"
+                onClick={() => removeAt(item.id)}
+                className="absolute top-1 right-1 w-6 h-6 rounded-full bg-black/55 flex items-center justify-center active:scale-90"
+                aria-label="Remover foto"
+              >
+                <CloseIcon size={12} color="white" />
+              </button>
+            </div>
+          ))}
+          {canAddMore && (
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              className="aspect-square rounded-xl flex flex-col items-center justify-center gap-1 border-2 border-dashed border-primary/35 bg-cream active:scale-95"
+              aria-label="Adicionar mais fotos"
+            >
+              <PlusIcon size={20} color="var(--color-primary)" />
+              <span className="text-[10px] text-muted">Adicionar</span>
+            </button>
+          )}
+        </div>
+      )}
+      <input
+        ref={inputRef}
+        type="file"
+        accept="image/*"
+        multiple
+        className="hidden"
+        onChange={(e) => {
+          addFiles(e.target.files);
+          e.target.value = ""; // permite re-selecionar o mesmo ficheiro
+        }}
+      />
+    </div>
+  );
+}
+
+/** GPX file picker for the route taken. Calls `onFileChange` with the File (or null). */
+export function GpxUpload({ onFileChange }) {
+  const inputRef = useRef(null);
+  const [fileName, setFileName] = useState(null);
+
+  const clear = () => {
+    setFileName(null);
+    onFileChange?.(null);
+    if (inputRef.current) inputRef.current.value = "";
+  };
+
+  return (
+    <div>
+      <button
+        type="button"
+        onClick={() => inputRef.current?.click()}
+        className="w-full rounded-2xl flex items-center gap-3 px-4 py-3 border-2 border-dashed border-primary/35 bg-cream text-left active:scale-[0.99]"
+      >
+        <span className="w-9 h-9 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+          <RoutesNavIcon size={18} color="var(--color-primary)" />
+        </span>
+        <span className="flex-1 min-w-0">
+          {fileName ? (
+            <span className="block text-[13px] font-medium text-dark truncate">{fileName}</span>
+          ) : (
+            <>
+              <span className="block text-[13px] font-medium text-muted">Adicionar ficheiro GPX</span>
+              <span className="block text-[11px] text-muted-soft">A rota será visível no mapa</span>
+            </>
+          )}
+        </span>
+        {fileName && (
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={(e) => {
+              e.stopPropagation();
+              clear();
+            }}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.stopPropagation();
+                clear();
+              }
+            }}
+            className="w-7 h-7 rounded-full bg-black/10 flex items-center justify-center flex-shrink-0 active:scale-90"
+            aria-label="Remover ficheiro GPX"
+          >
+            <CloseIcon size={13} color="var(--color-muted)" />
+          </span>
+        )}
+      </button>
+      <input
+        ref={inputRef}
+        type="file"
+        accept=".gpx,application/gpx+xml,application/xml,text/xml"
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0];
+          if (f) {
+            setFileName(f.name);
             onFileChange?.(f);
           }
         }}

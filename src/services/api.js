@@ -149,3 +149,18 @@ export async function getValida4DIdByGpxFile(gpxFile) {
     const match = routes.find((r) => r.file === gpxFile);
     return match ? match.id : null;
 }
+export async function uploadGpx(token, file) {
+    const body = new FormData();
+    body.append("gpx", file);
+    const res = await fetch(`${API}/upload-gpx`, {
+        method: "POST",
+        headers: {
+            Accept: "application/json",
+            Authorization: `Bearer ${token}`,
+        },
+        body,
+    });
+    const data = await res.json();
+    if (!res.ok) throw data;
+    return data;
+}

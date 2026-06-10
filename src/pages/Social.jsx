@@ -25,17 +25,20 @@ export default function Social() {
       .then((data) => {
         setPosts(
           data.map((p) => ({
-            id: p._id,
+            id: p.id ?? p._id,
             username: p.username ?? "unknown",
             avatar: IMAGES.avatars.user1,
             date: formatDate(p.created_at),
             location: p.location ?? "",
             image: p.post_url?.[0] ?? IMAGES.posts.feed1,
+            images: p.post_url ?? [],
+            gpxUrl: p.gpx_url ?? null,
+            gpxPoints: p.gpx_points ?? null,
             title: p.title,
             description: p.description,
             liked: (p.likes ?? []).includes(user?._id ?? user?.id),
             saved: false,
-            route: p.route_doc ? { distance: "—", duration: "—" } : null,
+            route: p.route_doc || p.gpx_url ? { distance: "—", duration: "—" } : null,
           })),
         );
       })
@@ -87,6 +90,7 @@ export default function Social() {
                   post={post}
                   onToggleLike={toggleLike}
                   onToggleSave={toggleSave}
+                  onOpenDetail={() => navigate("/social/post", { state: { post } })}
                   onOpenComments={() => navigate("/social/post", { state: { post } })}
                 />
               </div>
