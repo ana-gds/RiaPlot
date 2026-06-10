@@ -6,12 +6,12 @@ export function RouteCard({ route, onToggleSave, onClick }) {
   return (
     <article
       onClick={onClick}
-      className="relative w-full h-[264px] rounded-2xl overflow-hidden cursor-pointer shadow-card transition-transform hover:-translate-y-0.5"
+      className="relative w-full h-[264px] min-h-[264px] max-h-[264px] rounded-2xl overflow-hidden cursor-pointer shadow-card transition-transform hover:-translate-y-0.5"
     >
       <img
         src={route.image}
         alt={route.title}
-        className="absolute inset-0 w-full h-full object-cover"
+        className="absolute inset-0 w-full h-full object-cover object-center"
       />
 
       <DifficultyBadge level={route.difficulty} />
@@ -32,9 +32,8 @@ export function RouteCard({ route, onToggleSave, onClick }) {
         <img src={IMAGES.routes.mapThumb} alt="" className="w-full h-full object-cover" />
       </div>
 
-      <div className="absolute left-4 bottom-4 px-3.5 py-2.5 rounded-lg max-w-[60%] bg-black/45 backdrop-blur-[2px]">
+      <div className="absolute left-4 bottom-4 px-3.5 py-2.5 rounded-lg w-fit max-w-[calc(100%-2rem)] bg-black/45 backdrop-blur-[2px]">
         <div className="text-lg font-bold text-white leading-tight">{route.title}</div>
-        <div className="text-xs text-white/85 mt-1">{route.route}</div>
       </div>
     </article>
   );
@@ -48,7 +47,7 @@ export function RouteCardCompact({ route, onClick }) {
         style={{ background: "linear-gradient(160deg, #004D6C, #126587)" }}
       >
         <span className="text-white text-[11px] font-bold px-3 py-1 rounded-full bg-primary-soft">
-          {route.distance} · {route.duration}
+          {[route.distance, route.duration].filter(Boolean).join(" · ")}
         </span>
       </div>
       <div className="px-4 pt-3 pb-1">

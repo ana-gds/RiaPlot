@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext.jsx";
 import { AppShell, PageShell } from "./layouts/AppLayout.jsx";
 import Login from "./pages/Login.jsx";
@@ -16,50 +16,11 @@ import EditProfile from "./pages/EditProfile.jsx";
 import BoatSettings from "./pages/BoatSettings.jsx";
 import MapPage from "./pages/Map.jsx";
 
-const DEV_PAGES = [
-  ["/login", "Login"],
-  ["/register/profile", "Criar conta"],
-  ["/register/boat", "Embarcação"],
-  ["/register/final", "Concluir registo"],
-  ["/routes", "Rotas"],
-  ["/routes/detail", "Detalhe rota"],
-  ["/social", "Social"],
-  ["/social/post", "Detalhe post"],
-  ["/social/new", "Novo post"],
-  ["/notifications", "Notificações"],
-  ["/profile", "Perfil"],
-  ["/profile/edit", "Editar perfil"],
-  ["/profile/boat", "Definições embarcação"],
-];
-
-function DevPicker() {
-  const navigate = useNavigate();
-  if (!import.meta.env.DEV) return null;
-  return (
-    <select
-      onChange={(e) => navigate(e.target.value)}
-      defaultValue=""
-      className="fixed top-2 right-2 z-50 text-xs px-2 py-1 rounded shadow bg-dark text-white border-0 cursor-pointer"
-      aria-label="Dev page picker"
-    >
-      <option value="" disabled>
-        Ir para…
-      </option>
-      {DEV_PAGES.map(([path, label]) => (
-        <option key={path} value={path}>
-          {label}
-        </option>
-      ))}
-    </select>
-  );
-}
-
 export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
         <div className="app-frame">
-          <DevPicker />
           <Routes>
           {/* Tab pages share the bottom navigation */}
           <Route element={<AppShell />}>
@@ -75,7 +36,7 @@ export default function App() {
             <Route path="/register/profile" element={<ProfileRegister />} />
             <Route path="/register/boat" element={<BoatRegister />} />
             <Route path="/register/final" element={<FinalRegister />} />
-            <Route path="/routes/detail" element={<RouteDetail />} />
+            <Route path="/routes/:id" element={<RouteDetail />} />
             <Route path="/social/post" element={<PostDetail />} />
             <Route path="/social/new" element={<AddPost />} />
             <Route path="/profile" element={<Profile />} />

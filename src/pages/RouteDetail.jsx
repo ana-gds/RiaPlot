@@ -15,6 +15,7 @@ import { DifficultyBar } from "../components/shared/DifficultyBadge.jsx";
 import { fetchRoute } from "../hooks/useApi.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { saveRoute } from "../services/api.js";
+import { getRouteImage } from "../services/routeImages.js";
 
 function StatCard({ icon, value, label }) {
   return (
@@ -60,26 +61,35 @@ function calaoDifficulty(calado) {
 
 export default function RouteDetail() {
   const { id } = useParams();
-  const { user, token } = useAuth();
+  const { user, token, updateUser } = useAuth();
   const [route, setRoute] = useState(null);
+  const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
     fetchRoute(id)
       .then((data) => {
+        if (cancelled) return;
         setRoute(data);
         const routeId = data._id?.$oid ?? data._id ?? id;
         setSaved(user?.saved_routes?.includes(routeId) ?? false);
+        getRouteImage(routeId, data).then((url) => {
+          if (!cancelled && url) setImage(url);
+        });
       })
       .catch(() => {})
-      .finally(() => setLoading(false));
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [id]);
 
   const handleSave = async () => {
     setSaved((s) => !s);
     try {
-      await saveRoute(token, id);
+      const res = await saveRoute(token, id);
+      // Persiste o estado vindo do servidor no user em cache
+      if (res?.saved_routes) updateUser({ saved_routes: res.saved_routes });
     } catch {
       setSaved((s) => !s);
     }
@@ -110,21 +120,23 @@ export default function RouteDetail() {
   const warningText = warnings.join(" ");
 
   return (
-    <div className="flex flex-col flex-1">
+    <div className="flex flex-col flex-1 -mt-6 md:mt-0">
       <div className="relative w-full h-[328px] flex-shrink-0">
-        <img src={IMAGES.routes.detail} alt={title} className="w-full h-full object-cover" />
+        <img src={image ?? IMAGES.routes.detail} alt={title} className="w-full h-full object-cover" />
 
         <div className="absolute left-4 top-4">
           <BackButton />
         </div>
 
-        <button
-          type="button"
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[60px] h-[60px] rounded-full flex items-center justify-center pl-1 bg-dark/70 shadow-[0_20px_25px_rgba(0,0,0,0.1)]"
-          aria-label="Reproduzir vídeo"
-        >
-          <PlayIcon />
-        </button>
+        {route.video_url && (
+          <button
+            type="button"
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[60px] h-[60px] rounded-full flex items-center justify-center pl-1 bg-dark/70 shadow-[0_20px_25px_rgba(0,0,0,0.1)]"
+            aria-label="Reproduzir vídeo"
+          >
+            <PlayIcon />
+          </button>
+        )}
       </div>
 
       <div className="-mt-4 rounded-t-2xl bg-white relative z-10 px-4 pt-6 pb-8 shadow-top-sheet">

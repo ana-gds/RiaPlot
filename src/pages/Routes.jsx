@@ -9,6 +9,7 @@ import { RouteCard } from "../components/shared/RouteCard.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { useRoutes } from "../hooks/useApi.js";
 import { saveRoute } from "../services/api.js";
+import { getRouteImage } from "../services/routeImages.js";
 
 const DIFFICULTY_FILTERS = [
   { key: "facil", label: "Fácil", level: 1, color: "#4caf50" },
@@ -37,17 +38,31 @@ const ROUTE_IMAGES = [
 export default function Routes() {
   const navigate = useNavigate();
   const { openSidebar } = useOutletContext();
-  const { user, token } = useAuth();
+  const { user, token, updateUser } = useAuth();
   const apiRoutes = useRoutes();
 
   const [savedIds, setSavedIds] = useState(() => user?.saved_routes ?? []);
   const [search, setSearch] = useState("");
   const [activeFilters, setActiveFilters] = useState([]);
-  const [advancedFilters, setAdvancedFilters] = useState(0);
+  const [showFilters, setShowFilters] = useState(false);
+  const [imagesById, setImagesById] = useState({});
 
   useEffect(() => {
     setSavedIds(user?.saved_routes ?? []);
   }, [user]);
+
+  // Vai buscar uma foto real do local (Wikipédia) para cada rota.
+  useEffect(() => {
+    let cancelled = false;
+    apiRoutes.forEach((r) => {
+      const id = extractId(r._id ?? r.id);
+      if (!id) return;
+      getRouteImage(id, r).then((url) => {
+        if (!cancelled && url) setImagesById((prev) => ({ ...prev, [id]: url }));
+      });
+    });
+    return () => { cancelled = true; };
+  }, [apiRoutes]);
 
   const routes = useMemo(() =>
     apiRoutes.map((r, i) => {
@@ -56,12 +71,12 @@ export default function Routes() {
         id,
         title: r.nome ?? "Rota",
         route: [r.cais_partida?.nome, r.cais_chegada?.nome].filter(Boolean).join(" → ") || "",
-        image: ROUTE_IMAGES[i % ROUTE_IMAGES.length],
+        image: imagesById[id] ?? ROUTE_IMAGES[i % ROUTE_IMAGES.length],
         difficulty: calaoDifficulty(r.calado_max),
         saved: savedIds.includes(id),
       };
     }),
-  [apiRoutes, savedIds]);
+  [apiRoutes, savedIds, imagesById]);
 
   const toggleFilter = (key) =>
     setActiveFilters((f) => (f.includes(key) ? f.filter((x) => x !== key) : [...f, key]));
@@ -71,7 +86,9 @@ export default function Routes() {
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
     try {
-      await saveRoute(token, id);
+      const res = await saveRoute(token, id);
+      // Persiste o estado vindo do servidor no user em cache
+      if (res?.saved_routes) updateUser({ saved_routes: res.saved_routes });
     } catch {
       setSavedIds((prev) =>
         prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
@@ -105,50 +122,53 @@ export default function Routes() {
           <SearchBar value={search} onChange={setSearch} onClear={() => setSearch("")} />
           <button
             type="button"
-            onClick={() => setAdvancedFilters((n) => (n > 0 ? 0 : 2))}
+            onClick={() => setShowFilters((s) => !s)}
             className={[
               "w-[46px] h-[46px] rounded-[14px] flex items-center justify-center shrink-0 relative transition-colors border",
-              advancedFilters > 0
+              showFilters || activeFilters.length > 0
                 ? "bg-primary/10 border-primary text-primary"
                 : "bg-white border-primary/25 text-dark",
             ].join(" ")}
-            aria-label="Filtros avançados"
+            aria-label="Mostrar filtros"
+            aria-expanded={showFilters}
           >
             <FilterIcon color="currentColor" />
-            {advancedFilters > 0 && (
+            {activeFilters.length > 0 && (
               <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center bg-primary text-white text-[10px] font-bold border-2 border-white">
-                {advancedFilters}
+                {activeFilters.length}
               </span>
             )}
           </button>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-1 scroll-x-hidden">
-          <Chip
-            active={activeFilters.includes("duracao")}
-            onClick={() => toggleFilter("duracao")}
-            icon={<ClockIcon />}
-          >
-            Duração
-          </Chip>
-          {DIFFICULTY_FILTERS.map((d) => (
+        {showFilters && (
+          <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-1 scroll-x-hidden">
             <Chip
-              key={d.key}
-              active={activeFilters.includes(d.key)}
-              onClick={() => toggleFilter(d.key)}
-              icon={<span className="w-2 h-2 rounded-full" style={{ background: d.color }} />}
+              active={activeFilters.includes("duracao")}
+              onClick={() => toggleFilter("duracao")}
+              icon={<ClockIcon />}
             >
-              {d.label}
+              Duração
             </Chip>
-          ))}
-          <Chip
-            active={activeFilters.includes("guardadas")}
-            onClick={() => toggleFilter("guardadas")}
-            icon={<BookmarkIcon size={12} color="currentColor" strokeColor="currentColor" />}
-          >
-            Guardadas
-          </Chip>
-        </div>
+            {DIFFICULTY_FILTERS.map((d) => (
+              <Chip
+                key={d.key}
+                active={activeFilters.includes(d.key)}
+                onClick={() => toggleFilter(d.key)}
+                icon={<span className="w-2 h-2 rounded-full" style={{ background: d.color }} />}
+              >
+                {d.label}
+              </Chip>
+            ))}
+            <Chip
+              active={activeFilters.includes("guardadas")}
+              onClick={() => toggleFilter("guardadas")}
+              icon={<BookmarkIcon size={12} color="currentColor" strokeColor="currentColor" />}
+            >
+              Guardadas
+            </Chip>
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6">

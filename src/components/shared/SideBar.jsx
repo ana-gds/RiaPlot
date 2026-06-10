@@ -155,11 +155,15 @@ export default function Sidebar({ open, onClose, onNavigate }) {
 
                     {/* User info */}
                     <div className="flex items-center gap-3.5 relative z-10">
-                        <div
+                        <button
+                            onClick={() => handleNav("perfil")}
+                            aria-label="Ver o meu perfil"
                             className="w-[52px] h-[52px] rounded-full overflow-hidden flex-shrink-0 bg-primary-soft flex items-center justify-center text-white font-bold text-xl"
                             style={{
                                 border: "2.5px solid rgba(219,139,49,0.8)",
                                 boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                                cursor: "pointer",
+                                padding: 0,
                             }}
                         >
                             {user?.photo_url ? (
@@ -167,12 +171,18 @@ export default function Sidebar({ open, onClose, onNavigate }) {
                             ) : (
                                 user?.name?.charAt(0)?.toUpperCase() ?? "?"
                             )}
-                        </div>
+                        </button>
                         <div>
-                            <div className="text-base font-bold text-white leading-tight">{user?.name ?? ""}</div>
-                            <div className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.65)" }}>
-                                @{user?.username ?? ""}
-                            </div>
+                            <button
+                                onClick={() => handleNav("perfil")}
+                                className="text-left"
+                                style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                            >
+                                <div className="text-base font-bold text-white leading-tight">{user?.name ?? ""}</div>
+                                <div className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.65)" }}>
+                                    @{user?.username ?? ""}
+                                </div>
+                            </button>
                             <button
                                 onClick={() => handleNav("editarPerfil")}
                                 className="flex items-center gap-1 mt-1.5 text-[11px] font-medium"
