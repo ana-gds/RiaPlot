@@ -92,6 +92,49 @@ body,
   width: 100%;
 }
 
+/* ── Custom Leaflet Controls ──────────────────────────────────────────── */
+
+.leaflet-bottom.leaflet-right .leaflet-control-zoom {
+  @apply mb-26;
+  border: none;
+  box-shadow: none;
+  background: transparent;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.leaflet-control-zoom a,
+.leaflet-control-zoom a:focus {
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 12px !important;
+  background: white !important;
+  color: var(--color-secondary) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-shadow: 0 4px 14px rgba(0, 77, 108, 0.25) !important;
+  font-size: 22px !important;
+  font-weight: 600 !important;
+  line-height: 1 !important;
+  text-decoration: none !important;
+  border: none !important;
+  transition: all 0.2s ease-in-out !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background: var(--color-secondary) !important;
+  color: white !important;
+}
+
+.leaflet-control-zoom a.leaflet-disabled {
+  color: var(--color-muted-soft) !important;
+  cursor: not-allowed !important;
+  background: white !important;
+  box-shadow: 0 2px 8px rgba(0, 77, 108, 0.1) !important;
+}
+
 /* ── Map page ─────────────────────────────────────────────────────────── */
 
 .map-page {
@@ -142,6 +185,17 @@ body,
 }
 
 .map-bottom-bar > * {
+  pointer-events: auto;
+}
+
+.map-side-toggles {
+  position: absolute;
+  top: 70px;
+  right: 16px;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   pointer-events: auto;
 }
 
@@ -404,35 +458,6 @@ body,
   margin-top: 1px;
 }
 
-/* ── Depth legend ─────────────────────────────────────────────────────── */
-
-.depth-legend {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 14px;
-  background: rgba(14, 44, 56, 0.88);
-  backdrop-filter: blur(10px);
-  border-radius: 12px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-}
-.depth-legend__item {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-.depth-legend__dot {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.depth-legend__label {
-  font-size: 10px;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.82);
-}
-
 /* ── Locating toast ───────────────────────────────────────────────────── */
 
 .locating-toast {
@@ -452,22 +477,6 @@ body,
   font-size: 13px;
   font-weight: 500;
   color: white;
-}
-
-/* ── Simulate-route launcher button ───────────────────────────────────── */
-
-.sim-launch {
-  height: 46px;
-  padding-inline: 28px;
-  border-radius: 14px;
-  background: var(--color-primary-soft);
-  color: white;
-  font-size: 14px;
-  font-weight: 700;
-  box-shadow: var(--shadow-primary-fab);
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 /* ── Route test buttons (temporary) ───────────────────────────────────── */

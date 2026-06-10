@@ -5,8 +5,8 @@ import { MenuIcon } from "../ui/Icons.jsx";
 
 export function MapHeader({ baseLayer, onChangeLayer, nautical, onToggleNautical, onOpenMenu }) {
   return (
-    <div className="map-header">
-      <div className="map-header__row">
+    <div className="map-header" >
+      <div className="map-header__row mt-16">
         {onOpenMenu && (
           <CircularButton onClick={onOpenMenu} ariaLabel="Menu" className="md:hidden">
             <MenuIcon />

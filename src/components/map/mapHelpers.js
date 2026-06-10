@@ -19,14 +19,6 @@ export const MOCK_TIDES = [
   { type: "BM", label: "Baixa-Mar", time: "23:12", height: 0.8 },
 ];
 
-export const DEPTH_LEGEND = [
-  { color: "#4caf50", label: "Seguro" },
-  { color: "#ffb74d", label: "Atenção" },
-  { color: "#f44336", label: "Perigo" },
-  { color: "#212121", label: "Sequeiro" },
-  { color: "#9c27b0", label: "Sem dados" },
-];
-
 export const SIM_LEGEND = [
   { color: "#4caf50", label: "Zona segura", desc: "Folga acima do limite superior" },
   { color: "#ffb74d", label: "Atenção", desc: "Folga entre limites inferior e superior" },
