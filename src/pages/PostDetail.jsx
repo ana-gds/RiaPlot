@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { IMAGES } from "../constants/images.js";
 import { BackButton } from "../components/ui/BackButton.jsx";
 import { HeartIcon, CommentIcon, SendIcon } from "../components/ui/Icons.jsx";
@@ -101,12 +101,16 @@ function CommentsSheet({ open, onClose, comments, onAddComment }) {
 
 export default function PostDetail() {
   const { state } = useLocation();
+  const navigate = useNavigate();
   const { user, token } = useAuth();
   const post = state?.post;
 
-  const [liked, setLiked] = useState(() =>
-    post ? (post.likes ?? []).includes(user?._id ?? user?.id) : false,
-  );
+  const [liked, setLiked] = useState(() => {
+    if (!post) return false;
+    if (typeof post.liked === "boolean") return post.liked;
+    const myId = user?._id ?? user?.id;
+    return Array.isArray(post.likes) ? post.likes.includes(myId) : false;
+  });
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [comments, setComments] = useState([]);
 
@@ -137,26 +141,48 @@ export default function PostDetail() {
     }
   };
 
-  const image = post?.image ?? IMAGES.posts.detail;
+  const images = post?.images?.length ? post.images : [post?.image ?? IMAGES.posts.detail];
+  const [activeImage, setActiveImage] = useState(0);
   const username = post?.username ?? "";
   const date = post?.date ?? "";
   const location = post?.location ?? "";
   const title = post?.title ?? "";
   const description = post?.description ?? "";
+  const gpxUrl = post?.gpxUrl ?? null;
+  const gpxPoints = post?.gpxPoints ?? null;
+  const hasRoute = gpxPoints?.length > 0 || !!gpxUrl;
 
   return (
     <div className="flex flex-col flex-1">
       <div className="relative w-full h-[328px] flex-shrink-0">
-        <img src={image} alt={title} className="w-full h-full object-cover" />
+        <img src={images[activeImage]} alt={title} className="w-full h-full object-cover" />
         <div className="absolute left-4 top-4">
           <BackButton />
         </div>
-        <button
-          type="button"
-          className="absolute right-4 bottom-4 h-10 px-5 rounded-2xl bg-primary-soft text-white text-sm font-semibold shadow-primary-button backdrop-blur-[2px] active:scale-95"
-        >
-          Ver no mapa
-        </button>
+        {images.length > 1 && (
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+            {images.map((_, i) => (
+              <button
+                key={i}
+                type="button"
+                onClick={() => setActiveImage(i)}
+                className={`h-1.5 rounded-full transition-all ${
+                  i === activeImage ? "w-5 bg-white" : "w-1.5 bg-white/55"
+                }`}
+                aria-label={`Foto ${i + 1}`}
+              />
+            ))}
+          </div>
+        )}
+        {hasRoute && (
+          <button
+            type="button"
+            onClick={() => navigate("/map", { state: { gpxPoints, gpxUrl } })}
+            className="absolute right-4 bottom-4 h-10 px-5 rounded-2xl bg-primary-soft text-white text-sm font-semibold shadow-primary-button backdrop-blur-[2px] active:scale-95"
+          >
+            Ver no mapa
+          </button>
+        )}
       </div>
 
       <article className="flex-1 -mt-4 rounded-t-2xl bg-white relative z-10 px-4 pt-6 pb-8 shadow-top-sheet">

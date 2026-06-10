@@ -1,7 +1,7 @@
 import { IMAGES } from "../../constants/images.js";
 import { HeartIcon, CommentIcon, BookmarkIcon } from "../ui/Icons.jsx";
 
-export function FeedPostCard({ post, onToggleLike, onToggleSave, onOpenComments }) {
+export function FeedPostCard({ post, onToggleLike, onToggleSave, onOpenComments, onOpenDetail }) {
   return (
     <article className="pb-2">
       <div className="flex items-center gap-3 px-4 pb-2.5">
@@ -19,7 +19,15 @@ export function FeedPostCard({ post, onToggleLike, onToggleSave, onOpenComments 
       </div>
 
       <div className="px-4">
-        <div className="relative">
+        <div
+          className="relative cursor-pointer"
+          role="button"
+          tabIndex={0}
+          onClick={() => onOpenDetail?.(post.id)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") onOpenDetail?.(post.id);
+          }}
+        >
           <img
             src={post.image}
             alt={post.title}
@@ -41,7 +49,15 @@ export function FeedPostCard({ post, onToggleLike, onToggleSave, onOpenComments 
         </div>
       </div>
 
-      <div className="px-4 pt-2.5">
+      <div
+        className="px-4 pt-2.5 cursor-pointer"
+        role="button"
+        tabIndex={0}
+        onClick={() => onOpenDetail?.(post.id)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") onOpenDetail?.(post.id);
+        }}
+      >
         <h3 className="text-base font-bold mb-1 text-dark">{post.title}</h3>
         <p className="text-xs leading-relaxed text-dark/80 line-clamp-2">{post.description}</p>
       </div>
@@ -77,15 +93,25 @@ export function FeedPostCard({ post, onToggleLike, onToggleSave, onOpenComments 
   );
 }
 
-export function ProfilePostCard({ post, onToggleLike }) {
+export function ProfilePostCard({ post, onToggleLike, onOpenDetail }) {
   return (
     <article className="rounded-2xl overflow-hidden bg-white shadow-card">
-      <div className="w-full h-[220px] overflow-hidden">
-        <img src={post.image} alt={post.title} className="w-full h-full object-cover" />
-      </div>
-      <div className="px-4 pt-3 pb-1">
-        <h3 className="text-base font-bold mb-1 text-dark">{post.title}</h3>
-        <p className="text-xs leading-relaxed text-dark/75 line-clamp-2">{post.description}</p>
+      <div
+        className="cursor-pointer"
+        role="button"
+        tabIndex={0}
+        onClick={() => onOpenDetail?.(post.id)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") onOpenDetail?.(post.id);
+        }}
+      >
+        <div className="w-full h-[220px] overflow-hidden">
+          <img src={post.image} alt={post.title} className="w-full h-full object-cover" />
+        </div>
+        <div className="px-4 pt-3 pb-1">
+          <h3 className="text-base font-bold mb-1 text-dark">{post.title}</h3>
+          <p className="text-xs leading-relaxed text-dark/75 line-clamp-2">{post.description}</p>
+        </div>
       </div>
       <div className="flex items-center gap-4 px-4 py-3 mt-1 border-t border-divider/60">
         <button

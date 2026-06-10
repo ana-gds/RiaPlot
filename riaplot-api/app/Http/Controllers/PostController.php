@@ -18,14 +18,17 @@ class PostController extends Controller
     {
         $data = $request->validate([
             'title'       => 'required|string',
-            'description' => 'required|string',
+            'description' => 'nullable|string',
             'location'    => 'nullable|string',
             'route_doc'   => 'nullable|string',
             'post_url'    => 'nullable|array',
+            'gpx_url'     => 'nullable|string',
+            'gpx_points'  => 'nullable|array',
         ]);
 
         $post = Post::create([
             ...$data,
+            'description' => $data['description'] ?? '',
             'user_id'  => $request->user()->id,
             'username' => $request->user()->username,
             'likes'    => [],

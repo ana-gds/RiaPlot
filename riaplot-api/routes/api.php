@@ -38,6 +38,24 @@ Route::middleware('auth:sanctum')->group(function () {
         return response()->json(['url' => url('uploads/' . $filename)]);
     });
 
+    // Upload de ficheiro GPX (rota percorrida)
+    Route::post('/upload-gpx', function(\Illuminate\Http\Request $request) {
+        // O MIME de ficheiros .gpx varia muito entre browsers (xml, octet-stream…),
+        // por isso validamos a extensão manualmente em vez de usar `mimetypes`.
+        $request->validate([
+            'gpx' => 'required|file|max:10240',
+        ]);
+        $ext = strtolower($request->file('gpx')->getClientOriginalExtension());
+        if ($ext !== 'gpx') {
+            return response()->json(['message' => 'O ficheiro tem de ter a extensão .gpx'], 422);
+        }
+        $dir = public_path('uploads');
+        if (!is_dir($dir)) mkdir($dir, 0755, true);
+        $filename = uniqid('gpx_', true) . '.gpx';
+        $request->file('gpx')->move($dir, $filename);
+        return response()->json(['url' => url('uploads/' . $filename)]);
+    });
+
     // Embarcações
     Route::apiResource('boats', BoatController::class);
 

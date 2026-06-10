@@ -1,13 +1,14 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input, Textarea, Select, Label } from "../components/ui/Input.jsx";
 import { PrimaryButton } from "../components/ui/Button.jsx";
 import { BackButton } from "../components/ui/BackButton.jsx";
-import { RectanglePhotoUpload } from "../components/ui/PhotoUpload.jsx";
+import { MultiPhotoUpload, GpxUpload } from "../components/ui/PhotoUpload.jsx";
 import { PinIcon } from "../components/ui/Icons.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { createPost, uploadFile } from "../services/api.js";
+import { createPost, uploadFile, uploadGpx } from "../services/api.js";
 import { useRoutes } from "../hooks/useApi.js";
+import { parseGpx } from "../utils/gpx.js";
 
 function CharCount({ current, max }) {
   const warn = current > max * 0.9;
@@ -24,7 +25,8 @@ export default function AddPost() {
   const apiRoutes = useRoutes();
 
   const [form, setForm] = useState({ title: "", description: "", location: "", route: "" });
-  const [photoFile, setPhotoFile] = useState(null);
+  const [photoFiles, setPhotoFiles] = useState([]);
+  const [gpxFile, setGpxFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -37,21 +39,37 @@ export default function AddPost() {
     setLoading(true);
     setError("");
     try {
-      let postUrls = [];
-      if (photoFile) {
-        const uploaded = await uploadFile(token, photoFile);
-        postUrls = [uploaded.url];
+      const uploaded = await Promise.all(photoFiles.map((f) => uploadFile(token, f)));
+      const postUrls = uploaded.map((u) => u.url);
+
+      let gpxUrl = null;
+      let gpxPoints = null;
+      if (gpxFile) {
+        // Parse no cliente para guardar os pontos da rota (renderizados no mapa
+        // sem voltar a descarregar o ficheiro), e guarda também o .gpx original.
+        const points = parseGpx(await gpxFile.text());
+        if (points.length === 0) {
+          throw new Error("Ficheiro GPX inválido ou sem pontos de rota.");
+        }
+        const gpx = await uploadGpx(token, gpxFile);
+        gpxUrl = gpx.url;
+        gpxPoints = points;
       }
+
       await createPost(token, {
         title: form.title,
         description: form.description,
         location: form.location || null,
         route_doc: form.route || null,
         post_url: postUrls.length > 0 ? postUrls : null,
+        gpx_url: gpxUrl,
+        gpx_points: gpxPoints,
       });
       navigate("/social");
     } catch (err) {
-      setError(err?.message ?? "Erro ao publicar. Tenta novamente.");
+      // Mostra erros de validação do Laravel (err.errors) quando existirem.
+      const firstFieldError = err?.errors ? Object.values(err.errors)[0]?.[0] : null;
+      setError(firstFieldError ?? err?.message ?? "Erro ao publicar. Tenta novamente.");
     } finally {
       setLoading(false);
     }
@@ -68,7 +86,7 @@ export default function AddPost() {
 
       <div className="flex-1 px-4 pt-4 overflow-y-auto flex flex-col">
         <div className="mb-5">
-          <RectanglePhotoUpload onFileChange={setPhotoFile} />
+          <MultiPhotoUpload onFilesChange={setPhotoFiles} />
         </div>
 
         {error && <p className="text-xs text-danger text-center mb-3">{error}</p>}
@@ -123,6 +141,14 @@ export default function AddPost() {
               </option>
             ))}
           </Select>
+        </div>
+
+        <div className="mb-4">
+          <Label>
+            Rota percorrida (GPX){" "}
+            <span className="font-normal text-muted-soft">(opcional)</span>
+          </Label>
+          <GpxUpload onFileChange={setGpxFile} />
         </div>
       </div>
 
