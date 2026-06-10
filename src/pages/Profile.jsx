@@ -6,8 +6,13 @@ import { ProfilePostCard } from "../components/shared/PostCard.jsx";
 import { RouteCard } from "../components/shared/RouteCard.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { useRoutes } from "../hooks/useApi.js";
-import { saveRoute } from "../services/api.js";
+import { getPosts, saveRoute } from "../services/api.js";
 import { getRouteImage } from "../services/routeImages.js";
+
+function formatDate(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" });
+}
 
 function extractId(raw) {
   if (!raw) return null;
@@ -53,6 +58,38 @@ export default function Profile() {
   useEffect(() => {
     setSavedIds(user?.saved_routes ?? []);
   }, [user]);
+
+  // Posts do próprio utilizador (o feed devolve todos; filtramos pelo user_id).
+  useEffect(() => {
+    if (!token) return;
+    const myId = user?._id ?? user?.id;
+    let cancelled = false;
+    getPosts(token)
+      .then((data) => {
+        if (cancelled) return;
+        setPosts(
+          data
+            .filter((p) => p.user_id === myId)
+            .map((p) => ({
+              id: p.id ?? p._id,
+              username: p.username ?? user?.username ?? "",
+              date: formatDate(p.created_at),
+              location: p.location ?? "",
+              image: p.post_url?.[0] ?? IMAGES.posts.feed1,
+              images: p.post_url ?? [],
+              gpxUrl: p.gpx_url ?? null,
+              gpxPoints: p.gpx_points ?? null,
+              title: p.title,
+              description: p.description,
+              liked: (p.likes ?? []).includes(myId),
+              likes: (p.likes ?? []).length,
+              comments: (p.comments ?? []).length,
+            })),
+        );
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [token, user]);
 
   // Vai buscar uma foto real do local para cada rota guardada (igual à página de rotas)
   useEffect(() => {
@@ -163,7 +200,21 @@ export default function Profile() {
 
       <div className="px-4 py-4 flex flex-col gap-4">
         {activeTab === "posts" &&
-          posts.map((p) => <ProfilePostCard key={p.id} post={p} onToggleLike={toggleLike} />)}
+          (posts.length > 0 ? (
+            posts.map((p) => (
+              <ProfilePostCard
+                key={p.id}
+                post={p}
+                onToggleLike={toggleLike}
+                onOpenDetail={() => navigate("/social/post", { state: { post: p } })}
+              />
+            ))
+          ) : (
+            <div className="text-center py-12 text-muted">
+              <p className="text-sm font-medium">Ainda não publicaste nada</p>
+              <p className="text-xs mt-1">Partilha a tua primeira aventura na página Social</p>
+            </div>
+          ))}
         {activeTab === "rotas" &&
           (savedRoutes.length > 0 ? (
             savedRoutes.map((r) => (

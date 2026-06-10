@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useOutletContext } from "react-router-dom";
+import { useLocation, useOutletContext } from "react-router-dom";
 import {
   MapContainer,
   ZoomControl,
@@ -13,12 +13,16 @@ import { RIA_CENTER, INITIAL_ZOOM } from "../components/map/mapHelpers.js";
 import { MapHeader } from "../components/map/MapHeader.jsx";
 import { MapInner } from "../components/map/MapInner.jsx";
 import { DockMarkers } from "../components/map/DockMarkers.jsx";
+import { RoutePath } from "../components/map/RoutePath.jsx";
 import { TidesPanel } from "../components/map/TidesPanel.jsx";
 import { SimulationSheet } from "../components/map/SimulationSheet.jsx";
 import { LocatingToast } from "../components/map/LocatingToast.jsx";
 
 export default function MapPage() {
   const { openSidebar } = useOutletContext();
+  const { state } = useLocation();
+  const gpxUrl = state?.gpxUrl ?? null;
+  const gpxPoints = state?.gpxPoints ?? null;
   const [baseLayer, setBaseLayer] = useState("osm");
   const [nauticalVisible, setNauticalVisible] = useState(true);
   const [simOpen, setSimOpen] = useState(false);
@@ -59,6 +63,10 @@ export default function MapPage() {
           />
 
           <DockMarkers docks={docks} />
+
+          {(gpxPoints?.length || gpxUrl) && (
+            <RoutePath points={gpxPoints} gpxUrl={gpxUrl} />
+          )}
 
           <ZoomControl position="bottomright" />
           <AttributionControl position="bottomleft" prefix={false} />
