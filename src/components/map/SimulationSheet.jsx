@@ -1,22 +1,76 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useDocks } from "../../hooks/useApi";
 import { SIM_LEGEND } from "./mapHelpers.js";
+import { simularRota } from "../../services/simulacaoService.js";
+import { useAuth } from "../../contexts/AuthContext.jsx";
+import { getBoats } from "../../services/api.js";
 
-export function SimulationSheet({ open, onClose }) {
+export function SimulationSheet({ open, onClose, route, onResults }) {
   const { docks } = useDocks();
+  const { token } = useAuth();
+  const [boat, setBoat] = useState(null);
   const [form, setForm] = useState({
     partida: "",
     chegada: "",
     data: new Date().toISOString().slice(0, 10),
     hora: 12,
   });
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState("");
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (!token) return;
+    getBoats(token)
+      .then((boats) => setBoat(boats?.[0] ?? null))
+      .catch(() => {});
+  }, [token]);
+
   const set = (f) => (e) => setForm((p) => ({ ...p, [f]: e.target.value }));
 
-  const canSimulate = form.partida && form.chegada && form.partida !== form.chegada;
+  // Reset ao fechar ou ao mudar de rota
+  useEffect(() => {
+    if (!open) {
+      setLoading(false);
+      setProgress("");
+      setError(null);
+    }
+  }, [open]);
 
-  const handleSimulate = () => {
-    if (!canSimulate) return;
-    alert("Simulação em desenvolvimento — à espera da API Valida4D.");
+  useEffect(() => {
+    setError(null);
+    setProgress("");
+  }, [route]);
+
+  const hasTrackpoints = Array.isArray(route?.trackpoints) && route.trackpoints.length > 1;
+  const canSimulate = hasTrackpoints
+    ? true
+    : form.partida && form.chegada && form.partida !== form.chegada;
+
+  const handleSimulate = async () => {
+    if (!canSimulate || loading) return;
+    setLoading(true);
+    setError(null);
+    setProgress("");
+
+    try {
+      const hora = String(form.hora).padStart(2, "0") + ":00";
+      const resultado = await simularRota({
+        pontos: route.trackpoints,
+        data: form.data,
+        hora,
+        calado:         boat?.height          ?? 1.0,
+        folgaSuperior:  boat?.upper_clearance  ?? 0.2,
+        folgaInferior:  boat?.lower_clearance  ?? 0.1,
+        onProgress: setProgress,
+      });
+      onResults?.(resultado);
+      onClose();
+    } catch (err) {
+      setError(err.message ?? "Erro desconhecido na simulação.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -45,10 +99,25 @@ export function SimulationSheet({ open, onClose }) {
         </div>
 
         <div className="sim-sheet__body">
-          <div className="sim-sheet__grid">
-            <DockSelect label="Cais de Partida" value={form.partida} onChange={set("partida")} docks={docks} />
-            <DockSelect label="Cais de Chegada" value={form.chegada} onChange={set("chegada")} docks={docks} />
-          </div>
+          {hasTrackpoints ? (
+            <div className="sim-sheet__route-badge">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="flex-shrink-0">
+                <path d="M3 17h4l3-10 4 14 3-8h4" stroke="#007AFF" strokeWidth="2"
+                      strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+              <span className="text-sm font-semibold text-dark truncate">
+                {route.nome ?? "Rota seleccionada"}
+              </span>
+              {route.distancia_nm && (
+                <span className="text-xs text-muted flex-shrink-0">{route.distancia_nm} nm</span>
+              )}
+            </div>
+          ) : (
+            <div className="sim-sheet__grid">
+              <DockSelect label="Cais de Partida" value={form.partida} onChange={set("partida")} docks={docks} />
+              <DockSelect label="Cais de Chegada" value={form.chegada} onChange={set("chegada")} docks={docks} />
+            </div>
+          )}
 
           <div className="sim-sheet__grid">
             <div>
@@ -63,28 +132,33 @@ export function SimulationSheet({ open, onClose }) {
                 </span>
               </label>
               <input
-                type="range"
-                min="0"
-                max="23"
-                step="1"
-                value={form.hora}
-                onChange={set("hora")}
+                type="range" min="0" max="23" step="1"
+                value={form.hora} onChange={set("hora")}
                 className="sim-sheet__range"
               />
             </div>
           </div>
 
-          <BoatInfo />
+          <BoatInfo boat={boat} />
 
-          <ApiPendingBanner />
+          {error && (
+            <div className="rounded-xl p-3 flex gap-2 bg-red-50 border border-red-200">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="flex-shrink-0 mt-px">
+                <circle cx="12" cy="12" r="10" stroke="#E74C3C" strokeWidth="2" />
+                <line x1="12" y1="8" x2="12" y2="12" stroke="#E74C3C" strokeWidth="2" strokeLinecap="round" />
+                <line x1="12" y1="16" x2="12.01" y2="16" stroke="#E74C3C" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+              <p className="text-[11px] text-red-700 leading-relaxed">{error}</p>
+            </div>
+          )}
 
           <button
             type="button"
-            disabled={!canSimulate}
+            disabled={!canSimulate || loading}
             onClick={handleSimulate}
             className="sim-sheet__cta"
           >
-            Simular Rota
+            {loading ? (progress || "A simular…") : "Simular Rota"}
           </button>
 
           <SimLegend />
@@ -102,9 +176,7 @@ function DockSelect({ label, value, onChange, docks }) {
         <select value={value} onChange={onChange} className="sim-sheet__select">
           <option value="">Seleciona um cais...</option>
           {docks.map((d) => (
-            <option key={d.id || d._id} value={d.id || d._id}>
-              {d.nome}
-            </option>
+            <option key={d.id || d._id} value={d.id || d._id}>{d.nome}</option>
           ))}
         </select>
         <div className="sim-sheet__chevron">▾</div>
@@ -113,7 +185,12 @@ function DockSelect({ label, value, onChange, docks }) {
   );
 }
 
-function BoatInfo() {
+function BoatInfo({ boat }) {
+  const nome    = boat?.name ?? "Sem barco registado";
+  const calado  = boat?.height          != null ? `${boat.height}m`         : "—";
+  const folgaSup = boat?.upper_clearance != null ? `${boat.upper_clearance}m` : "—";
+  const folgaInf = boat?.lower_clearance != null ? `${boat.lower_clearance}m` : "—";
+
   return (
     <div className="sim-sheet__boat">
       <div className="sim-sheet__boat-icon">
@@ -123,32 +200,12 @@ function BoatInfo() {
         </svg>
       </div>
       <div className="flex-1">
-        <div className="text-[13px] font-semibold text-dark">Gaivota</div>
-        <div className="text-[11px] text-muted mt-px">Calado: 0.8m · Folgas: ±0.2m</div>
-      </div>
-      <button type="button" className="text-[11px] font-semibold text-primary">
-        Alterar
-      </button>
-    </div>
-  );
-}
-
-function ApiPendingBanner() {
-  return (
-    <div className="sim-sheet__banner">
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" className="flex-shrink-0 mt-px">
-        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"
-              stroke="#f57c00" strokeWidth="2" />
-        <line x1="12" y1="9" x2="12" y2="13" stroke="#f57c00" strokeWidth="2" strokeLinecap="round" />
-        <line x1="12" y1="17" x2="12.01" y2="17" stroke="#f57c00" strokeWidth="2" strokeLinecap="round" />
-      </svg>
-      <div>
-        <div className="text-xs font-bold text-warning mb-0.5">
-          API Valida4D — A aguardar acesso
-        </div>
-        <div className="text-[11px] text-muted leading-relaxed">
-          O pedido de acesso à Hidromod está em curso. A simulação real de navegabilidade estará disponível em breve.
-        </div>
+        <div className="text-[13px] font-semibold text-dark">{nome}</div>
+        {boat && (
+          <div className="text-[11px] text-muted mt-px">
+            Calado: {calado} · Folga sup: {folgaSup} · Folga inf: {folgaInf}
+          </div>
+        )}
       </div>
     </div>
   );
