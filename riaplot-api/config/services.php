@@ -28,6 +28,12 @@ return [
         'region' => env('AWS_DEFAULT_REGION', 'us-east-1'),
     ],
 
+    'sismar' => [
+        'base_url'   => env('SISMAR_BASE_URL',   'https://sismarservices.hidromod.com/reader'),
+        'initial_id' => env('SISMAR_INITIAL_ID', 0),   // ← preencher depois do Swagger
+        'timeout'    => env('SISMAR_TIMEOUT',    30),
+    ],
+
     'slack' => [
         'notifications' => [
             'bot_user_oauth_token' => env('SLACK_BOT_USER_OAUTH_TOKEN'),
