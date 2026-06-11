@@ -7,6 +7,7 @@ use App\Http\Controllers\PoiController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Api\DockController;
+use App\Http\Controllers\Api\TideController;
 use App\Http\Controllers\SimulacaoController;
 use App\Http\Controllers\Api\HidromodController;
 
@@ -20,6 +21,10 @@ Route::get('/docks/{id}',  [DockController::class, 'show']);
 Route::get('/routes',      [RouteController::class, 'index']);
 Route::get('/routes/{id}', [RouteController::class, 'show']);
 Route::get('/pois',        [PoiController::class, 'index']);
+
+// Marés (previsão FCUL/IH — pública)
+Route::get('/tides/current', [TideController::class, 'current']);
+Route::get('/tides',         [TideController::class, 'index']);
 
 // Tudo o resto precisa de autenticação
 Route::middleware('auth:sanctum')->group(function () {

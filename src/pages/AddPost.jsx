@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Input, Textarea, Select, Label } from "../components/ui/Input.jsx";
 import { PrimaryButton } from "../components/ui/Button.jsx";
 import { BackButton } from "../components/ui/BackButton.jsx";
 import { MultiPhotoUpload, GpxUpload } from "../components/ui/PhotoUpload.jsx";
 import { PinIcon } from "../components/ui/Icons.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { createPost, uploadFile, uploadGpx } from "../services/api.js";
+import { createPost, updatePost, uploadFile, uploadGpx } from "../services/api.js";
 import { useRoutes } from "../hooks/useApi.js";
 import { parseGpx } from "../utils/gpx.js";
 
@@ -21,14 +21,33 @@ function CharCount({ current, max }) {
 
 export default function AddPost() {
   const navigate = useNavigate();
+  const { state } = useLocation();
   const { token } = useAuth();
   const apiRoutes = useRoutes();
 
-  const [form, setForm] = useState({ title: "", description: "", location: "", route: "" });
-  const [photoFiles, setPhotoFiles] = useState([]);
+  const editPost = state?.editPost ?? null;
+  const isEdit = !!editPost;
+
+  const [form, setForm] = useState({
+    title: editPost?.title ?? "",
+    description: editPost?.description ?? "",
+    location: editPost?.location ?? "",
+    route: editPost?.route_doc ?? "",
+  });
+  // Lista ordenada de fotos: cada item é `{ file }` (nova) ou `{ url }` (já
+  // existente). Em edição arranca com as fotos atuais do post.
+  const [photoItems, setPhotoItems] = useState(() =>
+    (editPost?.images ?? []).map((url) => ({ url })),
+  );
   const [gpxFile, setGpxFile] = useState(null);
+  // Em edição, o GPX só é tocado quando o utilizador escolhe outro ou o remove.
+  const [gpxChanged, setGpxChanged] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const initialGpxName = editPost?.gpxUrl
+    ? decodeURIComponent(editPost.gpxUrl.split("/").pop()) || "rota.gpx"
+    : null;
 
   const set = (field) => (e) => setForm((p) => ({ ...p, [field]: e.target.value }));
 
@@ -39,8 +58,13 @@ export default function AddPost() {
     setLoading(true);
     setError("");
     try {
-      const uploaded = await Promise.all(photoFiles.map((f) => uploadFile(token, f)));
-      const postUrls = uploaded.map((u) => u.url);
+      // Mantém a ordem: reutiliza URLs já existentes e faz upload apenas das
+      // fotos novas (em edição podem coexistir fotos antigas e novas).
+      const postUrls = await Promise.all(
+        photoItems.map(async (item) =>
+          item.url ?? (await uploadFile(token, item.file)).url,
+        ),
+      );
 
       let gpxUrl = null;
       let gpxPoints = null;
@@ -54,6 +78,25 @@ export default function AddPost() {
         const gpx = await uploadGpx(token, gpxFile);
         gpxUrl = gpx.url;
         gpxPoints = points;
+      }
+
+      if (isEdit) {
+        const payload = {
+          title: form.title,
+          description: form.description,
+          location: form.location || null,
+          route_doc: form.route || null,
+          post_url: postUrls.length > 0 ? postUrls : null,
+        };
+        // Só mexe no GPX se o utilizador o trocou ou removeu; caso contrário,
+        // mantém o do post original.
+        if (gpxChanged) {
+          payload.gpx_url = gpxUrl;
+          payload.gpx_points = gpxPoints;
+        }
+        await updatePost(token, editPost.id, payload);
+        navigate("/social");
+        return;
       }
 
       await createPost(token, {
@@ -80,13 +123,16 @@ export default function AddPost() {
       <div className="flex items-center px-4 flex-shrink-0 h-12 relative">
         <BackButton />
         <h1 className="absolute inset-x-0 text-center text-lg font-bold text-dark pointer-events-none">
-          Novo Post
+          {isEdit ? "Editar Post" : "Novo Post"}
         </h1>
       </div>
 
       <div className="flex-1 px-4 pt-4 overflow-y-auto flex flex-col">
         <div className="mb-5">
-          <MultiPhotoUpload onFilesChange={setPhotoFiles} />
+          <MultiPhotoUpload
+            onChange={setPhotoItems}
+            initialImages={isEdit ? (editPost?.images ?? []) : []}
+          />
         </div>
 
         {error && <p className="text-xs text-danger text-center mb-3">{error}</p>}
@@ -148,13 +194,19 @@ export default function AddPost() {
             Rota percorrida (GPX){" "}
             <span className="font-normal text-muted-soft">(opcional)</span>
           </Label>
-          <GpxUpload onFileChange={setGpxFile} />
+          <GpxUpload
+            initialName={initialGpxName}
+            onFileChange={(f) => {
+              setGpxFile(f);
+              setGpxChanged(true);
+            }}
+          />
         </div>
       </div>
 
       <div className="px-4 py-4 pb-8 flex-shrink-0">
         <PrimaryButton onClick={handlePublish} disabled={!canPublish} loading={loading} className="w-full">
-          Publicar
+          {isEdit ? "Guardar alterações" : "Publicar"}
         </PrimaryButton>
       </div>
     </>

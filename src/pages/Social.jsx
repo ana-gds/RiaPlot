@@ -13,12 +13,16 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" });
 }
 
+// Quantos posts mostrar de cada vez (paginação no cliente).
+const PAGE_SIZE = 5;
+
 export default function Social() {
   const navigate = useNavigate();
   const { openSidebar } = useOutletContext();
   const { user, token } = useAuth();
   const [posts, setPosts] = useState([]);
   const [search, setSearch] = useState("");
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   useEffect(() => {
     getPosts(token)
@@ -26,19 +30,22 @@ export default function Social() {
         setPosts(
           data.map((p) => ({
             id: p.id ?? p._id,
+            user_id: p.user_id,
             username: p.username ?? "unknown",
-            avatar: IMAGES.avatars.user1,
+            avatar: p.photo_url ?? null,
+            photo_url: p.photo_url ?? null,
             date: formatDate(p.created_at),
             location: p.location ?? "",
             image: p.post_url?.[0] ?? IMAGES.posts.feed1,
             images: p.post_url ?? [],
             gpxUrl: p.gpx_url ?? null,
             gpxPoints: p.gpx_points ?? null,
+            route_doc: p.route_doc ?? "",
             title: p.title,
             description: p.description,
+            comments: p.comments ?? [],
             liked: (p.likes ?? []).includes(user?._id ?? user?.id),
             saved: false,
-            route: p.route_doc || p.gpx_url ? { distance: "—", duration: "—" } : null,
           })),
         );
       })
@@ -65,6 +72,13 @@ export default function Social() {
     );
   }, [posts, search]);
 
+  const visible = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+
+  const handleSearch = (v) => {
+    setSearch(v);
+    setVisibleCount(PAGE_SIZE);
+  };
+
   return (
     <>
       <div className="flex items-center gap-3 px-4 pb-3 flex-shrink-0 sticky top-0 bg-white z-10 border-b border-secondary/5">
@@ -74,8 +88,8 @@ export default function Social() {
         <h1 className="hidden md:block text-xl font-bold text-dark shrink-0">Social</h1>
         <SearchBar
           value={search}
-          onChange={setSearch}
-          onClear={() => setSearch("")}
+          onChange={handleSearch}
+          onClear={() => handleSearch("")}
           placeholder="Procura um post ou utilizador"
         />
       </div>
@@ -83,18 +97,35 @@ export default function Social() {
       <div className="flex-1 overflow-y-auto pt-2 pb-4">
         <div className="w-full md:max-w-xl md:mx-auto">
           {filtered.length > 0 ? (
-            filtered.map((post, i) => (
-              <div key={post.id}>
-                {i > 0 && <div className="h-px mx-4 my-2 bg-secondary/10" />}
-                <FeedPostCard
-                  post={post}
-                  onToggleLike={toggleLike}
-                  onToggleSave={toggleSave}
-                  onOpenDetail={() => navigate("/social/post", { state: { post } })}
-                  onOpenComments={() => navigate("/social/post", { state: { post } })}
-                />
-              </div>
-            ))
+            <>
+              {visible.map((post, i) => (
+                <div key={post.id}>
+                  {i > 0 && <div className="h-px mx-4 my-2 bg-secondary/10" />}
+                  <FeedPostCard
+                    post={post}
+                    onToggleLike={toggleLike}
+                    onToggleSave={toggleSave}
+                    onOpenDetail={() => navigate("/social/post", { state: { post } })}
+                    onOpenComments={() => navigate("/social/post", { state: { post } })}
+                  />
+                </div>
+              ))}
+
+              {visibleCount < filtered.length && (
+                <div className="flex flex-col items-center gap-2 mt-4 mb-2">
+                  <span className="text-xs text-muted">
+                    A mostrar {visible.length} de {filtered.length}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                    className="h-11 px-6 rounded-2xl bg-primary text-white text-sm font-semibold shadow-primary-button active:scale-95"
+                  >
+                    Carregar mais
+                  </button>
+                </div>
+              )}
+            </>
           ) : (
             <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
               <CommentIcon size={48} color="var(--color-muted-soft)" className="mb-3" />

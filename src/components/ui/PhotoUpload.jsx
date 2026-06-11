@@ -102,16 +102,21 @@ export function RectanglePhotoUpload({ preview, onFileChange, height = 220 }) {
 let photoUid = 0;
 
 /**
- * Multi-image picker. Calls `onFilesChange` with the current array of File
- * objects whenever the selection changes.
+ * Multi-image picker. Calls `onFilesChange` with the current array of new File
+ * objects, and `onChange` with the full ordered list of items — each either an
+ * already-uploaded image (`{ url }`) or a newly picked one (`{ file }`). Use
+ * `initialImages` (array of URLs) to pre-fill existing photos when editing.
  */
-export function MultiPhotoUpload({ onFilesChange, max = 8 }) {
+export function MultiPhotoUpload({ onFilesChange, onChange, initialImages = [], max = 8 }) {
   const inputRef = useRef(null);
-  const [items, setItems] = useState([]); // { id, file, preview }
+  const [items, setItems] = useState(() =>
+    initialImages.map((url) => ({ id: ++photoUid, file: null, preview: url, url })),
+  ); // { id, file, preview, url }
 
   const emit = (next) => {
     setItems(next);
-    onFilesChange?.(next.map((i) => i.file));
+    onFilesChange?.(next.filter((i) => i.file).map((i) => i.file));
+    onChange?.(next);
   };
 
   const addFiles = (fileList) => {
@@ -124,6 +129,7 @@ export function MultiPhotoUpload({ onFilesChange, max = 8 }) {
         id: ++photoUid,
         file,
         preview: URL.createObjectURL(file),
+        url: null,
       })),
     ];
     emit(next);
@@ -131,7 +137,7 @@ export function MultiPhotoUpload({ onFilesChange, max = 8 }) {
 
   const removeAt = (id) => {
     const target = items.find((i) => i.id === id);
-    if (target) URL.revokeObjectURL(target.preview);
+    if (target?.file) URL.revokeObjectURL(target.preview);
     emit(items.filter((i) => i.id !== id));
   };
 
@@ -193,10 +199,14 @@ export function MultiPhotoUpload({ onFilesChange, max = 8 }) {
   );
 }
 
-/** GPX file picker for the route taken. Calls `onFileChange` with the File (or null). */
-export function GpxUpload({ onFileChange }) {
+/**
+ * GPX file picker for the route taken. Calls `onFileChange` with the File when
+ * a new file is picked, or `null` when cleared. `initialName` pre-fills the name
+ * of an existing GPX file (when editing) without holding a File object.
+ */
+export function GpxUpload({ onFileChange, initialName = null }) {
   const inputRef = useRef(null);
-  const [fileName, setFileName] = useState(null);
+  const [fileName, setFileName] = useState(initialName);
 
   const clear = () => {
     setFileName(null);
