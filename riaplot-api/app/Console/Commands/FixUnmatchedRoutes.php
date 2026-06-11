@@ -70,10 +70,14 @@ class FixUnmatchedRoutes extends Command
                 continue;
             }
 
+            $positions   = $data['positions'];
+            $depths      = array_filter(array_column($positions, 'z'), 'is_numeric');
+            $minDepth    = $depths ? round((float) min($depths), 2) : null;
+
             $step        = 10; // sub-amostragem igual ao sim:import
             $trackpoints = [];
-            for ($i = 0; $i < count($data['positions']); $i += $step) {
-                $p = $data['positions'][$i];
+            for ($i = 0; $i < count($positions); $i += $step) {
+                $p = $positions[$i];
                 $trackpoints[] = [
                     'lat' => (float) $p['x'],
                     'lng' => (float) $p['y'],
@@ -86,7 +90,7 @@ class FixUnmatchedRoutes extends Command
             if ($isDry) {
                 $this->line("  ✓ [{$route->nome}]  ←  {$basename}");
             } else {
-                $route->update(['trackpoints' => $trackpoints, 'sim_file' => $basename]);
+                $route->update(['trackpoints' => $trackpoints, 'sim_file' => $basename, 'min_depth' => $minDepth]);
                 $this->line("  ✓ {$route->nome}");
             }
 

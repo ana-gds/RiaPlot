@@ -123,25 +123,17 @@ export function boatCompatibility(routeCalado, boatCalado) {
   };
 }
 
-// Nível médio da maré em Aveiro (≈ MSL acima do Zero Hidrográfico), usado como
-// referência: assume-se que o calado_max curado corresponde a este nível, e a
-// maré atual aumenta/diminui a profundidade disponível sobre os sequeiros.
-// Valor aproximado e afinável; a maré em Aveiro varia ~0,6 m (BM) a ~3,6 m (PM).
-const REF_TIDE_AVEIRO = 2.0;
-
 /**
  * Navegabilidade "agora": estima se o barco do utilizador passa na rota com a
  * maré atual (vinda de GET /tides/current).
  *
- * Modelo: calado_navegável(agora) ≈ calado_max + (maré_atual − maré_referência).
- * Em águas altas há mais profundidade sobre os sequeiros (mais calado admissível);
- * na baixa-mar, menos. A margem para o calado do barco define o veredito.
+ * Quando disponível, usa `route.min_depth` (profundidade mínima real da rota ao
+ * Zero Hidrográfico, extraída da batimetria Hidromod). A profundidade real no
+ * ponto mais raso é então: min_depth + tide.height (ambos referenciados ao ZH).
  *
- * Importante: é uma ESTIMATIVA. A maré usada é a do porto/barra de Aveiro; não
- * modela o desfasamento nem a batimetria fina dentro dos esteiros. Por isso o
- * texto deve ser apresentado como orientação, não como garantia.
+ * Sem min_depth, recai na fórmula de estimativa com calado_max (retrocompatível).
  *
- * @param {object} route  rota (usa calado_max e condicoes_mare)
+ * @param {object} route  rota (usa min_depth, calado_max e condicoes_mare)
  * @param {number} boatCalado  calado do barco do utilizador
  * @param {object|null} tide  resposta de /tides/current: { height, rising, next: {label, time, height} }
  * @returns {{status: "ok"|"limite"|"incompativel", title: string, message: string, tide: string}|null}
@@ -149,14 +141,12 @@ const REF_TIDE_AVEIRO = 2.0;
 export function navigabilityNow(route, boatCalado, tide) {
   if (!tide || typeof tide.height !== "number") return null;
 
-  // Contexto da maré, sempre presente.
   const trend = tide.rising ? "a subir" : "a descer";
   let tideLine = `Maré ${tide.height} m, ${trend}.`;
   if (tide.next) {
     tideLine += ` Próxima ${tide.next.label.toLowerCase()} às ${tide.next.time} (${tide.next.height} m).`;
   }
 
-  // Rotas que exigem estofo: a janela ótima é junto à maré parada (próximo extremo).
   const estofo = route?.condicoes_mare === "estofo";
   const estofoHint = estofo
     ? " Como pede maré de estofo, parte de modo a passar as zonas críticas perto da maré parada."
@@ -164,7 +154,6 @@ export function navigabilityNow(route, boatCalado, tide) {
 
   const boat = Number(boatCalado);
 
-  // Sem barco registado: só damos o contexto da maré.
   if (!boat || boat <= 0) {
     return {
       status: "ok",
@@ -176,10 +165,10 @@ export function navigabilityNow(route, boatCalado, tide) {
     };
   }
 
-  const routeCalado = route?.calado_max;
   const boatStr = `${boat} m`;
 
   // Rota sem restrição de calado: navegável independentemente da maré.
+  const routeCalado = route?.calado_max;
   if (!routeCalado || routeCalado >= 99) {
     return {
       status: "ok",
@@ -189,13 +178,19 @@ export function navigabilityNow(route, boatCalado, tide) {
     };
   }
 
-  // Calado navegável estimado com a maré atual.
-  const navigableDraught = routeCalado + (tide.height - REF_TIDE_AVEIRO);
-  const margin = navigableDraught - boat;
-  const navStr = `${navigableDraught.toFixed(1)} m`;
+  // Profundidade real no ponto mais raso com a maré atual.
+  // min_depth (ZH) + tide.height = profundidade total disponível agora.
+  // Sem min_depth usa estimativa de offset sobre calado_max (retrocompatível).
+  const minDepth = typeof route?.min_depth === "number" ? route.min_depth : null;
+  const realDepth = minDepth !== null
+    ? minDepth + tide.height
+    : routeCalado + (tide.height - 2.0); // fallback: calado_max com referência MSL ≈ 2.0 m
+
+  const margin = realDepth - boat;
+  const depthStr = `${realDepth.toFixed(1)} m`;
+  const source = minDepth !== null ? "batimetria Hidromod" : "estimativa";
 
   if (margin < 0) {
-    // Sugere esperar pela próxima preia-mar quando a maré está a subir.
     const wait =
       tide.rising && tide.next?.type === "PM"
         ? ` Com a maré a subir, ganha profundidade até à preia-mar das ${tide.next.time} (${tide.next.height} m).`
@@ -203,7 +198,7 @@ export function navigabilityNow(route, boatCalado, tide) {
     return {
       status: "incompativel",
       title: "Não navegável agora",
-      message: `Com a maré atual, o calado navegável estimado é ~${navStr}, abaixo do teu barco (${boatStr}).${wait}`,
+      message: `Com a maré atual, a profundidade no ponto mais raso é ~${depthStr} (${source}), abaixo do teu barco (${boatStr}).${wait}`,
       tide: tideLine,
     };
   }
@@ -212,7 +207,7 @@ export function navigabilityNow(route, boatCalado, tide) {
     return {
       status: "limite",
       title: tide.rising ? "Navegável no limite — maré a subir" : "Navegável no limite — maré a descer",
-      message: `Com a maré atual ficas no limite: calado navegável estimado ~${navStr} vs ${boatStr} do teu barco.${estofoHint}`,
+      message: `Com a maré atual ficas no limite: profundidade mínima ~${depthStr} (${source}) vs ${boatStr} do teu barco.${estofoHint}`,
       tide: tideLine,
     };
   }
@@ -220,7 +215,7 @@ export function navigabilityNow(route, boatCalado, tide) {
   return {
     status: "ok",
     title: "Navegável agora",
-    message: `Com a maré atual passas com folga: calado navegável estimado ~${navStr} (o teu barco tem ${boatStr}).${estofoHint}`,
+    message: `Com a maré atual passas com folga: profundidade mínima ~${depthStr} (${source}), o teu barco tem ${boatStr}.${estofoHint}`,
     tide: tideLine,
   };
 }
