@@ -8,8 +8,7 @@ import { SearchBar } from "../components/shared/SearchBar.jsx";
 import { RouteCard } from "../components/shared/RouteCard.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { useRoutes } from "../hooks/useApi.js";
-import { saveRoute } from "../services/api.js";
-import { getRouteImage } from "../services/routeImages.js";
+import { saveRoute, getCurrentTide } from "../services/api.js";
 import { routeDifficulty } from "../utils/routeDifficulty.js";
 
 const DIFFICULTY_FILTERS = [
@@ -19,17 +18,15 @@ const DIFFICULTY_FILTERS = [
   { key: "muito_dificil", label: "Muito difícil", level: 4, color: "#e53935" },
 ];
 
+// Quantas rotas mostrar de cada vez (paginação no cliente). Limita também o
+// número de fotos da Wikipédia que vão buscar de uma vez.
+const PAGE_SIZE = 12;
+
 function extractId(raw) {
   if (!raw) return null;
   if (typeof raw === 'object') return raw.$oid ?? String(raw);
   return raw;
 }
-
-const ROUTE_IMAGES = [
-  IMAGES.routes.caleDoOuro,
-  IMAGES.routes.rioNovo,
-  IMAGES.routes.monteFarinha,
-];
 
 export default function Routes() {
   const navigate = useNavigate();
@@ -41,41 +38,74 @@ export default function Routes() {
   const [search, setSearch] = useState("");
   const [activeFilters, setActiveFilters] = useState([]);
   const [showFilters, setShowFilters] = useState(false);
-  const [imagesById, setImagesById] = useState({});
+  const [tide, setTide] = useState(null);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   useEffect(() => {
     setSavedIds(user?.saved_routes ?? []);
   }, [user]);
 
-  // Vai buscar uma foto real do local (Wikipédia) para cada rota.
+  // Maré atual no porto de Aveiro, para ajustar a dificuldade em tempo real.
   useEffect(() => {
     let cancelled = false;
-    apiRoutes.forEach((r) => {
-      const id = extractId(r._id ?? r.id);
-      if (!id) return;
-      getRouteImage(id, r).then((url) => {
-        if (!cancelled && url) setImagesById((prev) => ({ ...prev, [id]: url }));
-      });
-    });
+    getCurrentTide("aveiro")
+      .then((data) => {
+        if (!cancelled) setTide(data);
+      })
+      .catch(() => {});
     return () => { cancelled = true; };
-  }, [apiRoutes]);
+  }, []);
 
-  const routes = useMemo(() =>
-    apiRoutes.map((r, i) => {
+  // Dados de cada rota para a lista. A foto específica (`image_url`, Wikipédia)
+  // já vem no payload de `/routes` — preenchida na BD por `routes:fetch-images`,
+  // sem qualquer pedido no cliente. Sem foto específica, usa o placeholder local.
+  const routesBase = useMemo(() =>
+    apiRoutes.map((r) => {
       const id = extractId(r._id ?? r.id);
       return {
         id,
         title: r.nome ?? "Rota",
         route: [r.cais_partida?.nome, r.cais_chegada?.nome].filter(Boolean).join(" → ") || "",
-        image: imagesById[id] ?? ROUTE_IMAGES[i % ROUTE_IMAGES.length],
-        difficulty: routeDifficulty(r.calado_max, r.condicoes_mare),
+        image: r.image_url || IMAGES.routes.detail,
+        difficulty: routeDifficulty(r.calado_max, r.condicoes_mare, tide),
         saved: savedIds.includes(id),
       };
     }),
-  [apiRoutes, savedIds, imagesById]);
+  [apiRoutes, savedIds, tide]);
 
-  const toggleFilter = (key) =>
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const activeLevels = DIFFICULTY_FILTERS.filter((d) => activeFilters.includes(d.key)).map(
+      (d) => d.level,
+    );
+    const onlySaved = activeFilters.includes("guardadas");
+    const result = routesBase.filter((r) => {
+      if (q && !r.title.toLowerCase().includes(q) && !r.route.toLowerCase().includes(q))
+        return false;
+      if (activeLevels.length > 0 && !activeLevels.includes(r.difficulty)) return false;
+      if (onlySaved && !r.saved) return false;
+      return true;
+    });
+    if (activeFilters.includes("az")) {
+      result.sort((a, b) => a.title.localeCompare(b.title, "pt", { sensitivity: "base" }));
+    }
+    return result;
+  }, [routesBase, search, activeFilters]);
+
+  // Apenas a página atual.
+  const visible = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+
+  const resetPaging = () => setVisibleCount(PAGE_SIZE);
+
+  const handleSearch = (v) => {
+    setSearch(v);
+    resetPaging();
+  };
+
+  const toggleFilter = (key) => {
     setActiveFilters((f) => (f.includes(key) ? f.filter((x) => x !== key) : [...f, key]));
+    resetPaging();
+  };
 
   const toggleSave = async (id) => {
     setSavedIds((prev) =>
@@ -92,25 +122,6 @@ export default function Routes() {
     }
   };
 
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    const activeLevels = DIFFICULTY_FILTERS.filter((d) => activeFilters.includes(d.key)).map(
-      (d) => d.level,
-    );
-    const onlySaved = activeFilters.includes("guardadas");
-    const result = routes.filter((r) => {
-      if (q && !r.title.toLowerCase().includes(q) && !r.route.toLowerCase().includes(q))
-        return false;
-      if (activeLevels.length > 0 && !activeLevels.includes(r.difficulty)) return false;
-      if (onlySaved && !r.saved) return false;
-      return true;
-    });
-    if (activeFilters.includes("az")) {
-      result.sort((a, b) => a.title.localeCompare(b.title, "pt", { sensitivity: "base" }));
-    }
-    return result;
-  }, [routes, search, activeFilters]);
-
   return (
     <>
       <div className="px-4 pb-3 flex-shrink-0 bg-white sticky top-0 z-10 border-b border-secondary/5">
@@ -119,7 +130,7 @@ export default function Routes() {
             <MenuIcon />
           </CircularButton>
           <h1 className="hidden md:block text-xl font-bold text-dark shrink-0">Rotas</h1>
-          <SearchBar value={search} onChange={setSearch} onClear={() => setSearch("")} />
+          <SearchBar value={search} onChange={handleSearch} onClear={() => handleSearch("")} />
           <button
             type="button"
             onClick={() => setShowFilters((s) => !s)}
@@ -178,16 +189,33 @@ export default function Routes() {
 
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6">
         {filtered.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filtered.map((route) => (
-              <RouteCard
-                key={route.id}
-                route={route}
-                onToggleSave={toggleSave}
-                onClick={() => navigate(`/routes/${route.id}`)}
-              />
-            ))}
-          </div>
+          <>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+              {visible.map((route) => (
+                <RouteCard
+                  key={route.id}
+                  route={route}
+                  onToggleSave={toggleSave}
+                  onClick={() => navigate(`/routes/${route.id}`)}
+                />
+              ))}
+            </div>
+
+            {visibleCount < filtered.length && (
+              <div className="flex flex-col items-center gap-2 mt-6">
+                <span className="text-xs text-muted">
+                  A mostrar {visible.length} de {filtered.length}
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setVisibleCount((c) => c + PAGE_SIZE)}
+                  className="h-11 px-6 rounded-2xl bg-primary text-white text-sm font-semibold shadow-primary-button active:scale-95"
+                >
+                  Carregar mais
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <div className="text-center py-12 text-muted">
             <p className="text-sm font-medium">Nenhuma rota encontrada</p>

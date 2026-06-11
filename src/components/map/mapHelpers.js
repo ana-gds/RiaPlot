@@ -12,13 +12,6 @@ export const TILE_URLS = {
 
 export const IH_WMS_URL = "https://enc.hidrografico.pt/geoserver/ows?";
 
-export const MOCK_TIDES = [
-  { type: "PM", label: "Preia-Mar", time: "04:23", height: 3.4 },
-  { type: "BM", label: "Baixa-Mar", time: "10:51", height: 0.6 },
-  { type: "PM", label: "Preia-Mar", time: "16:47", height: 3.1 },
-  { type: "BM", label: "Baixa-Mar", time: "23:12", height: 0.8 },
-];
-
 export const SIM_LEGEND = [
   { color: "#4caf50", label: "Zona segura", desc: "Folga acima do limite superior" },
   { color: "#ffb74d", label: "Atenção", desc: "Folga entre limites inferior e superior" },

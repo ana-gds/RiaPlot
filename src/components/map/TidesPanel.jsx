@@ -1,4 +1,5 @@
-import { MOCK_TIDES } from "./mapHelpers.js";
+import { useEffect, useState } from "react";
+import { getTides } from "../../services/api.js";
 
 function nowHHMM() {
   const d = new Date();
@@ -7,14 +8,30 @@ function nowHHMM() {
 
 export function TidesPanel() {
   const nowStr = nowHHMM();
-  const nextTide = MOCK_TIDES.find((t) => t.time > nowStr) || MOCK_TIDES[0];
+  const [tides, setTides] = useState([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    getTides("aveiro")
+      .then((data) => {
+        if (!cancelled) setTides(data?.tides ?? []);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  if (tides.length === 0) {
+    return <div className="tides-panel tides-panel--empty">Marés indisponíveis</div>;
+  }
+
+  const nextTide = tides.find((t) => t.time > nowStr) || tides[0];
 
   return (
     <div className="tides-panel">
-      {MOCK_TIDES.map((tide, i) => {
+      {tides.map((tide, i) => {
         const isPast = tide.time < nowStr;
         const isNext = tide === nextTide;
-        const isLast = i === MOCK_TIDES.length - 1;
+        const isLast = i === tides.length - 1;
         return (
           <div
             key={tide.time}

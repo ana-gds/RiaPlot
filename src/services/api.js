@@ -80,6 +80,21 @@ export function createPost(token, data) {
     });
 }
 
+export function updatePost(token, id, data) {
+    return request(`/posts/${id}`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify(data),
+    });
+}
+
+export function deletePost(token, id) {
+    return request(`/posts/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
 export function likePost(token, id) {
     return request(`/posts/${id}/like`, {
         method: "POST",
@@ -106,6 +121,17 @@ export function saveRoute(token, id) {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
     });
+}
+
+// Marés (previsão FCUL/IH — público, sem token).
+export function getTides(port = "aveiro", date) {
+    const params = new URLSearchParams({ port });
+    if (date) params.set("date", date);
+    return request(`/tides?${params.toString()}`);
+}
+
+export function getCurrentTide(port = "aveiro") {
+    return request(`/tides/current?port=${encodeURIComponent(port)}`);
 }
 
 export async function uploadFile(token, file) {

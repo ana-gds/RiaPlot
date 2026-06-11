@@ -7,7 +7,6 @@ import { RouteCard } from "../components/shared/RouteCard.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { useRoutes } from "../hooks/useApi.js";
 import { getPosts, saveRoute } from "../services/api.js";
-import { getRouteImage } from "../services/routeImages.js";
 
 function formatDate(iso) {
   if (!iso) return "";
@@ -25,12 +24,6 @@ function calaoDifficulty(calado) {
   if (calado <= 1.0) return 2;
   return 3;
 }
-
-const ROUTE_IMAGES = [
-  IMAGES.routes.caleDoOuro,
-  IMAGES.routes.rioNovo,
-  IMAGES.routes.monteFarinha,
-];
 
 const TABS = [
   { key: "posts", label: "Posts" },
@@ -53,7 +46,6 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState("posts");
   const [posts, setPosts] = useState([]);
   const [savedIds, setSavedIds] = useState(() => user?.saved_routes ?? []);
-  const [imagesById, setImagesById] = useState({});
 
   useEffect(() => {
     setSavedIds(user?.saved_routes ?? []);
@@ -72,18 +64,22 @@ export default function Profile() {
             .filter((p) => p.user_id === myId)
             .map((p) => ({
               id: p.id ?? p._id,
+              user_id: p.user_id,
               username: p.username ?? user?.username ?? "",
+              photo_url: p.photo_url ?? user?.photo_url ?? null,
               date: formatDate(p.created_at),
               location: p.location ?? "",
               image: p.post_url?.[0] ?? IMAGES.posts.feed1,
               images: p.post_url ?? [],
               gpxUrl: p.gpx_url ?? null,
               gpxPoints: p.gpx_points ?? null,
+              route_doc: p.route_doc ?? "",
               title: p.title,
               description: p.description,
+              comments: p.comments ?? [],
               liked: (p.likes ?? []).includes(myId),
               likes: (p.likes ?? []).length,
-              comments: (p.comments ?? []).length,
+              commentCount: (p.comments ?? []).length,
             })),
         );
       })
@@ -91,36 +87,24 @@ export default function Profile() {
     return () => { cancelled = true; };
   }, [token, user]);
 
-  // Vai buscar uma foto real do local para cada rota guardada (igual à página de rotas)
-  useEffect(() => {
-    let cancelled = false;
-    apiRoutes.forEach((r) => {
-      const id = extractId(r._id ?? r.id);
-      if (!id || !savedIds.includes(id)) return;
-      getRouteImage(id, r).then((url) => {
-        if (!cancelled && url) setImagesById((prev) => ({ ...prev, [id]: url }));
-      });
-    });
-    return () => { cancelled = true; };
-  }, [apiRoutes, savedIds]);
-
-  // Rotas realmente guardadas pelo utilizador (saved_routes vem do servidor)
+  // Rotas realmente guardadas pelo utilizador (saved_routes vem do servidor).
+  // A foto já vem em `image_url` no payload de /routes.
   const savedRoutes = useMemo(() => {
     if (savedIds.length === 0) return [];
     return apiRoutes
       .filter((r) => savedIds.includes(extractId(r._id ?? r.id)))
-      .map((r, i) => {
+      .map((r) => {
         const id = extractId(r._id ?? r.id);
         return {
           id,
           title: r.nome ?? "Rota",
           route: [r.cais_partida?.nome, r.cais_chegada?.nome].filter(Boolean).join(" → ") || "",
-          image: imagesById[id] ?? ROUTE_IMAGES[i % ROUTE_IMAGES.length],
+          image: r.image_url || IMAGES.routes.detail,
           difficulty: calaoDifficulty(r.calado_max),
           saved: true,
         };
       });
-  }, [apiRoutes, savedIds, imagesById]);
+  }, [apiRoutes, savedIds]);
 
   const toggleSave = async (id) => {
     setSavedIds((prev) => prev.filter((x) => x !== id));
