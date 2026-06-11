@@ -83,6 +83,10 @@ class ImportSimulationData extends Command
             $first = $positions[0];
             $last  = $positions[count($positions) - 1];
 
+            // Profundidade mínima (ponto mais raso da rota ao ZH), usada no aviso de navegabilidade
+            $depths   = array_filter(array_column($positions, 'z'), 'is_numeric');
+            $minDepth = $depths ? round((float) min($depths), 2) : null;
+
             // Trackpoints sub-amostrados para a DB (mapa); JSON completo fica em disco
             $trackpoints = [];
             for ($i = 0; $i < count($positions); $i += $step) {
@@ -105,7 +109,7 @@ class ImportSimulationData extends Command
                 if ($isDry) {
                     $this->line("\n  [UPDATE] {$basename}  →  '{$match->nome}'");
                 } else {
-                    $match->update(['trackpoints' => $trackpoints, 'sim_file' => $basename]);
+                    $match->update(['trackpoints' => $trackpoints, 'sim_file' => $basename, 'min_depth' => $minDepth]);
                     // Actualiza a cópia em memória para evitar duplicados
                     $routes[$match->_id]->sim_file = $basename;
                 }
@@ -132,6 +136,7 @@ class ImportSimulationData extends Command
                         'cais_chegada' => ['nome' => $dockEnd['nome'],   'latitude' => $dockEnd['latitude'],   'longitude' => $dockEnd['longitude']],
                         'trackpoints'  => $trackpoints,
                         'sim_file'     => $basename,
+                        'min_depth'    => $minDepth,
                     ]);
                     // Adiciona à coleção em memória para evitar duplicados no mesmo batch
                     $routes[$newRoute->_id] = $newRoute;

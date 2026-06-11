@@ -41,6 +41,7 @@ class Route extends Model
         'simulation_data',   // { startDate, positions, waterLevels } — preenchido pela API Hidromod
         'trackpoints',
         'sim_file',          // Nome do ficheiro JSON em storage/app/sim/
+        'min_depth',         // Profundidade mínima ao longo da rota (m, ZH) — extraída do JSON de simulação
         'image_url',         // Foto representativa do local (Wikipédia), preenchida por `routes:fetch-images`
     ];
 
@@ -54,6 +55,7 @@ class Route extends Model
         'trackpoints' => 'array',
         'distancia_nm'      => 'float',
         'calado_max'        => 'float',
+        'min_depth'         => 'float',
         'routinav_id'       => 'integer',
         'rota_direta'       => 'boolean',
         'recomendada'       => 'boolean',
