@@ -18,8 +18,9 @@ Route::post('/login',    [AuthController::class, 'login']);
 // Cais, Rotas e POIs (públicos — o mapa não precisa de login)
 Route::get('/docks',       [DockController::class, 'index']);
 Route::get('/docks/{id}',  [DockController::class, 'show']);
-Route::get('/routes',      [RouteController::class, 'index']);
-Route::get('/routes/{id}', [RouteController::class, 'show']);
+Route::get('/routes',          [RouteController::class, 'index']);
+Route::get('/routes/map',      [RouteController::class, 'mapIndex']);
+Route::get('/routes/{id}',     [RouteController::class, 'show']);
 Route::get('/pois',        [PoiController::class, 'index']);
 
 // Marés (previsão FCUL/IH — pública)

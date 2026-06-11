@@ -20,6 +20,21 @@ class RouteController extends Controller
         return response()->json($routes);
     }
 
+    // Endpoint dedicado para o mapa: só devolve campos necessários para desenhar
+    // os traçados. Payload muito mais leve do que incluir trackpoints em /routes.
+    public function mapIndex()
+    {
+        $routes = Route::project([
+            'nome'         => 1,
+            'cais_partida' => 1,
+            'cais_chegada' => 1,
+            'distancia_nm' => 1,
+            'trackpoints'  => 1,
+        ])->whereNotNull('trackpoints')->get();
+
+        return response()->json($routes);
+    }
+
     public function show($id)
     {
         $route = Route::find($id);

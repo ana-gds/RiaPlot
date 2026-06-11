@@ -30,6 +30,20 @@ export function useRoutes(recomendada = false) {
     return routes;
 }
 
+// Rotas com trackpoints para o mapa — endpoint dedicado mais leve.
+export function useMapRoutes() {
+    const [routes, setRoutes] = useState([]);
+
+    useEffect(() => {
+        fetch(`${API}/routes/map`)
+            .then(r => r.json())
+            .then(data => setRoutes(Array.isArray(data) ? data : []))
+            .catch(() => {});
+    }, []);
+
+    return routes;
+}
+
 export async function fetchRoute(id) {
     const res = await fetch(`${API}/routes/${id}`);
     return res.json();
