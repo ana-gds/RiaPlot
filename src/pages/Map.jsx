@@ -49,6 +49,7 @@ export default function MapPage() {
   };
 
   const handleClearRoute = () => {
+    setSimResults(null);
     navigate("/map", { replace: true, state: {} });
   };
 
@@ -103,13 +104,15 @@ export default function MapPage() {
               )}
             </div>
             <div className="flex gap-2 flex-shrink-0">
-              <button
-                type="button"
-                onClick={() => navigate(`/routes/${selectedRouteId}`)}
-                className="text-xs font-medium px-3 py-1.5 rounded-xl border border-border-soft text-dark active:scale-95"
-              >
-                Detalhes
-              </button>
+              {!simResults && (
+                <button
+                  type="button"
+                  onClick={() => setSimOpen(true)}
+                  className="text-xs font-medium px-3 py-1.5 rounded-xl bg-primary text-white active:scale-95"
+                >
+                  Simular
+                </button>
+              )}
               <button
                 type="button"
                 onClick={handleClearRoute}
@@ -123,9 +126,11 @@ export default function MapPage() {
 
         {!selectedRoute && tidesVisible && <TidesPanel />}
 
-        <PrimaryButton onClick={() => setSimOpen(true)} className="px-6">
-          Simular Rota
-        </PrimaryButton>
+        {!selectedRoute && !simResults && (
+          <PrimaryButton onClick={() => setSimOpen(true)} className="px-6">
+            Simular Rota
+          </PrimaryButton>
+        )}
       </div>
 
       <LocatingToast visible={locating} />

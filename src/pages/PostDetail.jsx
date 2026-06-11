@@ -2,16 +2,16 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { IMAGES } from "../constants/images.js";
 import { BackButton } from "../components/ui/BackButton.jsx";
-import { HeartIcon, CommentIcon, SendIcon } from "../components/ui/Icons.jsx";
+import { HeartIcon, CommentIcon, SendIcon, EditIcon, TrashIcon } from "../components/ui/Icons.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { likePost, addComment } from "../services/api.js";
+import { likePost, addComment, deletePost } from "../services/api.js";
 
 function formatDate(iso) {
   if (!iso) return "";
   return new Date(iso).toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" });
 }
 
-function CommentsSheet({ open, onClose, comments, onAddComment }) {
+function CommentsSheet({ open, onClose, comments, onAddComment, meAvatar, meName }) {
   const [text, setText] = useState("");
   const inputRef = useRef(null);
 
@@ -70,7 +70,11 @@ function CommentsSheet({ open, onClose, comments, onAddComment }) {
           </div>
           <div className="flex items-center gap-3 px-4 py-3 border-t border-white/10">
             <div className="w-[30px] h-[30px] rounded-full overflow-hidden flex-shrink-0 bg-primary-soft flex items-center justify-center text-white text-xs font-bold">
-              {/* user initial */}
+              {meAvatar ? (
+                <img src={meAvatar} alt={meName} className="w-full h-full object-cover" />
+              ) : (
+                meName?.charAt(0)?.toUpperCase() ?? ""
+              )}
             </div>
             <div className="flex-1 h-[42px] rounded-full bg-white/10 flex items-center px-4">
               <input
@@ -112,7 +116,35 @@ export default function PostDetail() {
     return Array.isArray(post.likes) ? post.likes.includes(myId) : false;
   });
   const [commentsOpen, setCommentsOpen] = useState(false);
-  const [comments, setComments] = useState([]);
+  const [comments, setComments] = useState(() =>
+    (post?.comments ?? []).map((c) => ({
+      id: c.id ?? c._id,
+      username: c.username ?? "utilizador",
+      avatar: c.photo_url ?? null,
+      date: formatDate(c.created_at),
+      text: c.comment ?? c.text ?? "",
+    })),
+  );
+  const [deleting, setDeleting] = useState(false);
+
+  const myId = user?._id ?? user?.id;
+  const isOwner = !!post && !!myId && post.user_id === myId;
+
+  const handleEdit = () => {
+    navigate("/social/new", { state: { editPost: post } });
+  };
+
+  const handleDelete = async () => {
+    if (!post || deleting) return;
+    if (!window.confirm("Eliminar este post? Esta ação não pode ser revertida.")) return;
+    setDeleting(true);
+    try {
+      await deletePost(token, post.id);
+      navigate("/social");
+    } catch {
+      setDeleting(false);
+    }
+  };
 
   const handleLike = async () => {
     setLiked((l) => !l);
@@ -126,24 +158,28 @@ export default function PostDetail() {
   };
 
   const handleAddComment = async (text) => {
-    const newComment = {
-      id: Date.now(),
-      username: user?.username ?? "eu",
-      avatar: null,
-      date: new Date().toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" }),
-      text,
-    };
-    setComments((p) => [...p, newComment]);
-    if (post) {
-      try {
-        await addComment(token, post.id, text);
-      } catch {}
+    if (!post) return;
+    try {
+      const created = await addComment(token, post.id, text);
+      setComments((p) => [
+        ...p,
+        {
+          id: created?.id ?? Date.now(),
+          username: created?.username ?? user?.username ?? "eu",
+          avatar: created?.photo_url ?? user?.photo_url ?? null,
+          date: formatDate(created?.created_at) || formatDate(new Date().toISOString()),
+          text: created?.comment ?? text,
+        },
+      ]);
+    } catch {
+      // mantém o comentário por enviar; o utilizador pode tentar de novo
     }
   };
 
   const images = post?.images?.length ? post.images : [post?.image ?? IMAGES.posts.detail];
   const [activeImage, setActiveImage] = useState(0);
   const username = post?.username ?? "";
+  const avatar = post?.photo_url ?? null;
   const date = post?.date ?? "";
   const location = post?.location ?? "";
   const title = post?.title ?? "";
@@ -153,7 +189,7 @@ export default function PostDetail() {
   const hasRoute = gpxPoints?.length > 0 || !!gpxUrl;
 
   return (
-    <div className="flex flex-col flex-1">
+    <div className="flex flex-col flex-1 -mt-6 md:mt-0">
       <div className="relative w-full h-[328px] flex-shrink-0">
         <img src={images[activeImage]} alt={title} className="w-full h-full object-cover" />
         <div className="absolute left-4 top-4">
@@ -188,12 +224,37 @@ export default function PostDetail() {
       <article className="flex-1 -mt-4 rounded-t-2xl bg-white relative z-10 px-4 pt-6 pb-8 shadow-top-sheet">
         <header className="flex items-center gap-3 mb-5">
           <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-[#E6A45A] bg-primary-soft flex items-center justify-center text-white font-bold">
-            {username.charAt(0).toUpperCase()}
+            {avatar ? (
+              <img src={avatar} alt={username} className="w-full h-full object-cover" />
+            ) : (
+              username.charAt(0).toUpperCase()
+            )}
           </div>
           <div className="flex flex-col gap-px">
             <span className="text-sm text-dark">{username}</span>
             <span className="text-xs text-dark/70">{[date, location].filter(Boolean).join(" · ")}</span>
           </div>
+          {isOwner && (
+            <div className="ml-auto flex items-center gap-1">
+              <button
+                type="button"
+                onClick={handleEdit}
+                className="p-2 rounded-full text-dark/70 hover:bg-dark/5 active:scale-90"
+                aria-label="Editar post"
+              >
+                <EditIcon size={18} color="currentColor" />
+              </button>
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={deleting}
+                className="p-2 rounded-full text-danger hover:bg-danger/10 active:scale-90 disabled:opacity-40"
+                aria-label="Eliminar post"
+              >
+                <TrashIcon size={18} color="currentColor" />
+              </button>
+            </div>
+          )}
         </header>
 
         <h2 className="text-base font-bold mb-2 text-dark">{title}</h2>
@@ -224,6 +285,8 @@ export default function PostDetail() {
         onClose={() => setCommentsOpen(false)}
         comments={comments}
         onAddComment={handleAddComment}
+        meAvatar={user?.photo_url ?? null}
+        meName={user?.username ?? ""}
       />
     </div>
   );

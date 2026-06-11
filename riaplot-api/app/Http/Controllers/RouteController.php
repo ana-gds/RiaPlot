@@ -9,7 +9,14 @@ class RouteController extends Controller
 {
     public function index(Request $request)
     {
-        $routes = Route::all();
+        // A lista de rotas só precisa dos metadados (nome, cais, calado…). Os
+        // arrays pesados (`trackpoints` e `simulation_data`) só são necessários
+        // no detalhe da rota — excluí-los corta o payload de ~530 KB para ~65 KB.
+        $routes = Route::project([
+            'trackpoints'     => 0,
+            'simulation_data' => 0,
+        ])->get();
+
         return response()->json($routes);
     }
 

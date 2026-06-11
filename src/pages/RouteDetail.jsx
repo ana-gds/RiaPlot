@@ -16,12 +16,12 @@ import {
 import { DifficultyBar } from "../components/shared/DifficultyBadge.jsx";
 import { fetchRoute } from "../hooks/useApi.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { saveRoute, getBoats } from "../services/api.js";
-import { getRouteImage } from "../services/routeImages.js";
+import { saveRoute, getBoats, getCurrentTide } from "../services/api.js";
 import {
   routeDifficulty,
   DIFFICULTY_EXPLANATION,
   boatCompatibility,
+  navigabilityNow,
 } from "../utils/routeDifficulty.js";
 import { RouteMap } from "../components/map/RouteMap.jsx";
 import "leaflet/dist/leaflet.css";
@@ -83,6 +83,25 @@ function CompatibilityNote({ status, message }) {
   );
 }
 
+function NavigabilityCard({ status, title, message, tide }) {
+  const { color } = COMPAT_STYLES[status];
+  return (
+    <div
+      className="rounded-xl p-3"
+      style={{ background: `${color}14`, border: `1px solid ${color}55` }}
+    >
+      <div className="text-xs font-semibold leading-[18px] mb-1" style={{ color }}>
+        {title}
+      </div>
+      <div className="text-[11px] leading-[16.5px] text-muted">{message}</div>
+      <div className="text-[11px] leading-[16.5px] mt-1.5 text-muted">{tide}</div>
+      <div className="text-[10px] leading-[15px] mt-1 text-muted-soft">
+        Estimativa com base na maré da barra de Aveiro — não substitui a leitura local.
+      </div>
+    </div>
+  );
+}
+
 function InfoModal({ title, children, onClose }) {
   return (
     <div
@@ -119,10 +138,10 @@ export default function RouteDetail() {
   const navigate = useNavigate();
   const { user, token, updateUser } = useAuth();
   const [route, setRoute] = useState(null);
-  const [image, setImage] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saved, setSaved] = useState(false);
   const [boatCalado, setBoatCalado] = useState(null);
+  const [tide, setTide] = useState(null);
   const [showDifficultyInfo, setShowDifficultyInfo] = useState(false);
 
   // Calado do barco registado do utilizador, para avaliar a compatibilidade.
@@ -137,6 +156,17 @@ export default function RouteDetail() {
     return () => { cancelled = true; };
   }, [token]);
 
+  // Maré atual no porto de Aveiro (previsão FCUL/IH).
+  useEffect(() => {
+    let cancelled = false;
+    getCurrentTide("aveiro")
+      .then((data) => {
+        if (!cancelled) setTide(data);
+      })
+      .catch(() => {}); // 503 quando o ano ainda não foi importado
+    return () => { cancelled = true; };
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     fetchRoute(id)
@@ -145,9 +175,6 @@ export default function RouteDetail() {
         setRoute(data);
         const routeId = data._id?.$oid ?? data._id ?? id;
         setSaved(user?.saved_routes?.includes(routeId) ?? false);
-        getRouteImage(routeId, data).then((url) => {
-          if (!cancelled && url) setImage(url);
-        });
       })
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });
@@ -184,8 +211,9 @@ export default function RouteDetail() {
   const title = route.nome ?? "";
   const description = route.descricao_turistica ?? route.descricao ?? "";
   const distance = route.distancia_nm ? `${route.distancia_nm} nm` : "—";
-  const difficulty = routeDifficulty(route.calado_max, route.condicoes_mare);
+  const difficulty = routeDifficulty(route.calado_max, route.condicoes_mare, tide);
   const compatibility = boatCompatibility(route.calado_max, boatCalado);
+  const navigability = navigabilityNow(route, boatCalado, tide);
   const pois = route.pontos_interesse ?? [];
   const warnings = route.warnings ?? [];
   const warningText = warnings.join(" ");
@@ -193,7 +221,7 @@ export default function RouteDetail() {
   return (
     <div className="flex flex-col flex-1 -mt-6 md:mt-0">
       <div className="relative w-full h-[328px] flex-shrink-0">
-        <img src={image ?? IMAGES.routes.detail} alt={title} className="w-full h-full object-cover" />
+        <img src={route.image_url || IMAGES.routes.detail} alt={title} className="w-full h-full object-cover" />
 
         <div className="absolute left-4 top-4">
           <BackButton />
@@ -264,14 +292,28 @@ export default function RouteDetail() {
             <InfoIcon size={15} color="var(--color-muted)" />
           </button>
         </div>
-        <div className={compatibility ? "mb-2" : "mb-6"}>
+        <div className="mb-6">
           <DifficultyBar level={difficulty} />
         </div>
-        {compatibility && (
+
+        {/* Navegabilidade em tempo real: maré atual + barco. Recai na
+            compatibilidade estática se a maré não estiver disponível. */}
+        {navigability ? (
+          <>
+            <div className="mb-6">
+              <NavigabilityCard
+                status={navigability.status}
+                title={navigability.title}
+                message={navigability.message}
+                tide={navigability.tide}
+              />
+            </div>
+          </>
+        ) : compatibility ? (
           <div className="mb-6">
             <CompatibilityNote status={compatibility.status} message={compatibility.message} />
           </div>
-        )}
+        ) : null}
 
         {showDifficultyInfo && (
           <InfoModal title="Como é calculada a dificuldade?" onClose={() => setShowDifficultyInfo(false)}>

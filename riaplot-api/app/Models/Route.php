@@ -40,6 +40,8 @@ class Route extends Model
         'pontos_interesse',  // array de { poi_id, nome, km_do_inicio }
         'simulation_data',   // { startDate, positions, waterLevels } — preenchido pela API Hidromod
         'trackpoints',
+        'sim_file',          // Nome do ficheiro JSON em storage/app/sim/
+        'image_url',         // Foto representativa do local (Wikipédia), preenchida por `routes:fetch-images`
     ];
 
     protected $casts = [

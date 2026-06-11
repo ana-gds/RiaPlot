@@ -1,15 +1,20 @@
-import { IMAGES } from "../../constants/images.js";
 import { HeartIcon, CommentIcon, BookmarkIcon } from "../ui/Icons.jsx";
 
 export function FeedPostCard({ post, onToggleLike, onToggleSave, onOpenComments, onOpenDetail }) {
   return (
     <article className="pb-2">
       <div className="flex items-center gap-3 px-4 pb-2.5">
-        <img
-          src={post.avatar}
-          alt={post.username}
-          className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-[#E6A45A]"
-        />
+        {post.avatar ? (
+          <img
+            src={post.avatar}
+            alt={post.username}
+            className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-[#E6A45A]"
+          />
+        ) : (
+          <div className="w-10 h-10 rounded-full flex-shrink-0 border-2 border-[#E6A45A] bg-primary-soft flex items-center justify-center text-white font-bold">
+            {post.username?.charAt(0)?.toUpperCase() ?? "?"}
+          </div>
+        )}
         <div className="flex flex-col gap-px">
           <span className="text-sm text-dark">{post.username}</span>
           <span className="text-xs text-dark/70">
@@ -33,19 +38,6 @@ export function FeedPostCard({ post, onToggleLike, onToggleSave, onOpenComments,
             alt={post.title}
             className="w-full h-[300px] rounded-2xl object-cover"
           />
-          {post.route && (
-            <div className="absolute bottom-4 left-4 flex rounded-lg overflow-hidden bg-black/45 backdrop-blur-[1px]">
-              <div className="flex flex-col items-center px-3.5 py-2.5 gap-0.5">
-                <span className="text-[10px] text-white/80">Distância</span>
-                <span className="text-xs font-bold text-white">{post.route.distance}</span>
-              </div>
-              <div className="w-px bg-white/30 my-2" />
-              <div className="flex flex-col items-center px-3.5 py-2.5 gap-0.5">
-                <span className="text-[10px] text-white/80">Duração</span>
-                <span className="text-xs font-bold text-white">{post.route.duration}</span>
-              </div>
-            </div>
-          )}
         </div>
       </div>
 
@@ -125,8 +117,8 @@ export function ProfilePostCard({ post, onToggleLike, onOpenDetail }) {
           <span>{post.likes}</span>
         </button>
         <button type="button" className="flex items-center gap-1.5 text-xs font-semibold text-dark">
-          <img src={IMAGES.icons.messages} alt="" className="w-[22px] h-[22px]" />
-          <span>{post.comments}</span>
+          <CommentIcon size={20} />
+          <span>{post.commentCount}</span>
         </button>
       </div>
     </article>
