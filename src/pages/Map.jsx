@@ -7,7 +7,7 @@ import {
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
-import { useDocks, useRoutes } from "../hooks/useApi";
+import { useDocks, useRoutes, useMapRoutes } from "../hooks/useApi";
 import { PrimaryButton } from "../components/ui/Button.jsx";
 import { RIA_CENTER, INITIAL_ZOOM } from "../components/map/mapHelpers.js";
 import { MapHeader } from "../components/map/MapHeader.jsx";
@@ -38,9 +38,10 @@ export default function MapPage() {
 
   const { docks } = useDocks();
   const routes = useRoutes();
+  const mapRoutes = useMapRoutes();
 
   const selectedRoute = selectedRouteId
-    ? routes.find((r) => (r.id ?? r._id?.$oid ?? r._id) === selectedRouteId)
+    ? mapRoutes.find((r) => (r.id ?? r._id?.$oid ?? r._id) === selectedRouteId)
     : null;
 
   const handleLocate = () => {
@@ -79,7 +80,7 @@ export default function MapPage() {
             onToggleTides={() => setTidesVisible((v) => !v)}
           />
 
-          <RoutePolylines routes={routes} selectedRouteId={selectedRouteId} />
+          <RoutePolylines routes={mapRoutes} selectedRouteId={selectedRouteId} />
           {simResults && <SimulationPolyline positions={simResults.positions} />}
           <DockMarkers docks={docks} />
 
