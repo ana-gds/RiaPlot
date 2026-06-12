@@ -41,6 +41,15 @@ export function createDockIcon(type) {
   });
 }
 
+export function createPoiIcon(type) {
+  const cls = type === "boia_bombordo" ? "boia-marker--bombordo" : "boia-marker--estibordo";
+  return L.divIcon({
+    className: "",
+    iconAnchor: [7, 7],
+    html: `<div class="boia-marker ${cls}"></div>`,
+  });
+}
+
 // Vite + Leaflet default-icon fix.
 delete L.Icon.Default.prototype._getIconUrl;
 L.Icon.Default.mergeOptions({

@@ -43,6 +43,19 @@ export function useMapRoutes() {
     return routes;
 }
 
+export function usePois() {
+    const [pois, setPois] = useState([]);
+
+    useEffect(() => {
+        fetch(`${API}/pois`)
+            .then(r => r.json())
+            .then(data => setPois(Array.isArray(data) ? data : []))
+            .catch(() => {});
+    }, []);
+
+    return pois;
+}
+
 export async function fetchRoute(id) {
     const res = await fetch(`${API}/routes/${id}`);
     return res.json();

@@ -24,6 +24,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             DockSeeder::class,
             RouteSeeder::class,
+            PoiSeeder::class,
         ]);
     }
 }
