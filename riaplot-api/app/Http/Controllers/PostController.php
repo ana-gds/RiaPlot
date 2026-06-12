@@ -84,7 +84,13 @@ class PostController extends Controller
         }
 
         $post->update(['likes' => array_values($likes)]);
-        return response()->json(['likes' => count($post->likes)]);
+
+        // Devolve a contagem e o estado atual para o cliente reconciliar sem
+        // depender do palpite otimista (evita ficar dessincronizado).
+        return response()->json([
+            'likes' => count($post->likes),
+            'liked' => in_array($userId, $post->likes),
+        ]);
     }
 
     public function comment(Request $request, $id)

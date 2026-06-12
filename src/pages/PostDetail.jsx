@@ -115,6 +115,11 @@ export default function PostDetail() {
     const myId = user?._id ?? user?.id;
     return Array.isArray(post.likes) ? post.likes.includes(myId) : false;
   });
+  const [likeCount, setLikeCount] = useState(() => {
+    if (!post) return 0;
+    if (typeof post.likes === "number") return post.likes;
+    return Array.isArray(post.likes) ? post.likes.length : 0;
+  });
   const [commentsOpen, setCommentsOpen] = useState(false);
   const [comments, setComments] = useState(() =>
     (post?.comments ?? []).map((c) => ({
@@ -147,13 +152,18 @@ export default function PostDetail() {
   };
 
   const handleLike = async () => {
+    if (!post) return;
+    // Otimista: alterna o estado e ajusta a contagem.
     setLiked((l) => !l);
-    if (post) {
-      try {
-        await likePost(token, post.id);
-      } catch {
-        setLiked((l) => !l);
-      }
+    setLikeCount((c) => c + (liked ? -1 : 1));
+    try {
+      const res = await likePost(token, post.id);
+      // Reconcilia com o servidor.
+      if (typeof res?.liked === "boolean") setLiked(res.liked);
+      if (typeof res?.likes === "number") setLikeCount(res.likes);
+    } catch {
+      setLiked((l) => !l);
+      setLikeCount((c) => c + (liked ? 1 : -1));
     }
   };
 
@@ -213,7 +223,7 @@ export default function PostDetail() {
         {hasRoute && (
           <button
             type="button"
-            onClick={() => navigate("/map", { state: { gpxPoints, gpxUrl } })}
+            onClick={() => navigate("/map", { state: { gpxPoints, gpxUrl, gpxTitle: title } })}
             className="absolute right-4 bottom-4 h-10 px-5 rounded-2xl bg-primary-soft text-white text-sm font-semibold shadow-primary-button backdrop-blur-[2px] active:scale-95"
           >
             Ver no mapa
@@ -264,18 +274,24 @@ export default function PostDetail() {
           <button
             type="button"
             onClick={handleLike}
-            className="p-1 active:scale-90"
+            className="flex items-center gap-2 p-1 active:scale-90"
             aria-label={liked ? "Não gostar" : "Gostar"}
           >
             <HeartIcon filled={liked} size={25} />
+            {likeCount > 0 && (
+              <span className="text-sm font-semibold text-dark/80">{likeCount}</span>
+            )}
           </button>
           <button
             type="button"
             onClick={() => setCommentsOpen(true)}
-            className="p-1 active:scale-90"
+            className="flex items-center gap-2 p-1 active:scale-90"
             aria-label="Ver comentários"
           >
             <CommentIcon size={24} />
+            {comments.length > 0 && (
+              <span className="text-sm font-semibold text-dark/80">{comments.length}</span>
+            )}
           </button>
         </div>
       </article>

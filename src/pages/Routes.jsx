@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { IMAGES } from "../constants/images.js";
+import { caisImage } from "../constants/caisImages.js";
 import { CircularButton } from "../components/ui/Button.jsx";
 import { MenuIcon, FilterIcon, BookmarkIcon } from "../components/ui/Icons.jsx";
 import { Chip } from "../components/ui/Chip.jsx";
@@ -56,9 +57,9 @@ export default function Routes() {
     return () => { cancelled = true; };
   }, []);
 
-  // Dados de cada rota para a lista. A foto específica (`image_url`, Wikipédia)
-  // já vem no payload de `/routes` — preenchida na BD por `routes:fetch-images`,
-  // sem qualquer pedido no cliente. Sem foto específica, usa o placeholder local.
+  // Dados de cada rota para a lista. A foto é a do cais de partida (fotos reais
+  // dos cais da Ria, em src/assets/cais/). Sem foto para esse cais, usa o
+  // placeholder local.
   const routesBase = useMemo(() =>
     apiRoutes.map((r) => {
       const id = extractId(r._id ?? r.id);
@@ -66,7 +67,7 @@ export default function Routes() {
         id,
         title: r.nome ?? "Rota",
         route: [r.cais_partida?.nome, r.cais_chegada?.nome].filter(Boolean).join(" → ") || "",
-        image: r.image_url || IMAGES.routes.detail,
+        image: caisImage(r.cais_partida?.nome) || IMAGES.routes.detail,
         difficulty: routeDifficulty(r.calado_max, r.condicoes_mare, tide),
         saved: savedIds.includes(id),
       };
