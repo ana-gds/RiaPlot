@@ -12,7 +12,7 @@ class DockController extends Controller
         return response()->json(
             Dock::whereNotIn('tipo', ['entroncamento'])
                 ->orderBy('nome')
-                ->get(['_id', 'routinav_id', 'nome', 'latitude', 'longitude', 'tipo', 'imagem'])
+                ->get(['_id', 'routinav_id', 'nome', 'latitude', 'longitude', 'tipo', 'imagem', 'estado'])
         );
     }
 

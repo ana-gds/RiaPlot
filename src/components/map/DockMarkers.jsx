@@ -6,7 +6,7 @@ export function DockMarkers({ docks, onSelect }) {
     <Marker
       key={dock.id || dock._id}
       position={[dock.latitude, dock.longitude]}
-      icon={createDockIcon(dock.tipo)}
+      icon={createDockIcon(dock.tipo, dock.estado)}
       eventHandlers={{ click: () => onSelect?.(dock) }}
     >
       <Popup>
@@ -25,6 +25,9 @@ export function DockMarkers({ docks, onSelect }) {
             <span className="dock-popup__name">{dock.nome}</span>
           </div>
           <div className="dock-popup__type">Cais {dock.tipo}</div>
+          {dock.estado === "condicional" && (
+            <div className="dock-popup__warning">⚠ Acesso condicional</div>
+          )}
           <button
             type="button"
             onClick={() => onSelect?.(dock)}

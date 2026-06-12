@@ -32,16 +32,27 @@ const DOCK_ICON_SVG = `
       stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
   </svg>`;
 
-export function createDockIcon(type) {
+export function createDockIcon(type, estado) {
   const variant = DOCK_ICON_STYLES[type] || DOCK_ICON_STYLES.secundario;
+  const conditional = estado === "condicional" ? " dock-marker--condicional" : "";
+  const badge = estado === "condicional"
+    ? `<span class="dock-marker__badge">!</span>`
+    : "";
   return L.divIcon({
     className: "",
     iconAnchor: [11, 11],
-    html: `<div class="dock-marker ${variant}">${DOCK_ICON_SVG}</div>`,
+    html: `<div class="dock-marker ${variant}${conditional}">${DOCK_ICON_SVG}${badge}</div>`,
   });
 }
 
 export function createPoiIcon(type) {
+  if (type === "ponto_juncao") {
+    return L.divIcon({
+      className: "",
+      iconAnchor: [15, 15],
+      html: `<div class="juncao-marker"></div>`,
+    });
+  }
   const cls = type === "boia_bombordo" ? "boia-marker--bombordo" : "boia-marker--estibordo";
   return L.divIcon({
     className: "",
