@@ -40,11 +40,12 @@ class AuthTest extends TestCase
 
     public function test_register_requires_minimum_password_length(): void
     {
+        // 7 caracteres — abaixo do mínimo de 8.
         $res = $this->postJson('/api/register', [
             'name'     => 'Curta',
             'email'    => 'curta@example.com',
             'username' => 'curta',
-            'password' => '123',
+            'password' => '1234567',
         ]);
 
         $res->assertStatus(422)->assertJsonValidationErrors('password');

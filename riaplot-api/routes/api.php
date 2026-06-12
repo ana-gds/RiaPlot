@@ -1,6 +1,7 @@
 <?php
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\BoatController;
 use App\Http\Controllers\RouteController;
 use App\Http\Controllers\PoiController;
@@ -15,6 +16,11 @@ use App\Http\Controllers\Api\HidromodController;
 // Auth (público)
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
+
+// Verificação de email (link público) + reposição de palavra-passe
+Route::post('/email/verify',     [AuthController::class, 'verifyEmail']);
+Route::post('/forgot-password',  [PasswordResetController::class, 'forgot']);
+Route::post('/reset-password',   [PasswordResetController::class, 'reset']);
 
 // Cais, Rotas e POIs (públicos — o mapa não precisa de login)
 Route::get('/docks',       [DockController::class, 'index']);
@@ -35,6 +41,9 @@ Route::middleware('auth:sanctum')->group(function () {
     // Perfil
     Route::get('/user',    fn(\Illuminate\Http\Request $r) => $r->user());
     Route::patch('/user',  [AuthController::class, 'update']);
+
+    // Reenvio do email de verificação
+    Route::post('/email/resend', [AuthController::class, 'resendVerification']);
 
     // Upload de imagens
     Route::post('/upload', function(\Illuminate\Http\Request $request) {
@@ -82,8 +91,10 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/routes/{id}/save',   [RouteController::class, 'save']);
 
     // Notificações
-    Route::get('/notifications',          [NotificationController::class, 'index']);
-    Route::patch('/notifications/{id}/read', [NotificationController::class, 'markRead']);
+    Route::get('/notifications',              [NotificationController::class, 'index']);
+    Route::get('/notifications/unread-count', [NotificationController::class, 'unreadCount']);
+    Route::patch('/notifications/read-all',   [NotificationController::class, 'markAllRead']);
+    Route::patch('/notifications/{id}/read',  [NotificationController::class, 'markRead']);
 });
 
 // Simulação e Hidromod proxiam serviços externos (Hidromod) que consomem

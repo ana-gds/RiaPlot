@@ -4,7 +4,13 @@ import { IMAGES } from "../constants/images.js";
 import { CircularButton } from "../components/ui/Button.jsx";
 import { MenuIcon, CommentIcon } from "../components/ui/Icons.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { getNotifications, markNotificationRead, getPost } from "../services/api.js";
+import { useNotifications } from "../contexts/NotificationsContext.jsx";
+import {
+  getNotifications,
+  markNotificationRead,
+  markAllNotificationsRead,
+  getPost,
+} from "../services/api.js";
 
 const ICON_BG = {
   like: "rgba(219,139,49,0.12)",
@@ -171,7 +177,9 @@ export default function Notifications() {
   const { openSidebar } = useOutletContext();
   const navigate = useNavigate();
   const { user, token } = useAuth();
+  const { unreadCount, decrementUnread, clearUnread } = useNotifications();
   const [notifications, setNotifications] = useState([]);
+  const [markingAll, setMarkingAll] = useState(false);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
@@ -237,12 +245,28 @@ export default function Notifications() {
     }));
   }, [notifications, now]);
 
+  // Marca todas como lidas (otimista) e zera o badge.
+  const handleMarkAll = async () => {
+    if (markingAll || unreadCount === 0) return;
+    setMarkingAll(true);
+    setNotifications((prev) => prev.map((x) => ({ ...x, read: true })));
+    clearUnread();
+    try {
+      await markAllNotificationsRead(token);
+    } catch {
+      // Falha de rede — o próximo poll do contador reconcilia o badge.
+    } finally {
+      setMarkingAll(false);
+    }
+  };
+
   const handleClick = async (n) => {
     // Marca como lida (otimista).
     if (!n.read) {
       setNotifications((prev) =>
         prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)),
       );
+      decrementUnread();
       markNotificationRead(token, n.id).catch(() => {});
     }
     // Abre o post associado (likes/comentários). Follow não tem destino.
@@ -263,6 +287,16 @@ export default function Notifications() {
           <MenuIcon />
         </CircularButton>
         <h1 className="text-2xl font-bold text-dark">Notificações</h1>
+        {unreadCount > 0 && (
+          <button
+            type="button"
+            onClick={handleMarkAll}
+            disabled={markingAll}
+            className="ml-auto text-sm font-semibold text-primary hover:underline disabled:opacity-60"
+          >
+            Marcar todas como lidas
+          </button>
+        )}
       </div>
       <div className="flex-1 overflow-y-auto pb-4">
         <div className="w-full md:max-w-2xl md:mx-auto">

@@ -2,9 +2,12 @@ import { useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { StatusBar } from "../components/ui/StatusBar.jsx";
 import { BottomNav } from "../components/shared/BottomNav.jsx";
+import VerificationBanner from "../components/shared/VerificationBanner.jsx";
 import Sidebar from "../components/shared/SideBar.jsx";
 import { NAV_ITEMS } from "../constants/mockData.js";
 import { IMAGES } from "../constants/images.js";
+import { useNotifications } from "../contexts/NotificationsContext.jsx";
+import { NotificationBadge } from "../components/shared/NotificationBadge.jsx";
 
 const SIDEBAR_NAV_MAP = {
   rotas: "/routes",
@@ -16,6 +19,7 @@ const SIDEBAR_NAV_MAP = {
 };
 
 function DesktopSidebar() {
+  const { unreadCount } = useNotifications();
   return (
     <aside className="hidden md:flex flex-col w-64 shrink-0 sticky top-0 h-screen border-r border-secondary/10 bg-white overflow-y-auto">
       {/* Brand */}
@@ -51,7 +55,7 @@ function DesktopSidebar() {
               ].join(" ")
             }
           >
-            {({ isActive }) => (
+            {() => (
               <>
                 <svg
                   width="20"
@@ -70,6 +74,9 @@ function DesktopSidebar() {
                   />
                 </svg>
                 {item.label}
+                {item.key === "notificacoes" && (
+                  <NotificationBadge count={unreadCount} className="ml-auto" />
+                )}
               </>
             )}
           </NavLink>
@@ -126,6 +133,7 @@ export function AppShell() {
       />
       <div className="flex flex-col flex-1 min-h-svh min-w-0">
         {!isMap && <StatusBar className="md:hidden" />}
+        {!isMap && <VerificationBanner />}
         <main className="flex-1 flex flex-col min-h-0">
           <Outlet context={{ openSidebar: () => setSidebarOpen(true) }} />
         </main>

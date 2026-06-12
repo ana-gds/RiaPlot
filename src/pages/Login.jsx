@@ -71,7 +71,9 @@ export default function Login() {
             autoComplete="current-password"
           />
           <div className="text-right mt-1">
-            <TextLink className="text-sm">Repor palavra-passe</TextLink>
+            <TextLink className="text-sm" onClick={() => navigate("/forgot-password")}>
+              Repor palavra-passe
+            </TextLink>
           </div>
         </div>
 
