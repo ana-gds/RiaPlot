@@ -15,14 +15,16 @@ class User extends Authenticatable
     protected $fillable = [
         'name', 'email', 'username', 'password',
         'photo_url', 'saved_routes', 'followers', 'following',
+        'email_verified_at', 'verification_token',
     ];
 
-    protected $hidden = ['password'];
+    protected $hidden = ['password', 'verification_token'];
 
     protected $casts = [
-        'saved_routes' => 'array',
-        'followers'    => 'array',
-        'following'    => 'array',
+        'saved_routes'      => 'array',
+        'followers'         => 'array',
+        'following'         => 'array',
+        'email_verified_at' => 'datetime',
     ];
 
     public function boats()

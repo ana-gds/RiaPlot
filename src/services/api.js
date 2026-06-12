@@ -58,6 +58,36 @@ export function logoutUser(token) {
     });
 }
 
+// --- Verificação de email e reposição de palavra-passe ---
+
+export function verifyEmail({ id, token }) {
+    return request("/email/verify", {
+        method: "POST",
+        body: JSON.stringify({ id, token }),
+    });
+}
+
+export function resendVerification(token) {
+    return request("/email/resend", {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
+export function forgotPassword(email) {
+    return request("/forgot-password", {
+        method: "POST",
+        body: JSON.stringify({ email }),
+    });
+}
+
+export function resetPassword({ email, token, password }) {
+    return request("/reset-password", {
+        method: "POST",
+        body: JSON.stringify({ email, token, password }),
+    });
+}
+
 export function updateUser(token, data) {
     return request("/user", {
         method: "PATCH",
@@ -145,6 +175,20 @@ export function getNotifications(token, { page = 1, perPage = 20 } = {}) {
 
 export function markNotificationRead(token, id) {
     return request(`/notifications/${id}/read`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
+// Contagem de não-lidas — endpoint leve para o badge/polling. Devolve { count }.
+export function getUnreadNotificationCount(token) {
+    return request(`/notifications/unread-count`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
+export function markAllNotificationsRead(token) {
+    return request(`/notifications/read-all`, {
         method: "PATCH",
         headers: { Authorization: `Bearer ${token}` },
     });

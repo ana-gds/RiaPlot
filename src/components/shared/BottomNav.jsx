@@ -1,8 +1,11 @@
 import { NavLink } from "react-router-dom";
 import { NAV_ITEMS } from "../../constants/mockData.js";
 import { RoutesNavIcon } from "../ui/Icons.jsx";
+import { useNotifications } from "../../contexts/NotificationsContext.jsx";
+import { NotificationBadge } from "./NotificationBadge.jsx";
 
 export function BottomNav() {
+  const { unreadCount } = useNotifications();
   return (
     <>
       {/* Spacer — mobile only */}
@@ -26,19 +29,27 @@ export function BottomNav() {
                 {isActive && (
                   <span className="absolute top-0 left-1/2 -translate-x-1/2 w-6 h-[3px] rounded-b bg-primary" />
                 )}
-                {item.key === "rotas" ? (
-                  <RoutesNavIcon size={26} />
-                ) : (
-                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                    <path
-                      d={item.d}
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+                <span className="relative inline-flex">
+                  {item.key === "rotas" ? (
+                    <RoutesNavIcon size={26} />
+                  ) : (
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                      <path
+                        d={item.d}
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  )}
+                  {item.key === "notificacoes" && (
+                    <NotificationBadge
+                      count={unreadCount}
+                      className="absolute -top-1.5 -right-2"
                     />
-                  </svg>
-                )}
+                  )}
+                </span>
                 <span>{item.label}</span>
               </>
             )}

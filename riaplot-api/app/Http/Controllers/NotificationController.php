@@ -58,12 +58,35 @@ class NotificationController extends Controller
         ]);
     }
 
-    public function markRead($id)
+    // Contagem de não-lidas do utilizador autenticado. Endpoint leve usado
+    // pelo polling do badge (não carrega a lista inteira).
+    public function unreadCount(Request $request)
     {
-        $notification = Notification::find($id);
+        $count = Notification::where('user', $request->user()->id)
+            ->where('read', false)
+            ->count();
+
+        return response()->json(['count' => $count]);
+    }
+
+    public function markRead(Request $request, $id)
+    {
+        $notification = Notification::where('_id', $id)
+            ->where('user', $request->user()->id)
+            ->first();
         if (!$notification) return response()->json(['message' => 'Não encontrado'], 404);
 
         $notification->update(['read' => true]);
         return response()->json(['message' => 'Marcado como lido']);
+    }
+
+    // Marca todas as notificações do utilizador como lidas.
+    public function markAllRead(Request $request)
+    {
+        $updated = Notification::where('user', $request->user()->id)
+            ->where('read', false)
+            ->update(['read' => true]);
+
+        return response()->json(['updated' => $updated]);
     }
 }
