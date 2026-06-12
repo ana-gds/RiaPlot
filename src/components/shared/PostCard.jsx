@@ -1,6 +1,14 @@
 import { HeartIcon, CommentIcon, BookmarkIcon } from "../ui/Icons.jsx";
 
-export function FeedPostCard({ post, onToggleLike, onToggleSave, onOpenComments, onOpenDetail }) {
+export function FeedPostCard({
+  post,
+  onToggleLike,
+  onToggleSave,
+  onOpenComments,
+  onOpenDetail,
+  onOpenProfile,
+}) {
+  const openProfile = () => post.user_id && onOpenProfile?.(post.user_id);
   return (
     <article className="pb-2">
       <div className="flex items-center gap-3 px-4 pb-2.5">
@@ -8,15 +16,29 @@ export function FeedPostCard({ post, onToggleLike, onToggleSave, onOpenComments,
           <img
             src={post.avatar}
             alt={post.username}
-            className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-[#E6A45A]"
+            onClick={openProfile}
+            className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-[#E6A45A] cursor-pointer"
           />
         ) : (
-          <div className="w-10 h-10 rounded-full flex-shrink-0 border-2 border-[#E6A45A] bg-primary-soft flex items-center justify-center text-white font-bold">
+          <div
+            onClick={openProfile}
+            className="w-10 h-10 rounded-full flex-shrink-0 border-2 border-[#E6A45A] bg-primary-soft flex items-center justify-center text-white font-bold cursor-pointer"
+          >
             {post.username?.charAt(0)?.toUpperCase() ?? "?"}
           </div>
         )}
         <div className="flex flex-col gap-px">
-          <span className="text-sm text-dark">{post.username}</span>
+          <span
+            onClick={openProfile}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") openProfile();
+            }}
+            className="text-sm text-dark cursor-pointer hover:underline w-fit"
+          >
+            {post.username}
+          </span>
           <span className="text-xs text-dark/70">
             {post.date} · {post.location}
           </span>

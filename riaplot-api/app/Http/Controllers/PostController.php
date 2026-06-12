@@ -4,14 +4,31 @@ namespace App\Http\Controllers;
 
 use App\Models\Post;
 use App\Models\User;
+use App\Models\Notification;
 use Illuminate\Http\Request;
 
 class PostController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        $posts = Post::orderBy('created_at', 'desc')->get();
-        return response()->json($this->enrichMany($posts));
+        $perPage = min(max((int) $request->query('per_page', 10), 1), 50);
+
+        $query = Post::orderBy('created_at', 'desc');
+
+        // Filtro opcional por autor (perfil próprio/público) — feito no servidor
+        // para não trazer o feed inteiro só para filtrar no cliente.
+        if ($userId = $request->query('user')) {
+            $query->where('user_id', $userId);
+        }
+
+        $paginator = $query->paginate($perPage);
+
+        return response()->json([
+            'data'         => $this->enrichMany(collect($paginator->items())),
+            'current_page' => $paginator->currentPage(),
+            'last_page'    => $paginator->lastPage(),
+            'total'        => $paginator->total(),
+        ]);
     }
 
     public function store(Request $request)
@@ -81,6 +98,16 @@ class PostController extends Controller
             $likes = array_filter($likes, fn($l) => $l !== $userId);
         } else {
             $likes[] = $userId;
+            // Notifica o dono do post (exceto ao gostar do próprio post).
+            if ($post->user_id !== $userId) {
+                Notification::create([
+                    'type'  => 'like',
+                    'user'  => $post->user_id,
+                    'actor' => $userId,
+                    'post'  => $post->id,
+                    'read'  => false,
+                ]);
+            }
         }
 
         $post->update(['likes' => array_values($likes)]);
@@ -111,6 +138,18 @@ class PostController extends Controller
         $comments   = $post->comments ?? [];
         $comments[] = $newComment;
         $post->update(['comments' => $comments]);
+
+        // Notifica o dono do post (exceto ao comentar o próprio post).
+        if ($post->user_id !== $user->id) {
+            Notification::create([
+                'type'    => 'comment',
+                'user'    => $post->user_id,
+                'actor'   => $user->id,
+                'post'    => $post->id,
+                'comment' => $data['comment'],
+                'read'    => false,
+            ]);
+        }
 
         // Devolve o comentário já enriquecido para o cliente o poder mostrar
         // sem recarregar o post.
