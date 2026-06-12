@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { COLORS } from "../constants/theme.js";
 import { IMAGES } from "../constants/images.js";
+import { caisImage } from "../constants/caisImages.js";
 import { BackButton } from "../components/ui/BackButton.jsx";
 import { PrimaryButton } from "../components/ui/Button.jsx";
 import {
   BookmarkIcon,
   PinIcon,
-  ClockIcon,
   WarningIcon,
   PlayIcon,
   InfoIcon,
@@ -26,13 +26,25 @@ import {
 import { RouteMap } from "../components/map/RouteMap.jsx";
 import "leaflet/dist/leaflet.css";
 
-function StatCard({ icon, value, label }) {
+function StatCard({ icon, value, label, onInfo }) {
   return (
     <div className="flex-1 rounded-xl p-3 flex items-center gap-2 bg-cream border border-border-soft">
       {icon}
-      <div>
+      <div className="min-w-0">
         <div className="text-base font-semibold leading-6 text-dark">{value}</div>
-        <div className="text-[10px] text-muted">{label}</div>
+        <div className="flex items-center gap-1">
+          <span className="text-[10px] text-muted">{label}</span>
+          {onInfo && (
+            <button
+              type="button"
+              onClick={onInfo}
+              className="p-0.5 -m-0.5 active:scale-90"
+              aria-label={`O que significa ${label}?`}
+            >
+              <InfoIcon size={12} color="var(--color-muted)" />
+            </button>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -143,6 +155,7 @@ export default function RouteDetail() {
   const [boatCalado, setBoatCalado] = useState(null);
   const [tide, setTide] = useState(null);
   const [showDifficultyInfo, setShowDifficultyInfo] = useState(false);
+  const [showCaladoInfo, setShowCaladoInfo] = useState(false);
 
   // Calado do barco registado do utilizador, para avaliar a compatibilidade.
   useEffect(() => {
@@ -221,7 +234,7 @@ export default function RouteDetail() {
   return (
     <div className="flex flex-col flex-1 -mt-6 md:mt-0">
       <div className="relative w-full h-[328px] flex-shrink-0">
-        <img src={route.image_url || IMAGES.routes.detail} alt={title} className="w-full h-full object-cover" />
+        <img src={caisImage(route.cais_partida?.nome) || IMAGES.routes.detail} alt={title} className="w-full h-full object-cover" />
 
         <div className="absolute left-4 top-4">
           <BackButton />
@@ -257,26 +270,12 @@ export default function RouteDetail() {
         </div>
 
         <div className="flex gap-3 mb-5">
-          <StatCard
-            icon={
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-                <path
-                  d="M3 17h4l3-10 4 14 3-8h4"
-                  stroke={COLORS.primary}
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            }
-            value={distance}
-            label="Distância"
-          />
+          <StatCard value={distance} label="Distância" />
           {route.calado_max && (
             <StatCard
-              icon={<ClockIcon size={20} color={COLORS.primary} />}
               value={`${route.calado_max} m`}
               label="Calado máx."
+              onInfo={() => setShowCaladoInfo(true)}
             />
           )}
         </div>
@@ -318,6 +317,15 @@ export default function RouteDetail() {
         {showDifficultyInfo && (
           <InfoModal title="Como é calculada a dificuldade?" onClose={() => setShowDifficultyInfo(false)}>
             {DIFFICULTY_EXPLANATION}
+          </InfoModal>
+        )}
+
+        {showCaladoInfo && (
+          <InfoModal title="Calado máximo recomendado" onClose={() => setShowCaladoInfo(false)}>
+            É o calado máximo de embarcação aconselhado para percorrer esta rota com
+            segurança, dado que ela atravessa zonas pouco profundas. É uma referência
+            fixa e curada da rota — não reflete a maré atual. Para saber se passas
+            agora com a tua embarcação, vê a indicação de maré em tempo real abaixo.
           </InfoModal>
         )}
 

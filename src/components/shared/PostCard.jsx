@@ -58,18 +58,24 @@ export function FeedPostCard({ post, onToggleLike, onToggleSave, onOpenComments,
         <button
           type="button"
           onClick={() => onToggleLike?.(post.id)}
-          className="p-1 active:scale-90"
+          className="flex items-center gap-1.5 p-1 active:scale-90"
           aria-label={post.liked ? "Não gostar" : "Gostar"}
         >
           <HeartIcon filled={post.liked} size={22} />
+          {post.likes > 0 && (
+            <span className="text-xs font-semibold text-dark/80">{post.likes}</span>
+          )}
         </button>
         <button
           type="button"
           onClick={() => onOpenComments?.(post.id)}
-          className="p-1"
+          className="flex items-center gap-1.5 p-1"
           aria-label="Ver comentários"
         >
           <CommentIcon size={22} />
+          {post.commentCount > 0 && (
+            <span className="text-xs font-semibold text-dark/80">{post.commentCount}</span>
+          )}
         </button>
         <div className="flex-1" />
         <button

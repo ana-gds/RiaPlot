@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import {
   MapContainer,
@@ -7,7 +7,7 @@ import {
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
-import { useDocks, useRoutes, useMapRoutes } from "../hooks/useApi";
+import { useDocks, useMapRoutes } from "../hooks/useApi";
 import { PrimaryButton } from "../components/ui/Button.jsx";
 import { RIA_CENTER, INITIAL_ZOOM } from "../components/map/mapHelpers.js";
 import { MapHeader } from "../components/map/MapHeader.jsx";
@@ -19,6 +19,7 @@ import { RoutePath } from "../components/map/RoutePath.jsx";
 import { TidesPanel } from "../components/map/TidesPanel.jsx";
 import { SimulationSheet } from "../components/map/SimulationSheet.jsx";
 import { LocatingToast } from "../components/map/LocatingToast.jsx";
+import { fetchGpxPoints } from "../utils/gpx.js";
 
 export default function MapPage() {
   const { openSidebar } = useOutletContext();
@@ -27,6 +28,7 @@ export default function MapPage() {
 
   const gpxUrl = state?.gpxUrl ?? null;
   const gpxPoints = state?.gpxPoints ?? null;
+  const gpxTitle = state?.gpxTitle ?? null;
   const selectedRouteId = state?.selectedRouteId ?? null;
 
   const [baseLayer, setBaseLayer] = useState("osm");
@@ -37,12 +39,39 @@ export default function MapPage() {
   const [tidesVisible, setTidesVisible] = useState(true);
 
   const { docks } = useDocks();
-  const routes = useRoutes();
   const mapRoutes = useMapRoutes();
 
   const selectedRoute = selectedRouteId
     ? mapRoutes.find((r) => (r.id ?? r._id?.$oid ?? r._id) === selectedRouteId)
     : null;
+
+  // GPX de um post: resolve os pontos da rota percorrida. Usa os `gpxPoints`
+  // guardados no post ou, em fallback, descarrega e faz parse do ficheiro.
+  const [fetchedGpx, setFetchedGpx] = useState(null);
+  useEffect(() => {
+    // Só descarrega quando não há pontos guardados mas há ficheiro.
+    if (gpxPoints?.length || !gpxUrl) return;
+    let cancelled = false;
+    fetchGpxPoints(gpxUrl)
+      .then((pts) => { if (!cancelled && pts.length) setFetchedGpx(pts); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [gpxUrl, gpxPoints]);
+
+  const gpxResolved = gpxPoints?.length ? gpxPoints : gpxUrl ? fetchedGpx : null;
+
+  // Constrói uma "rota" sintética a partir do GPX para alimentar a simulação,
+  // tal como acontece com uma rota curada selecionada.
+  const gpxRoute = useMemo(() => {
+    if (!gpxResolved?.length) return null;
+    return {
+      nome: gpxTitle ?? "Rota do post",
+      trackpoints: gpxResolved.map(([lat, lng]) => ({ lat, lng })),
+    };
+  }, [gpxResolved, gpxTitle]);
+
+  // A rota ativa no mapa: uma rota curada selecionada ou o GPX de um post.
+  const activeRoute = selectedRoute ?? gpxRoute;
 
   const handleLocate = () => {
     setLocating(true);
@@ -84,7 +113,9 @@ export default function MapPage() {
           {simResults && <SimulationPolyline positions={simResults.positions} />}
           <DockMarkers docks={docks} />
 
-          {(gpxPoints?.length || gpxUrl) && (
+          {/* Desenha o traçado do GPX enquanto não há resultado de simulação
+              (depois é a polyline colorida da simulação que manda). */}
+          {!simResults && (gpxPoints?.length || gpxUrl) && (
             <RoutePath points={gpxPoints} gpxUrl={gpxUrl} />
           )}
 
@@ -94,14 +125,14 @@ export default function MapPage() {
       </div>
 
       <div className="map-bottom-bar">
-        {selectedRoute && (
+        {activeRoute && (
           <div className="w-full bg-white rounded-2xl shadow-top-sheet px-4 py-3 flex items-center justify-between gap-3">
             <div className="min-w-0">
               <p className="text-sm font-semibold text-dark truncate">
-                {selectedRoute.nome ?? "Rota seleccionada"}
+                {activeRoute.nome ?? "Rota seleccionada"}
               </p>
-              {selectedRoute.distancia_nm && (
-                <p className="text-xs text-muted">{selectedRoute.distancia_nm} nm</p>
+              {activeRoute.distancia_nm && (
+                <p className="text-xs text-muted">{activeRoute.distancia_nm} nm</p>
               )}
             </div>
             <div className="flex gap-2 flex-shrink-0">
@@ -125,9 +156,9 @@ export default function MapPage() {
           </div>
         )}
 
-        {!selectedRoute && tidesVisible && <TidesPanel />}
+        {!activeRoute && tidesVisible && <TidesPanel />}
 
-        {!selectedRoute && !simResults && (
+        {!activeRoute && !simResults && (
           <PrimaryButton onClick={() => setSimOpen(true)} className="px-6">
             Simular Rota
           </PrimaryButton>
@@ -138,7 +169,7 @@ export default function MapPage() {
       <SimulationSheet
         open={simOpen}
         onClose={() => setSimOpen(false)}
-        route={selectedRoute}
+        route={activeRoute}
         onResults={(r) => { setSimResults(r); }}
       />
     </div>
