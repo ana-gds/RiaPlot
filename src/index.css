@@ -264,6 +264,26 @@ body,
   border-color: rgba(255, 255, 255, 0.9);
 }
 
+/* ── Boia (POI) marker ────────────────────────────────────────────────── */
+
+.boia-marker {
+  width: 14px;
+  height: 14px;
+  border-radius: 2px;
+  transform: rotate(45deg);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.8);
+  cursor: pointer;
+}
+
+.boia-marker--bombordo {
+  background: #c0392b;
+}
+
+.boia-marker--estibordo {
+  background: #27ae60;
+}
+
 /* ── Dock popup ───────────────────────────────────────────────────────── */
 
 .dock-popup {

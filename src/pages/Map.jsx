@@ -7,12 +7,13 @@ import {
 } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 
-import { useDocks, useMapRoutes } from "../hooks/useApi";
+import { useDocks, useMapRoutes, usePois } from "../hooks/useApi";
 import { PrimaryButton } from "../components/ui/Button.jsx";
 import { RIA_CENTER, INITIAL_ZOOM } from "../components/map/mapHelpers.js";
 import { MapHeader } from "../components/map/MapHeader.jsx";
 import { MapInner } from "../components/map/MapInner.jsx";
 import { DockMarkers } from "../components/map/DockMarkers.jsx";
+import { PoiMarkers } from "../components/map/PoiMarkers.jsx";
 import { RoutePolylines } from "../components/map/RoutePolylines.jsx";
 import { SimulationPolyline } from "../components/map/SimulationPolyline.jsx";
 import { RoutePath } from "../components/map/RoutePath.jsx";
@@ -40,6 +41,7 @@ export default function MapPage() {
 
   const { docks } = useDocks();
   const mapRoutes = useMapRoutes();
+  const pois = usePois();
 
   const selectedRoute = selectedRouteId
     ? mapRoutes.find((r) => (r.id ?? r._id?.$oid ?? r._id) === selectedRouteId)
@@ -112,6 +114,7 @@ export default function MapPage() {
           <RoutePolylines routes={mapRoutes} selectedRouteId={selectedRouteId} />
           {simResults && <SimulationPolyline positions={simResults.positions} />}
           <DockMarkers docks={docks} />
+          <PoiMarkers pois={pois} />
 
           {/* Desenha o traçado do GPX enquanto não há resultado de simulação
               (depois é a polyline colorida da simulação que manda). */}
