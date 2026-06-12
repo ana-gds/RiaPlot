@@ -45,6 +45,8 @@ export default function Social() {
             description: p.description,
             comments: p.comments ?? [],
             liked: (p.likes ?? []).includes(user?._id ?? user?.id),
+            likes: (p.likes ?? []).length,
+            commentCount: (p.comments ?? []).length,
             saved: false,
           })),
         );
@@ -53,11 +55,37 @@ export default function Social() {
   }, [token]);
 
   const toggleLike = async (id) => {
-    setPosts((p) => p.map((x) => (x.id === id ? { ...x, liked: !x.liked } : x)));
+    // Atualização otimista da contagem e do estado.
+    setPosts((p) =>
+      p.map((x) =>
+        x.id === id
+          ? { ...x, liked: !x.liked, likes: x.likes + (x.liked ? -1 : 1) }
+          : x,
+      ),
+    );
     try {
-      await likePost(token, id);
+      const res = await likePost(token, id);
+      // Reconcilia com a verdade do servidor (contagem e estado).
+      setPosts((p) =>
+        p.map((x) =>
+          x.id === id
+            ? {
+                ...x,
+                liked: typeof res?.liked === "boolean" ? res.liked : x.liked,
+                likes: typeof res?.likes === "number" ? res.likes : x.likes,
+              }
+            : x,
+        ),
+      );
     } catch {
-      setPosts((p) => p.map((x) => (x.id === id ? { ...x, liked: !x.liked } : x)));
+      // Reverte (voltar a aplicar o mesmo toggle desfaz o otimista).
+      setPosts((p) =>
+        p.map((x) =>
+          x.id === id
+            ? { ...x, liked: !x.liked, likes: x.likes + (x.liked ? -1 : 1) }
+            : x,
+        ),
+      );
     }
   };
 
