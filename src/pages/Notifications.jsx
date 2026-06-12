@@ -1,7 +1,10 @@
-import { useOutletContext } from "react-router-dom";
-import { MOCK_NOTIFICATIONS } from "../constants/mockData.js";
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useOutletContext } from "react-router-dom";
+import { IMAGES } from "../constants/images.js";
 import { CircularButton } from "../components/ui/Button.jsx";
-import { MenuIcon } from "../components/ui/Icons.jsx";
+import { MenuIcon, CommentIcon } from "../components/ui/Icons.jsx";
+import { useAuth } from "../contexts/AuthContext.jsx";
+import { getNotifications, markNotificationRead, getPost } from "../services/api.js";
 
 const ICON_BG = {
   like: "rgba(219,139,49,0.12)",
@@ -54,9 +57,91 @@ const ICONS = {
   ),
 };
 
-function NotifItem({ n }) {
+function truncate(text, max) {
+  if (!text) return "";
+  return text.length > max ? `${text.slice(0, max)}…` : text;
+}
+
+// Texto da notificação consoante o tipo (a parte a negrito é o username).
+function messageFor(n) {
+  switch (n.type) {
+    case "like":
+      return "gostou do teu post";
+    case "comment":
+      return n.comment ? `comentou: "${truncate(n.comment, 60)}"` : "comentou no teu post";
+    case "follow":
+      return "começou a seguir-te";
+    case "save":
+      return "guardou a tua rota";
+    default:
+      return "";
+  }
+}
+
+// Bucket temporal (Hoje / Ontem / Esta semana / Mais antigas).
+function bucketFor(date, now) {
+  const d = new Date(date);
+  const startToday = new Date(now);
+  startToday.setHours(0, 0, 0, 0);
+  const startYesterday = new Date(startToday);
+  startYesterday.setDate(startYesterday.getDate() - 1);
+  const startWeek = new Date(startToday);
+  startWeek.setDate(startWeek.getDate() - 7);
+
+  if (d >= startToday) return "Hoje";
+  if (d >= startYesterday) return "Ontem";
+  if (d >= startWeek) return "Esta semana";
+  return "Mais antigas";
+}
+
+function relativeTime(date, now) {
+  const diffMs = now - new Date(date).getTime();
+  const min = Math.floor(diffMs / 60000);
+  if (min < 1) return "Agora mesmo";
+  if (min < 60) return `Há ${min} minuto${min > 1 ? "s" : ""}`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `Há ${h} hora${h > 1 ? "s" : ""}`;
+  const days = Math.floor(h / 24);
+  if (days < 7) return `Há ${days} dia${days > 1 ? "s" : ""}`;
+  return new Date(date).toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" });
+}
+
+const BUCKET_ORDER = ["Hoje", "Ontem", "Esta semana", "Mais antigas"];
+
+// Mapeia o post enriquecido da API para a forma que o PostDetail espera.
+function mapPost(p, user) {
+  return {
+    id: p.id ?? p._id,
+    user_id: p.user_id,
+    username: p.username ?? "unknown",
+    photo_url: p.photo_url ?? null,
+    date: p.created_at
+      ? new Date(p.created_at).toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" })
+      : "",
+    location: p.location ?? "",
+    image: p.post_url?.[0] ?? IMAGES.posts.feed1,
+    images: p.post_url ?? [],
+    gpxUrl: p.gpx_url ?? null,
+    gpxPoints: p.gpx_points ?? null,
+    route_doc: p.route_doc ?? "",
+    title: p.title,
+    description: p.description,
+    comments: p.comments ?? [],
+    liked: (p.likes ?? []).includes(user?._id ?? user?.id),
+    likes: (p.likes ?? []).length,
+    commentCount: (p.comments ?? []).length,
+  };
+}
+
+function NotifItem({ n, onClick }) {
   return (
     <div
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") onClick?.();
+      }}
       className={`flex items-center gap-3 px-4 py-3 cursor-pointer transition-colors hover:bg-cream/60 ${
         n.read ? "" : "bg-primary/5"
       }`}
@@ -84,6 +169,93 @@ function NotifItem({ n }) {
 
 export default function Notifications() {
   const { openSidebar } = useOutletContext();
+  const navigate = useNavigate();
+  const { user, token } = useAuth();
+  const [notifications, setNotifications] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [page, setPage] = useState(1);
+  const [lastPage, setLastPage] = useState(1);
+  const [loadingMore, setLoadingMore] = useState(false);
+  // Instante de referência fixo para os tempos relativos (estável no render).
+  const [now] = useState(() => Date.now());
+
+  useEffect(() => {
+    if (!token) return;
+    let cancelled = false;
+    getNotifications(token, { page: 1 })
+      .then((res) => {
+        if (cancelled) return;
+        setNotifications(res.data ?? []);
+        setPage(res.current_page ?? 1);
+        setLastPage(res.last_page ?? 1);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [token]);
+
+  // Carrega a página seguinte e acrescenta à lista.
+  const loadMore = async () => {
+    if (loadingMore || page >= lastPage) return;
+    setLoadingMore(true);
+    try {
+      const res = await getNotifications(token, { page: page + 1 });
+      setNotifications((prev) => [...prev, ...(res.data ?? [])]);
+      setPage(res.current_page ?? page + 1);
+      setLastPage(res.last_page ?? lastPage);
+    } catch {
+      // mantém o que já está carregado
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
+  // Agrupa as notificações por bucket temporal, preservando a ordem (mais
+  // recentes primeiro, já que a API devolve por created_at desc).
+  const sections = useMemo(() => {
+    const groups = {};
+    for (const n of notifications) {
+      const label = bucketFor(n.created_at, now);
+      (groups[label] ??= []).push({
+        id: n.id,
+        type: n.type,
+        username: n.username,
+        message: messageFor(n),
+        time: relativeTime(n.created_at, now),
+        thumb: n.thumb ?? null,
+        read: n.read,
+        post_id: n.post_id ?? null,
+      });
+    }
+    return BUCKET_ORDER.filter((l) => groups[l]?.length).map((l) => ({
+      label: l,
+      items: groups[l],
+    }));
+  }, [notifications, now]);
+
+  const handleClick = async (n) => {
+    // Marca como lida (otimista).
+    if (!n.read) {
+      setNotifications((prev) =>
+        prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)),
+      );
+      markNotificationRead(token, n.id).catch(() => {});
+    }
+    // Abre o post associado (likes/comentários). Follow não tem destino.
+    if (n.post_id && (n.type === "like" || n.type === "comment")) {
+      try {
+        const p = await getPost(token, n.post_id);
+        navigate("/social/post", { state: { post: mapPost(p, user) } });
+      } catch {
+        // post pode ter sido removido — fica apenas marcado como lido
+      }
+    }
+  };
+
   return (
     <>
       <div className="flex items-center gap-3 px-4 pt-3 pb-2 flex-shrink-0 border-b border-secondary/5">
@@ -94,18 +266,45 @@ export default function Notifications() {
       </div>
       <div className="flex-1 overflow-y-auto pb-4">
         <div className="w-full md:max-w-2xl md:mx-auto">
-        {MOCK_NOTIFICATIONS.map((s) => (
-          <section key={s.label}>
-            <div className="px-4 pt-4 pb-2">
-              <span className="text-xs font-semibold uppercase tracking-[0.3px] text-muted-soft">
-                {s.label}
-              </span>
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <span className="text-sm text-muted">A carregar…</span>
             </div>
-            {s.items.map((n) => (
-              <NotifItem key={n.id} n={n} />
-            ))}
-          </section>
-        ))}
+          ) : sections.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+              <CommentIcon size={48} color="var(--color-muted-soft)" className="mb-3" />
+              <p className="text-sm font-semibold text-dark">Sem notificações</p>
+              <p className="text-xs mt-1 text-muted">
+                Quando alguém gostar, comentar ou te seguir, aparece aqui.
+              </p>
+            </div>
+          ) : (
+            sections.map((s) => (
+              <section key={s.label}>
+                <div className="px-4 pt-4 pb-2">
+                  <span className="text-xs font-semibold uppercase tracking-[0.3px] text-muted-soft">
+                    {s.label}
+                  </span>
+                </div>
+                {s.items.map((n) => (
+                  <NotifItem key={n.id} n={n} onClick={() => handleClick(n)} />
+                ))}
+              </section>
+            ))
+          )}
+
+          {!loading && page < lastPage && (
+            <div className="flex justify-center mt-4 mb-2">
+              <button
+                type="button"
+                onClick={loadMore}
+                disabled={loadingMore}
+                className="h-11 px-6 rounded-2xl bg-primary text-white text-sm font-semibold shadow-primary-button active:scale-95 disabled:opacity-60"
+              >
+                {loadingMore ? "A carregar…" : "Carregar mais"}
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </>

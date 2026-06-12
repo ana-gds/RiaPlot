@@ -20,9 +20,21 @@
  *   const mares = await obterMares({ latitude: 40.64, longitude: -8.73 });
  */
 
-const API_BASE = 'http://127.0.0.1:8000/api/simulacao';
+import { API_URL } from '../config.js';
+
+const API_BASE = `${API_URL}/simulacao`;
 const POLL_INTERVAL_MS = 500;   // polling a cada 500ms (API é rápida)
 const POLL_MAX_TENTATIVAS = 60; // max 30 segundos antes de desistir
+
+// Os endpoints de simulação exigem autenticação (auth:sanctum). Constrói os
+// cabeçalhos incluindo o token quando disponível.
+function authHeaders(token, extra = {}) {
+  return {
+    Accept: 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+    ...extra,
+  };
+}
 
 // ---------------------------------------------------------------------------
 // Simulação de rota — nível de água + cores
@@ -49,6 +61,7 @@ export async function simularRota({
   calado = 1.0,
   folgaSuperior = 0.2,
   folgaInferior = 0.1,
+  token,
   onProgress = () => {},
 }) {
   // Converter trackpoints para o formato que a API espera
@@ -61,7 +74,7 @@ export async function simularRota({
   onProgress('A iniciar simulação...');
   const inicioRes = await fetch(`${API_BASE}/iniciar`, {
     method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders(token, { 'Content-Type': 'application/json' }),
     body:    JSON.stringify({ pontos: pontosAPI, data, hora }),
   });
 
@@ -77,7 +90,7 @@ export async function simularRota({
   } else {
     // 2. Polling de estado
     onProgress('A calcular...');
-    await aguardarConclusao(executionId, 'rota', onProgress);
+    await aguardarConclusao(executionId, 'rota', onProgress, token);
   }
 
   // 3. Obter resultados
@@ -88,7 +101,9 @@ export async function simularRota({
     folga_inferior: folgaInferior,
   });
 
-  const dadosRes = await fetch(`${API_BASE}/${executionId}/dados?${params}`);
+  const dadosRes = await fetch(`${API_BASE}/${executionId}/dados?${params}`, {
+    headers: authHeaders(token),
+  });
 
   if (!dadosRes.ok) {
     throw new SimulacaoError('Erro ao obter dados da simulação');
@@ -117,13 +132,14 @@ export async function simularRota({
 export async function obterMares({
   latitude,
   longitude,
+  token,
   onProgress = () => {},
 }) {
   onProgress('A calcular marés...');
 
   const inicioRes = await fetch(`${API_BASE}/mares`, {
     method:  'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: authHeaders(token, { 'Content-Type': 'application/json' }),
     body:    JSON.stringify({ latitude, longitude }),
   });
 
@@ -134,10 +150,12 @@ export async function obterMares({
   const { executionId, cached } = await inicioRes.json();
 
   if (!cached) {
-    await aguardarConclusao(executionId, 'mares', onProgress);
+    await aguardarConclusao(executionId, 'mares', onProgress, token);
   }
 
-  const dadosRes = await fetch(`${API_BASE}/mares/${executionId}/dados`);
+  const dadosRes = await fetch(`${API_BASE}/mares/${executionId}/dados`, {
+    headers: authHeaders(token),
+  });
 
   if (!dadosRes.ok) {
     throw new SimulacaoError('Erro ao obter dados de marés');
@@ -160,7 +178,7 @@ export async function obterMares({
  * @param {'rota'|'mares'} tipo
  * @param {Function} onProgress
  */
-async function aguardarConclusao(executionId, tipo, onProgress) {
+async function aguardarConclusao(executionId, tipo, onProgress, token) {
   const urlStatus = tipo === 'mares'
     ? `${API_BASE}/mares/${executionId}/status`
     : `${API_BASE}/${executionId}/status`;
@@ -168,7 +186,7 @@ async function aguardarConclusao(executionId, tipo, onProgress) {
   for (let tentativa = 0; tentativa < POLL_MAX_TENTATIVAS; tentativa++) {
     await sleep(POLL_INTERVAL_MS);
 
-    const statusRes = await fetch(urlStatus);
+    const statusRes = await fetch(urlStatus, { headers: authHeaders(token) });
     if (!statusRes.ok) continue;
 
     const { status } = await statusRes.json();

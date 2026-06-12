@@ -12,6 +12,7 @@ import PostDetail from "./pages/PostDetail.jsx";
 import AddPost from "./pages/AddPost.jsx";
 import Notifications from "./pages/Notifications.jsx";
 import Profile from "./pages/Profile.jsx";
+import PublicProfile from "./pages/PublicProfile.jsx";
 import EditProfile from "./pages/EditProfile.jsx";
 import BoatSettings from "./pages/BoatSettings.jsx";
 import MapPage from "./pages/Map.jsx";
@@ -40,6 +41,7 @@ export default function App() {
             <Route path="/social/post" element={<PostDetail />} />
             <Route path="/social/new" element={<AddPost />} />
             <Route path="/profile" element={<Profile />} />
+            <Route path="/users/:id" element={<PublicProfile />} />
             <Route path="/profile/edit" element={<EditProfile />} />
             <Route path="/profile/boat" element={<BoatSettings />} />
           </Route>

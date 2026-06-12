@@ -10,7 +10,7 @@ class UserFactory extends Factory
 {
     protected $model = User::class;
 
-    public function casts(): array
+    public function definition(): array
     {
         return [
             'name'         => fake()->name(),
@@ -18,9 +18,9 @@ class UserFactory extends Factory
             'username'     => fake()->unique()->userName(),
             'password'     => Hash::make('password'),
             'photo_url'    => null,
-            'saved_routes' => 'array',
-            'followers'    => 'array',
-            'following'    => 'array',
+            'saved_routes' => [],
+            'followers'    => [],
+            'following'    => [],
         ];
     }
 }

@@ -51,17 +51,16 @@ export default function Profile() {
     setSavedIds(user?.saved_routes ?? []);
   }, [user]);
 
-  // Posts do próprio utilizador (o feed devolve todos; filtramos pelo user_id).
+  // Posts do próprio utilizador (filtrados pelo servidor via ?user=).
   useEffect(() => {
     if (!token) return;
     const myId = user?._id ?? user?.id;
     let cancelled = false;
-    getPosts(token)
-      .then((data) => {
+    getPosts(token, { userId: myId, perPage: 50 })
+      .then((res) => {
         if (cancelled) return;
         setPosts(
-          data
-            .filter((p) => p.user_id === myId)
+          (res.data ?? [])
             .map((p) => ({
               id: p.id ?? p._id,
               user_id: p.user_id,

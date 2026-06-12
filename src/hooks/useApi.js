@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
-
-const API = 'http://127.0.0.1:8000/api';
+import { API_URL as API } from '../config.js';
 
 export function useDocks() {
     const [docks, setDocks] = useState([]);

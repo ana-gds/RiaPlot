@@ -1,4 +1,11 @@
-const API = "http://127.0.0.1:8000/api";
+import { API_URL as API } from "../config.js";
+
+// Handler global para respostas 401 (token inválido/expirado). O AuthContext
+// regista aqui uma função que termina a sessão e redireciona para o login.
+let onUnauthorized = null;
+export function setUnauthorizedHandler(fn) {
+    onUnauthorized = fn;
+}
 
 async function request(path, options = {}) {
     const { headers: extraHeaders, ...restOptions } = options;
@@ -10,6 +17,13 @@ async function request(path, options = {}) {
         },
         ...restOptions,
     });
+
+    // Sessão expirada: só reagimos se o pedido foi autenticado (tinha token).
+    // Assim um 401 de "credenciais inválidas" no login NÃO dispara o logout.
+    if (res.status === 401 && extraHeaders?.Authorization) {
+        onUnauthorized?.();
+    }
+
     const data = await res.json();
     if (!res.ok) throw data;
     return data;
@@ -66,8 +80,19 @@ export function updateBoat(token, id, data) {
     });
 }
 
-export function getPosts(token) {
-    return request("/posts", {
+// Devolve um envelope paginado: { data, current_page, last_page, total }.
+// `userId` filtra pelos posts de um autor (perfil); `page`/`perPage` controlam
+// a paginação do feed.
+export function getPosts(token, { page = 1, perPage = 10, userId } = {}) {
+    const params = new URLSearchParams({ page, per_page: perPage });
+    if (userId) params.set("user", userId);
+    return request(`/posts?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
+export function getPost(token, id) {
+    return request(`/posts/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
     });
 }
@@ -110,8 +135,37 @@ export function addComment(token, id, comment) {
     });
 }
 
-export function getNotifications(token) {
-    return request("/notifications", {
+// Devolve um envelope paginado: { data, current_page, last_page, total }.
+export function getNotifications(token, { page = 1, perPage = 20 } = {}) {
+    const params = new URLSearchParams({ page, per_page: perPage });
+    return request(`/notifications?${params.toString()}`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
+export function markNotificationRead(token, id) {
+    return request(`/notifications/${id}/read`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
+export function getUsers(token, query = "") {
+    const qs = query ? `?q=${encodeURIComponent(query)}` : "";
+    return request(`/users${qs}`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
+export function getUser(token, id) {
+    return request(`/users/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
+export function followUser(token, id) {
+    return request(`/users/${id}/follow`, {
+        method: "POST",
         headers: { Authorization: `Bearer ${token}` },
     });
 }
@@ -150,28 +204,32 @@ export async function uploadFile(token, file) {
     return data;
 }
 
-// --- Valida4D / Hidromod Reader API ---
+// --- Valida4D / Hidromod Reader API (requer autenticação) ---
 
-export function getValida4DRoutes() {
-    return request("/hidromod/routes");
+function authHeader(token) {
+    return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+export function getValida4DRoutes(token) {
+    return request("/hidromod/routes", { headers: authHeader(token) });
 }
 
 // id = UUID devolvido pelo /hidromod/routes
-export function getValida4DRoute(id, reverse = 0) {
-    return request(`/hidromod/routes/${id}?reverse=${reverse}`);
+export function getValida4DRoute(token, id, reverse = 0) {
+    return request(`/hidromod/routes/${id}?reverse=${reverse}`, { headers: authHeader(token) });
 }
 
-export function getValida4DRouteDados(id) {
-    return request(`/hidromod/routes/${id}/dados`);
+export function getValida4DRouteDados(token, id) {
+    return request(`/hidromod/routes/${id}/dados`, { headers: authHeader(token) });
 }
 
-export function processValida4DGpxFiles() {
-    return request("/hidromod/routes/process-gpx");
+export function processValida4DGpxFiles(token) {
+    return request("/hidromod/routes/process-gpx", { headers: authHeader(token) });
 }
 
 // Dado o gpx_file de uma rota MongoDB, devolve o UUID da Valida4D (ou null)
-export async function getValida4DIdByGpxFile(gpxFile) {
-    const routes = await getValida4DRoutes();
+export async function getValida4DIdByGpxFile(token, gpxFile) {
+    const routes = await getValida4DRoutes(token);
     const match = routes.find((r) => r.file === gpxFile);
     return match ? match.id : null;
 }

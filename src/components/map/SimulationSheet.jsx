@@ -62,6 +62,7 @@ export function SimulationSheet({ open, onClose, route, onResults }) {
         calado:         boat?.height          ?? 1.0,
         folgaSuperior:  boat?.upper_clearance  ?? 0.2,
         folgaInferior:  boat?.lower_clearance  ?? 0.1,
+        token,
         onProgress: setProgress,
       });
       onResults?.(resultado);

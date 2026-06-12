@@ -5,6 +5,7 @@ use App\Http\Controllers\BoatController;
 use App\Http\Controllers\RouteController;
 use App\Http\Controllers\PoiController;
 use App\Http\Controllers\PostController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Api\DockController;
 use App\Http\Controllers\Api\TideController;
@@ -72,6 +73,11 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/posts/{id}/like',    [PostController::class, 'like']);
     Route::post('/posts/{id}/comment', [PostController::class, 'comment']);
 
+    // Utilizadores (perfil público) + seguir / deixar de seguir
+    Route::get('/users',               [UserController::class, 'index']);
+    Route::get('/users/{id}',          [UserController::class, 'show']);
+    Route::post('/users/{id}/follow',  [UserController::class, 'follow']);
+
     // Rotas guardadas
     Route::post('/routes/{id}/save',   [RouteController::class, 'save']);
 
@@ -80,7 +86,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/notifications/{id}/read', [NotificationController::class, 'markRead']);
 });
 
-Route::prefix('simulacao')->group(function () {
+// Simulação e Hidromod proxiam serviços externos (Hidromod) que consomem
+// computação e permitem apagar execuções — por isso exigem autenticação.
+Route::middleware('auth:sanctum')->prefix('simulacao')->group(function () {
 
     // Rota principal: nível de água + cores
     Route::post ('iniciar',              [SimulacaoController::class, 'iniciar']);
@@ -94,7 +102,7 @@ Route::prefix('simulacao')->group(function () {
     Route::get  ('mares/{id}/dados',     [SimulacaoController::class, 'maresDados']);
 });
 
-Route::prefix('hidromod')->group(function () {
+Route::middleware('auth:sanctum')->prefix('hidromod')->group(function () {
     Route::get('routes',              [HidromodController::class, 'index']);
     Route::get('routes/process-gpx',  [HidromodController::class, 'processGpxFiles']);
     Route::get('routes/{id}',         [HidromodController::class, 'show']);

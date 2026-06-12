@@ -4,14 +4,14 @@ import { IMAGES } from "../constants/images.js";
 import { BackButton } from "../components/ui/BackButton.jsx";
 import { HeartIcon, CommentIcon, SendIcon, EditIcon, TrashIcon } from "../components/ui/Icons.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { likePost, addComment, deletePost } from "../services/api.js";
+import { likePost, addComment, deletePost, followUser } from "../services/api.js";
 
 function formatDate(iso) {
   if (!iso) return "";
   return new Date(iso).toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" });
 }
 
-function CommentsSheet({ open, onClose, comments, onAddComment, meAvatar, meName }) {
+function CommentsSheet({ open, onClose, comments, onAddComment, onOpenProfile, meAvatar, meName }) {
   const [text, setText] = useState("");
   const inputRef = useRef(null);
 
@@ -46,26 +46,46 @@ function CommentsSheet({ open, onClose, comments, onAddComment, meAvatar, meName
           </div>
           <div className="flex-1 overflow-y-auto px-4 pb-3" style={{ maxHeight: "calc(60vh - 160px)" }}>
             <div className="flex flex-col gap-4">
-              {comments.map((c) => (
-                <div key={c.id} className="flex gap-3">
-                  <div className="w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-white/10">
-                    {c.avatar ? (
-                      <img src={c.avatar} alt={c.username} className="w-full h-full object-cover" />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white bg-primary-soft">
-                        {c.username?.charAt(0)?.toUpperCase() ?? "?"}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-baseline gap-2 mb-0.5">
-                      <span className="text-[13px] font-bold text-white">{c.username}</span>
-                      <span className="text-[11px] text-white/50">{c.date}</span>
+              {comments.map((c) => {
+                const openProfile = () => c.user_id && onOpenProfile?.(c.user_id);
+                return (
+                  <div key={c.id} className="flex gap-3">
+                    <div
+                      onClick={openProfile}
+                      className={`w-8 h-8 rounded-full overflow-hidden flex-shrink-0 bg-white/10 ${
+                        c.user_id ? "cursor-pointer" : ""
+                      }`}
+                    >
+                      {c.avatar ? (
+                        <img src={c.avatar} alt={c.username} className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white bg-primary-soft">
+                          {c.username?.charAt(0)?.toUpperCase() ?? "?"}
+                        </div>
+                      )}
                     </div>
-                    <p className="text-xs text-white/85 leading-relaxed">{c.text}</p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-2 mb-0.5">
+                        <span
+                          onClick={openProfile}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" || e.key === " ") openProfile();
+                          }}
+                          className={`text-[13px] font-bold text-white ${
+                            c.user_id ? "cursor-pointer hover:underline" : ""
+                          }`}
+                        >
+                          {c.username}
+                        </span>
+                        <span className="text-[11px] text-white/50">{c.date}</span>
+                      </div>
+                      <p className="text-xs text-white/85 leading-relaxed">{c.text}</p>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
           <div className="flex items-center gap-3 px-4 py-3 border-t border-white/10">
@@ -106,7 +126,7 @@ function CommentsSheet({ open, onClose, comments, onAddComment, meAvatar, meName
 export default function PostDetail() {
   const { state } = useLocation();
   const navigate = useNavigate();
-  const { user, token } = useAuth();
+  const { user, token, updateUser } = useAuth();
   const post = state?.post;
 
   const [liked, setLiked] = useState(() => {
@@ -124,6 +144,7 @@ export default function PostDetail() {
   const [comments, setComments] = useState(() =>
     (post?.comments ?? []).map((c) => ({
       id: c.id ?? c._id,
+      user_id: c.user_id ?? null,
       username: c.username ?? "utilizador",
       avatar: c.photo_url ?? null,
       date: formatDate(c.created_at),
@@ -134,6 +155,32 @@ export default function PostDetail() {
 
   const myId = user?._id ?? user?.id;
   const isOwner = !!post && !!myId && post.user_id === myId;
+
+  const [following, setFollowing] = useState(
+    () => !!post && (user?.following ?? []).includes(post.user_id),
+  );
+  const [followLoading, setFollowLoading] = useState(false);
+
+  const handleFollow = async () => {
+    if (!post || followLoading) return;
+    setFollowLoading(true);
+    setFollowing((f) => !f);
+    try {
+      const res = await followUser(token, post.user_id);
+      if (typeof res?.is_following === "boolean") setFollowing(res.is_following);
+      // Persiste a lista atualizada no user em cache (localStorage).
+      if (Array.isArray(res?.following)) updateUser({ following: res.following });
+    } catch {
+      setFollowing((f) => !f);
+    } finally {
+      setFollowLoading(false);
+    }
+  };
+
+  const goToProfile = () => {
+    if (!post?.user_id) return;
+    navigate(isOwner ? "/profile" : `/users/${post.user_id}`);
+  };
 
   const handleEdit = () => {
     navigate("/social/new", { state: { editPost: post } });
@@ -175,6 +222,7 @@ export default function PostDetail() {
         ...p,
         {
           id: created?.id ?? Date.now(),
+          user_id: created?.user_id ?? user?._id ?? user?.id ?? null,
           username: created?.username ?? user?.username ?? "eu",
           avatar: created?.photo_url ?? user?.photo_url ?? null,
           date: formatDate(created?.created_at) || formatDate(new Date().toISOString()),
@@ -233,7 +281,15 @@ export default function PostDetail() {
 
       <article className="flex-1 -mt-4 rounded-t-2xl bg-white relative z-10 px-4 pt-6 pb-8 shadow-top-sheet">
         <header className="flex items-center gap-3 mb-5">
-          <div className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-[#E6A45A] bg-primary-soft flex items-center justify-center text-white font-bold">
+          <div
+            onClick={goToProfile}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") goToProfile();
+            }}
+            className="w-10 h-10 rounded-full overflow-hidden flex-shrink-0 border-2 border-[#E6A45A] bg-primary-soft flex items-center justify-center text-white font-bold cursor-pointer"
+          >
             {avatar ? (
               <img src={avatar} alt={username} className="w-full h-full object-cover" />
             ) : (
@@ -241,7 +297,33 @@ export default function PostDetail() {
             )}
           </div>
           <div className="flex flex-col gap-px">
-            <span className="text-sm text-dark">{username}</span>
+            <div className="flex items-center gap-2">
+              <span
+                onClick={goToProfile}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") goToProfile();
+                }}
+                className="text-sm text-dark cursor-pointer hover:underline"
+              >
+                {username}
+              </span>
+              {!isOwner && post?.user_id && (
+                <button
+                  type="button"
+                  onClick={handleFollow}
+                  disabled={followLoading}
+                  className={`h-7 px-3 rounded-full text-xs font-semibold active:scale-95 disabled:opacity-50 ${
+                    following
+                      ? "bg-dark/5 text-dark"
+                      : "bg-primary text-white shadow-primary-button"
+                  }`}
+                >
+                  {following ? "A seguir" : "Seguir"}
+                </button>
+              )}
+            </div>
             <span className="text-xs text-dark/70">{[date, location].filter(Boolean).join(" · ")}</span>
           </div>
           {isOwner && (
@@ -301,6 +383,7 @@ export default function PostDetail() {
         onClose={() => setCommentsOpen(false)}
         comments={comments}
         onAddComment={handleAddComment}
+        onOpenProfile={(uid) => navigate(`/users/${uid}`)}
         meAvatar={user?.photo_url ?? null}
         meName={user?.username ?? ""}
       />
