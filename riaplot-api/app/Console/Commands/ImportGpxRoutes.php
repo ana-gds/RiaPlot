@@ -7,13 +7,21 @@ use App\Models\Route;
 
 class ImportGpxRoutes extends Command
 {
-    protected $signature   = 'gpx:import {--route= : ID MongoDB de uma rota específica}';
+    protected $signature   = 'gpx:import
+        {--route=           : ID MongoDB de uma rota específica}
+        {--skip-existing    : Salta rotas que já têm trackpoints (não sobrescreve dados de simulação)}';
     protected $description  = 'Parseia os ficheiros GPX em storage/app/public/gpx/ e popula o campo trackpoints nas rotas';
 
     public function handle(): int
     {
         $query = Route::whereNotNull('gpx_file')
                       ->where('gpx_file', '!=', '');
+
+        if ($this->option('skip-existing')) {
+            $query->where(function ($q) {
+                $q->whereNull('trackpoints')->orWhere('trackpoints', []);
+            });
+        }
 
         // Se passaram --route=<id>, processa só essa
         if ($routeId = $this->option('route')) {
