@@ -17,6 +17,7 @@ class Dock extends Model
         'tipo',
         'imagem',
         'descricao',
+        'estado'
     ];
 
     protected $casts = [

@@ -4,6 +4,7 @@ import { createPoiIcon } from "./mapHelpers.js";
 const TYPE_LABEL = {
   boia_bombordo:  "Boia de Bombordo",
   boia_estibordo: "Boia de Estibordo",
+  ponto_juncao:   "Ponto de Junção",
 };
 
 export function PoiMarkers({ pois }) {
@@ -12,6 +13,7 @@ export function PoiMarkers({ pois }) {
       key={poi.id}
       position={poi.coordinates}
       icon={createPoiIcon(poi.type)}
+      zIndexOffset={poi.type === "ponto_juncao" ? -1000 : 0}
     >
       <Popup>
         <div className="text-sm font-semibold text-dark">{poi.name}</div>
