@@ -45,12 +45,25 @@ export function createDockIcon(type, estado) {
   });
 }
 
+const POI_ROTA_SVG = `
+  <svg width="10" height="10" viewBox="0 0 24 24" fill="none">
+    <path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"
+      fill="white" stroke="white" stroke-width="1" stroke-linejoin="round"/>
+  </svg>`;
+
 export function createPoiIcon(type) {
   if (type === "ponto_juncao") {
     return L.divIcon({
       className: "",
       iconAnchor: [15, 15],
       html: `<div class="juncao-marker"></div>`,
+    });
+  }
+  if (type === "poi_rota") {
+    return L.divIcon({
+      className: "",
+      iconAnchor: [11, 11],
+      html: `<div class="poi-rota-marker">${POI_ROTA_SVG}</div>`,
     });
   }
   const cls = type === "boia_bombordo" ? "boia-marker--bombordo" : "boia-marker--estibordo";

@@ -21,6 +21,8 @@ class PoiController extends Controller
                 'name'        => (string) $p->name,
                 'coordinates' => $this->safeCoords($p->coordinates),
                 'type'        => (string) $p->type,
+                'rota'        => $p->rota ?? null,
+                'descricao'   => $p->descricao ?? null,
             ];
         }
 
