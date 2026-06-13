@@ -9,7 +9,16 @@ const TYPE_LABEL = {
 };
 
 export function PoiMarkers({ pois }) {
-  return pois.map((poi) => (
+  return pois
+    .filter((poi) => {
+      const ok = Array.isArray(poi.coordinates)
+        && poi.coordinates.length >= 2
+        && isFinite(poi.coordinates[0])
+        && isFinite(poi.coordinates[1]);
+      if (!ok) console.warn("[PoiMarkers] coordenadas inválidas:", poi);
+      return ok;
+    })
+    .map((poi) => (
     <Marker
       key={poi.id}
       position={poi.coordinates}
@@ -29,3 +38,4 @@ export function PoiMarkers({ pois }) {
     </Marker>
   ));
 }
+
