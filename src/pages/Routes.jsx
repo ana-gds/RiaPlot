@@ -61,17 +61,20 @@ export default function Routes() {
   // dos cais da Ria, em src/assets/cais/). Sem foto para esse cais, usa o
   // placeholder local.
   const routesBase = useMemo(() =>
-    apiRoutes.map((r) => {
-      const id = extractId(r._id ?? r.id);
-      return {
-        id,
-        title: r.nome ?? "Rota",
-        route: [r.cais_partida?.nome, r.cais_chegada?.nome].filter(Boolean).join(" → ") || "",
-        image: caisImage(r.cais_partida?.nome) || IMAGES.routes.detail,
-        difficulty: routeDifficulty(r.calado_max, r.condicoes_mare, tide),
-        saved: savedIds.includes(id),
-      };
-    }),
+    apiRoutes
+      .map((r) => {
+        const id = extractId(r._id ?? r.id);
+        return {
+          id,
+          title: r.nome ?? "Rota",
+          route: [r.cais_partida?.nome, r.cais_chegada?.nome].filter(Boolean).join(" → ") || "",
+          image: caisImage(r.cais_partida?.nome) || IMAGES.routes.detail,
+          difficulty: routeDifficulty(r.calado_max, r.condicoes_mare, tide),
+          saved: savedIds.includes(id),
+          hasGpx: !!r.gpx_file,
+        };
+      })
+      .sort((a, b) => (b.hasGpx ? 1 : 0) - (a.hasGpx ? 1 : 0)),
   [apiRoutes, savedIds, tide]);
 
   const filtered = useMemo(() => {
