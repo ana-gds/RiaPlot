@@ -216,12 +216,8 @@ export default function Profile() {
           );
         })}
         <span
-          className="absolute bottom-0 h-[2px] rounded-full bg-primary transition-all duration-200"
-          style={{
-            width: `calc(50% - 80px)`,
-            minWidth: 60,
-            left: activeTab === "posts" ? "calc(25% - 30px)" : "calc(75% - 30px)",
-          }}
+          className="absolute bottom-0 h-[2px] w-12 -translate-x-1/2 rounded-full bg-primary transition-all duration-200"
+          style={{ left: activeTab === "posts" ? "25%" : "75%" }}
         />
       </div>
 

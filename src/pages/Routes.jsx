@@ -8,7 +8,7 @@ import { Chip } from "../components/ui/Chip.jsx";
 import { SearchBar } from "../components/shared/SearchBar.jsx";
 import { RouteCard } from "../components/shared/RouteCard.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { useRoutes } from "../hooks/useApi.js";
+import { useRoutes, useMapRoutes } from "../hooks/useApi.js";
 import { saveRoute, getCurrentTide } from "../services/api.js";
 import { routeDifficulty } from "../utils/routeDifficulty.js";
 
@@ -34,6 +34,7 @@ export default function Routes() {
   const { openSidebar } = useOutletContext();
   const { user, token, updateUser } = useAuth();
   const apiRoutes = useRoutes();
+  const mapRoutes = useMapRoutes();
 
   const [savedIds, setSavedIds] = useState(() => user?.saved_routes ?? []);
   const [search, setSearch] = useState("");
@@ -57,6 +58,18 @@ export default function Routes() {
     return () => { cancelled = true; };
   }, []);
 
+  // Traçados (trackpoints) indexados por id — vêm do endpoint leve /routes/map.
+  const trackById = useMemo(() => {
+    const m = new Map();
+    mapRoutes.forEach((r) => {
+      const id = extractId(r._id ?? r.id);
+      if (id && Array.isArray(r.trackpoints) && r.trackpoints.length > 1) {
+        m.set(id, r.trackpoints.map((p) => [p.lat, p.lng ?? p.lon]));
+      }
+    });
+    return m;
+  }, [mapRoutes]);
+
   // Dados de cada rota para a lista. A foto é a do cais de partida (fotos reais
   // dos cais da Ria, em src/assets/cais/). Sem foto para esse cais, usa o
   // placeholder local.
@@ -64,6 +77,14 @@ export default function Routes() {
     apiRoutes
       .map((r) => {
         const id = extractId(r._id ?? r.id);
+        // Traçado real do GPX, ou fallback à linha cais-partida → cais-chegada.
+        const track = trackById.get(id) ?? null;
+        const sp = r.cais_partida;
+        const cp = r.cais_chegada;
+        const fallback =
+          !track && sp?.latitude && sp?.longitude && cp?.latitude && cp?.longitude
+            ? [[sp.latitude, sp.longitude], [cp.latitude, cp.longitude]]
+            : null;
         return {
           id,
           title: r.nome ?? "Rota",
@@ -72,10 +93,12 @@ export default function Routes() {
           difficulty: routeDifficulty(r.calado_max, r.condicoes_mare, tide),
           saved: savedIds.includes(id),
           hasGpx: !!r.gpx_file,
+          track: track ?? fallback,
+          trackDashed: !track && !!fallback,
         };
       })
       .sort((a, b) => (b.hasGpx ? 1 : 0) - (a.hasGpx ? 1 : 0)),
-  [apiRoutes, savedIds, tide]);
+  [apiRoutes, savedIds, tide, trackById]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
