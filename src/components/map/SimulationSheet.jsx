@@ -195,9 +195,11 @@ function BoatInfo({ boat }) {
   return (
     <div className="sim-sheet__boat">
       <div className="sim-sheet__boat-icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-          <path d="M2 20h20M4 17l2-7h12l2 7M8 10V6a2 2 0 012-2h0a2 2 0 012 2v4"
-                stroke="#004D6C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none"
+             stroke="#004D6C" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M22 18H2a4 4 0 0 0 4 4h12a4 4 0 0 0 4-4Z" />
+          <path d="M21 14 10 2 3 14h18Z" />
+          <path d="M10 2v16" />
         </svg>
       </div>
       <div className="flex-1">

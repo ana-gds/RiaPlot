@@ -19,6 +19,8 @@ function CharCount({ current, max }) {
   );
 }
 
+const DESCRIPTION_MAX = 600;
+
 export default function AddPost() {
   const navigate = useNavigate();
   const { state } = useLocation();
@@ -127,17 +129,15 @@ export default function AddPost() {
         </h1>
       </div>
 
-      <div className="flex-1 px-4 pt-4 overflow-y-auto flex flex-col">
-        <div className="mb-5">
-          <MultiPhotoUpload
-            onChange={setPhotoItems}
-            initialImages={isEdit ? (editPost?.images ?? []) : []}
-          />
-        </div>
+      <div className="flex-1 px-4 pt-4 pb-6 overflow-y-auto flex flex-col gap-5">
+        <MultiPhotoUpload
+          onChange={setPhotoItems}
+          initialImages={isEdit ? (editPost?.images ?? []) : []}
+        />
 
-        {error && <p className="text-xs text-danger text-center mb-3">{error}</p>}
+        {error && <p className="text-xs text-danger text-center -my-1">{error}</p>}
 
-        <div className="mb-4">
+        <div>
           <Label>Título</Label>
           <Input
             placeholder="Ex: Manhã de passeio na ria"
@@ -148,18 +148,18 @@ export default function AddPost() {
           <CharCount current={form.title.length} max={60} />
         </div>
 
-        <div className="mb-4">
+        <div>
           <Label>Descrição</Label>
           <Textarea
             placeholder="Conta a tua experiência..."
             value={form.description}
             onChange={set("description")}
-            maxLength={300}
+            maxLength={DESCRIPTION_MAX}
           />
-          <CharCount current={form.description.length} max={300} />
+          <CharCount current={form.description.length} max={DESCRIPTION_MAX} />
         </div>
 
-        <div className="mb-4">
+        <div>
           <Label>Localização</Label>
           <LocationInput
             placeholder="Ex: Costa Nova, Aveiro"
@@ -168,7 +168,7 @@ export default function AddPost() {
           />
         </div>
 
-        <div className="mb-4">
+        <div>
           <Label>
             Associar rota{" "}
             <span className="font-normal text-muted-soft">(opcional)</span>
@@ -183,7 +183,7 @@ export default function AddPost() {
           </Select>
         </div>
 
-        <div className="mb-4">
+        <div>
           <Label>
             Rota percorrida (GPX){" "}
             <span className="font-normal text-muted-soft">(opcional)</span>

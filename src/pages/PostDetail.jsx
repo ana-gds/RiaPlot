@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { IMAGES } from "../constants/images.js";
 import { BackButton } from "../components/ui/BackButton.jsx";
-import { HeartIcon, CommentIcon, SendIcon, EditIcon, TrashIcon } from "../components/ui/Icons.jsx";
+import { HeartIcon, CommentIcon, SendIcon, EditIcon, TrashIcon, CloseIcon } from "../components/ui/Icons.jsx";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import {
@@ -18,6 +18,14 @@ import {
 function formatDate(iso) {
   if (!iso) return "";
   return new Date(iso).toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" });
+}
+
+// Normaliza um id para string, lidando com ids embrulhados (ex.: { $oid }),
+// para que as comparações de dono/autor não falhem por diferença de forma.
+function idStr(v) {
+  if (v == null) return null;
+  if (typeof v === "object") return v.$oid ?? String(v);
+  return String(v);
 }
 
 // Mapeia um comentário enriquecido da API para a forma usada na UI.
@@ -54,8 +62,9 @@ function CommentsSheet({
   const [text, setText] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editText, setEditText] = useState("");
-  const [replyingId, setReplyingId] = useState(null);
-  const [replyText, setReplyText] = useState("");
+  // Comentário a que se está a responder ({ id, username }) ou null para
+  // comentar normalmente. A resposta usa a mesma caixa de texto do fundo.
+  const [replyTarget, setReplyTarget] = useState(null);
   const inputRef = useRef(null);
 
   useEffect(() => {
@@ -65,12 +74,21 @@ function CommentsSheet({
   const send = () => {
     const trimmed = text.trim();
     if (!trimmed) return;
-    onAddComment(trimmed);
+    if (replyTarget) {
+      // Não envia uma resposta que seja apenas a menção, sem conteúdo.
+      const mention = replyTarget.mention.trim();
+      const body = trimmed.startsWith(mention) ? trimmed.slice(mention.length).trim() : trimmed;
+      if (!body) return;
+      onReply?.(replyTarget.id, trimmed);
+      setReplyTarget(null);
+    } else {
+      onAddComment(trimmed);
+    }
     setText("");
   };
 
   const startEdit = (c) => {
-    setReplyingId(null);
+    setReplyTarget(null);
     setEditingId(c.id);
     setEditText(c.text);
   };
@@ -86,17 +104,19 @@ function CommentsSheet({
 
   const startReply = (c) => {
     setEditingId(null);
-    setReplyingId(c.id);
-    setReplyText("");
+    // Responder a uma resposta anexa ao mesmo tópico (o comentário de topo),
+    // para a nova resposta ficar visível na mesma cadeia. Pré-preenche a caixa
+    // com "@nome " para deixar claro a quem se está a responder.
+    const threadId = c.parent_id ?? c.id;
+    const mention = `@${c.username} `;
+    setReplyTarget({ id: threadId, username: c.username, mention });
+    setText(mention);
+    setTimeout(() => inputRef.current?.focus(), 50);
   };
   const cancelReply = () => {
-    setReplyingId(null);
-    setReplyText("");
-  };
-  const sendReply = () => {
-    const trimmed = replyText.trim();
-    if (trimmed) onReply?.(replyingId, trimmed);
-    cancelReply();
+    // Remove a menção pré-preenchida ao voltar a comentar normalmente.
+    setText((t) => (replyTarget?.mention && t.startsWith(replyTarget.mention) ? t.slice(replyTarget.mention.length) : t));
+    setReplyTarget(null);
   };
 
   // Agrupa as respostas pelo comentário pai.
@@ -105,15 +125,18 @@ function CommentsSheet({
 
   const renderComment = (c, isReply) => {
     const openProfile = () => c.user_id && onOpenProfile?.(c.user_id);
-    const canEdit = !!c.user_id && c.user_id === meId;
+    const canEdit = !!c.user_id && idStr(c.user_id) === meId;
     const canDelete = canEdit || isPostOwner;
     const isEditing = editingId === c.id;
 
+    const avatarSize = isReply ? "w-8 h-8" : "w-9 h-9";
+
     return (
-      <div key={c.id} className="flex gap-3">
+      <div key={c.id} className="flex gap-2.5">
+        {/* Avatar (alinhado ao topo, junto ao username). */}
         <div
           onClick={openProfile}
-          className={`${isReply ? "w-7 h-7" : "w-8 h-8"} rounded-full overflow-hidden flex-shrink-0 bg-white/10 ${
+          className={`${avatarSize} rounded-full overflow-hidden flex-shrink-0 bg-white/10 ${
             c.user_id ? "cursor-pointer" : ""
           }`}
         >
@@ -125,8 +148,10 @@ function CommentsSheet({
             </div>
           )}
         </div>
+
         <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-2 mb-0.5">
+          {/* Linha do username: nome + data à esquerda, like e ações à direita. */}
+          <div className="flex items-center gap-2">
             <span
               onClick={openProfile}
               role="button"
@@ -134,41 +159,50 @@ function CommentsSheet({
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") openProfile();
               }}
-              className={`text-[13px] font-bold text-white ${
+              className={`text-[13px] font-semibold text-white truncate ${
                 c.user_id ? "cursor-pointer hover:underline" : ""
               }`}
             >
               {c.username}
             </span>
-            <span className="text-[11px] text-white/50">{c.date}</span>
-            {(canEdit || canDelete) && !isEditing && (
-              <span className="ml-auto flex items-center gap-1">
-                {canEdit && (
-                  <button
-                    type="button"
-                    onClick={() => startEdit(c)}
-                    className="p-1 text-white/50 hover:text-white active:scale-90"
-                    aria-label="Editar comentário"
-                  >
-                    <EditIcon size={14} color="currentColor" />
-                  </button>
-                )}
-                {canDelete && (
-                  <button
-                    type="button"
-                    onClick={() => onDeleteComment?.(c.id)}
-                    className="p-1 text-white/50 hover:text-danger active:scale-90"
-                    aria-label="Eliminar comentário"
-                  >
-                    <TrashIcon size={14} color="currentColor" />
-                  </button>
-                )}
-              </span>
-            )}
+            <span className="text-[11px] text-white/40 flex-shrink-0">{c.date}</span>
+
+            <div className="ml-auto flex items-center gap-1 flex-shrink-0">
+              {/* Botão de gostar do comentário */}
+              <button
+                type="button"
+                onClick={() => onLikeComment?.(c.id)}
+                className="flex items-center gap-1 text-[12px] text-white/60 hover:text-white active:scale-90"
+                aria-label={c.liked ? "Não gostar" : "Gostar"}
+              >
+                <HeartIcon filled={c.liked} size={16} />
+                {c.likes > 0 && <span>{c.likes}</span>}
+              </button>
+              {canEdit && !isEditing && (
+                <button
+                  type="button"
+                  onClick={() => startEdit(c)}
+                  className="p-1 text-white/50 hover:text-white active:scale-90"
+                  aria-label="Editar comentário"
+                >
+                  <EditIcon size={14} color="currentColor" />
+                </button>
+              )}
+              {canDelete && !isEditing && (
+                <button
+                  type="button"
+                  onClick={() => onDeleteComment?.(c.id)}
+                  className="p-1 text-white/50 hover:text-danger active:scale-90"
+                  aria-label="Eliminar comentário"
+                >
+                  <TrashIcon size={14} color="currentColor" />
+                </button>
+              )}
+            </div>
           </div>
 
           {isEditing ? (
-            <div className="flex flex-col gap-2 mt-1">
+            <div className="flex flex-col gap-2 mt-1.5">
               <input
                 type="text"
                 value={editText}
@@ -199,71 +233,24 @@ function CommentsSheet({
               </div>
             </div>
           ) : (
-            <p className="text-xs text-white/85 leading-relaxed">{c.text}</p>
+            <p className="text-[13px] text-white/85 leading-snug mt-0.5">{c.text}</p>
           )}
 
-          {/* Ações: gostar e responder */}
+          {/* "Responder", alinhado à esquerda com o texto do comentário.
+              Disponível também nas respostas (anexa ao mesmo tópico). */}
           {!isEditing && (
-            <div className="flex items-center gap-4 mt-1.5">
-              <button
-                type="button"
-                onClick={() => onLikeComment?.(c.id)}
-                className="flex items-center gap-1 active:scale-90"
-                aria-label={c.liked ? "Não gostar" : "Gostar"}
-              >
-                <HeartIcon filled={c.liked} size={15} />
-                {c.likes > 0 && <span className="text-[11px] text-white/60">{c.likes}</span>}
-              </button>
-              {!isReply && (
-                <button
-                  type="button"
-                  onClick={() => startReply(c)}
-                  className="text-[11px] font-semibold text-white/60 hover:text-white active:scale-95"
-                >
-                  Responder
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Caixa de resposta */}
-          {replyingId === c.id && (
-            <div className="flex flex-col gap-2 mt-2">
-              <input
-                type="text"
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") sendReply();
-                  if (e.key === "Escape") cancelReply();
-                }}
-                autoFocus
-                placeholder={`Responder a ${c.username}...`}
-                className="w-full rounded-lg bg-white/10 px-3 py-2 text-xs text-white outline-none placeholder:text-white/40"
-              />
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={sendReply}
-                  disabled={!replyText.trim()}
-                  className="h-7 px-3 rounded-full bg-primary text-white text-[11px] font-semibold active:scale-95 disabled:opacity-40"
-                >
-                  Responder
-                </button>
-                <button
-                  type="button"
-                  onClick={cancelReply}
-                  className="h-7 px-3 rounded-full bg-white/10 text-white/70 text-[11px] font-semibold active:scale-95"
-                >
-                  Cancelar
-                </button>
-              </div>
-            </div>
+            <button
+              type="button"
+              onClick={() => startReply(c)}
+              className="block mt-1 text-[12px] font-semibold text-white/50 hover:text-white active:scale-95"
+            >
+              Responder
+            </button>
           )}
 
           {/* Respostas (um nível) */}
           {!isReply && repliesOf(c.id).length > 0 && (
-            <div className="mt-3 flex flex-col gap-3 pl-3 border-l border-white/10">
+            <div className="mt-3 flex flex-col gap-4 pl-3 border-l border-white/10">
               {repliesOf(c.id).map((r) => renderComment(r, true))}
             </div>
           )}
@@ -295,34 +282,56 @@ function CommentsSheet({
               {topLevel.map((c) => renderComment(c, false))}
             </div>
           </div>
-          <div className="flex items-center gap-3 px-4 py-3 border-t border-white/10">
-            <div className="w-[30px] h-[30px] rounded-full overflow-hidden flex-shrink-0 bg-primary-soft flex items-center justify-center text-white text-xs font-bold">
-              {meAvatar ? (
-                <img src={meAvatar} alt={meName} className="w-full h-full object-cover" />
-              ) : (
-                meName?.charAt(0)?.toUpperCase() ?? ""
-              )}
+          <div className="border-t border-white/10">
+            {/* Indicação de resposta: aparece por cima da caixa, com um X para
+                voltar a comentar normalmente. */}
+            {replyTarget && (
+              <div className="flex items-center justify-between px-4 pt-2.5 -mb-1">
+                <span className="text-[13px] text-white/70">
+                  A responder a <span className="font-semibold text-white">{replyTarget.username}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={cancelReply}
+                  className="p-1 -mr-1 text-white/60 hover:text-white active:scale-90"
+                  aria-label="Cancelar resposta"
+                >
+                  <CloseIcon size={14} color="currentColor" />
+                </button>
+              </div>
+            )}
+            <div className="flex items-center gap-3 px-4 py-3">
+              <div className="w-[30px] h-[30px] rounded-full overflow-hidden flex-shrink-0 bg-primary-soft flex items-center justify-center text-white text-xs font-bold">
+                {meAvatar ? (
+                  <img src={meAvatar} alt={meName} className="w-full h-full object-cover" />
+                ) : (
+                  meName?.charAt(0)?.toUpperCase() ?? ""
+                )}
+              </div>
+              <div className="flex-1 h-[42px] rounded-full bg-white/10 flex items-center px-4">
+                <input
+                  ref={inputRef}
+                  type="text"
+                  value={text}
+                  onChange={(e) => setText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") send();
+                    if (e.key === "Escape" && replyTarget) cancelReply();
+                  }}
+                  placeholder={replyTarget ? `Responder a ${replyTarget.username}...` : "Escreve um comentário..."}
+                  className="flex-1 bg-transparent border-none outline-none text-[13px] text-white placeholder:text-white/50"
+                />
+              </div>
+              <button
+                type="button"
+                onClick={send}
+                className="flex-shrink-0 p-1 active:scale-90 disabled:opacity-40"
+                disabled={!text.trim()}
+                aria-label="Enviar"
+              >
+                <SendIcon />
+              </button>
             </div>
-            <div className="flex-1 h-[42px] rounded-full bg-white/10 flex items-center px-4">
-              <input
-                ref={inputRef}
-                type="text"
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && send()}
-                placeholder="Escreve um comentário..."
-                className="flex-1 bg-transparent border-none outline-none text-xs text-white placeholder:text-white/50"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={send}
-              className="flex-shrink-0 p-1 active:scale-90 disabled:opacity-40"
-              disabled={!text.trim()}
-              aria-label="Enviar"
-            >
-              <SendIcon />
-            </button>
           </div>
         </div>
       </div>
@@ -335,7 +344,7 @@ export default function PostDetail() {
   const navigate = useNavigate();
   const { user, token, updateUser } = useAuth();
   const post = state?.post;
-  const myId = user?._id ?? user?.id;
+  const myId = idStr(user?._id ?? user?.id);
 
   const [liked, setLiked] = useState(() => {
     if (!post) return false;
@@ -355,7 +364,7 @@ export default function PostDetail() {
   // Diálogo de confirmação in-app: { title, message, confirmLabel, onConfirm } | null
   const [confirm, setConfirm] = useState(null);
 
-  const isOwner = !!post && !!myId && post.user_id === myId;
+  const isOwner = !!post && !!myId && idStr(post.user_id) === myId;
 
   const [following, setFollowing] = useState(
     () => !!post && (user?.following ?? []).includes(post.user_id),
@@ -569,36 +578,34 @@ export default function PostDetail() {
               username.charAt(0).toUpperCase()
             )}
           </div>
-          <div className="flex flex-col gap-px">
-            <div className="flex items-center gap-2">
-              <span
-                onClick={goToProfile}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") goToProfile();
-                }}
-                className="text-sm text-dark cursor-pointer hover:underline"
-              >
-                {username}
-              </span>
-              {!isOwner && post?.user_id && (
-                <button
-                  type="button"
-                  onClick={handleFollow}
-                  disabled={followLoading}
-                  className={`h-7 px-3 rounded-full text-xs font-semibold active:scale-95 disabled:opacity-50 ${
-                    following
-                      ? "bg-dark/5 text-dark"
-                      : "bg-primary text-white shadow-primary-button"
-                  }`}
-                >
-                  {following ? "A seguir" : "Seguir"}
-                </button>
-              )}
-            </div>
-            <span className="text-xs text-dark/70">{[date, location].filter(Boolean).join(" · ")}</span>
+          <div className="flex flex-col gap-px min-w-0">
+            <span
+              onClick={goToProfile}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") goToProfile();
+              }}
+              className="text-sm font-semibold text-dark cursor-pointer hover:underline truncate w-fit"
+            >
+              {username}
+            </span>
+            <span className="text-[13px] text-dark/70">{[date, location].filter(Boolean).join(" · ")}</span>
           </div>
+          {!isOwner && post?.user_id && (
+            <button
+              type="button"
+              onClick={handleFollow}
+              disabled={followLoading}
+              className={`ml-auto shrink-0 h-8 px-4 rounded-full text-[13px] font-semibold transition-colors active:scale-95 disabled:opacity-50 ${
+                following
+                  ? "bg-white text-dark border border-divider"
+                  : "bg-primary text-white shadow-primary-button"
+              }`}
+            >
+              {following ? "A seguir" : "Seguir"}
+            </button>
+          )}
           {isOwner && (
             <div className="ml-auto flex items-center gap-1">
               <button
@@ -622,8 +629,8 @@ export default function PostDetail() {
           )}
         </header>
 
-        <h2 className="text-base font-bold mb-2 text-dark">{title}</h2>
-        <p className="text-xs leading-relaxed mb-6 text-dark/80">{description}</p>
+        <h2 className="text-lg font-bold mb-2 text-dark">{title}</h2>
+        <p className="text-sm leading-relaxed mb-6 text-dark/80">{description}</p>
 
         <div className="flex items-center gap-4">
           <button

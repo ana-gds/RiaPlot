@@ -6,20 +6,20 @@ export function SearchBar({ value, onChange, onClear, placeholder = "Procura uma
       <SearchIcon
         size={18}
         color="currentColor"
-        className="absolute left-[14px] top-1/2 -translate-y-1/2 pointer-events-none text-muted group-focus-within:text-primary transition-colors"
+        className="absolute left-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted group-focus-within:text-primary transition-colors"
       />
       <input
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        className="w-full h-[46px] rounded-[14px] bg-cream pl-[42px] pr-10 text-sm text-dark border border-transparent outline-none shadow-card-soft transition-shadow focus:bg-white focus:border-primary/50 focus:shadow-[0_4px_16px_rgba(219,139,49,0.15)]"
+        className="w-full h-12 rounded-full bg-cream pl-11 pr-11 text-sm font-medium text-dark placeholder:text-muted/70 border border-primary/20 outline-none shadow-[0_2px_10px_rgba(0,77,108,0.05)] transition-all hover:border-primary/40 focus:bg-white focus:border-primary focus:shadow-[0_6px_22px_rgba(219,139,49,0.22)]"
       />
       {value?.length > 0 && (
         <button
           type="button"
           onClick={onClear}
-          className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center bg-secondary/10 text-muted"
+          className="absolute right-2.5 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full flex items-center justify-center bg-secondary/10 text-muted hover:bg-secondary/15 hover:text-dark active:scale-90 transition-colors"
           aria-label="Limpar pesquisa"
         >
           <CloseIcon />

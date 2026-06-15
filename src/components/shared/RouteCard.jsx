@@ -58,7 +58,7 @@ export function RouteCardCompact({ route, onClick }) {
       </div>
       <div className="px-4 pt-3 pb-1">
         <h3 className="text-base font-bold mb-1 text-dark">{route.name}</h3>
-        <p className="text-xs leading-relaxed text-dark/75">{route.description}</p>
+        <p className="text-[13px] leading-relaxed text-dark/75">{route.description}</p>
       </div>
       <div className="px-4 py-3 border-t border-divider/60">
         <button

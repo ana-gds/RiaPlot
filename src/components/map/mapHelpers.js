@@ -27,9 +27,11 @@ const DOCK_ICON_STYLES = {
 };
 
 const DOCK_ICON_SVG = `
-  <svg width="11" height="11" viewBox="0 0 24 24" fill="none">
-    <path d="M2 20h20M4 17l2-7h12l2 7M8 10V6a2 2 0 012-2h0a2 2 0 012 2v4"
-      stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <svg width="11" height="11" viewBox="0 0 24 24" fill="none"
+       stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M22 18H2a4 4 0 0 0 4 4h12a4 4 0 0 0 4-4Z"/>
+    <path d="M21 14 10 2 3 14h18Z"/>
+    <path d="M10 2v16"/>
   </svg>`;
 
 export function createDockIcon(type, estado) {
