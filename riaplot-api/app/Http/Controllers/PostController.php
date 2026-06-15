@@ -125,13 +125,19 @@ class PostController extends Controller
         $post = Post::find($id);
         if (!$post) return response()->json(['message' => 'Não encontrado'], 404);
 
-        $data = $request->validate(['comment' => 'required|string']);
+        $data = $request->validate([
+            'comment'   => 'required|string',
+            // Quando preenchido, este comentário é uma resposta a outro.
+            'parent_id' => 'nullable|string',
+        ]);
         $user = $request->user();
 
         $newComment = [
             'id'         => (string) new \MongoDB\BSON\ObjectId(),
             'user_id'    => $user->id,
             'comment'    => $data['comment'],
+            'parent_id'  => $data['parent_id'] ?? null,
+            'likes'      => [],
             'created_at' => now()->toISOString(),
         ];
 
@@ -159,8 +165,116 @@ class PostController extends Controller
             'username'   => $user->username,
             'photo_url'  => $user->photo_url ?? null,
             'comment'    => $newComment['comment'],
+            'parent_id'  => $newComment['parent_id'],
+            'likes'      => [],
             'created_at' => $newComment['created_at'],
         ], 201);
+    }
+
+    public function likeComment(Request $request, $id, $commentId)
+    {
+        $post = Post::find($id);
+        if (!$post) return response()->json(['message' => 'Não encontrado'], 404);
+
+        $userId   = $request->user()->id;
+        $comments = $post->comments ?? [];
+        $found    = false;
+        $liked    = false;
+        $count    = 0;
+
+        foreach ($comments as &$c) {
+            if (($c['id'] ?? null) === $commentId) {
+                $likes = $c['likes'] ?? [];
+                if (in_array($userId, $likes)) {
+                    $likes = array_values(array_filter($likes, fn($l) => $l !== $userId));
+                    $liked = false;
+                } else {
+                    $likes[] = $userId;
+                    $liked = true;
+                }
+                $c['likes'] = array_values($likes);
+                $count = count($c['likes']);
+                $found = true;
+                break;
+            }
+        }
+        unset($c);
+
+        if (!$found) return response()->json(['message' => 'Comentário não encontrado'], 404);
+
+        $post->update(['comments' => $comments]);
+
+        return response()->json(['likes' => $count, 'liked' => $liked]);
+    }
+
+    public function updateComment(Request $request, $id, $commentId)
+    {
+        $post = Post::find($id);
+        if (!$post) return response()->json(['message' => 'Não encontrado'], 404);
+
+        $data = $request->validate(['comment' => 'required|string']);
+        $user = $request->user();
+
+        $comments = $post->comments ?? [];
+        $found    = false;
+
+        foreach ($comments as &$c) {
+            if (($c['id'] ?? null) === $commentId) {
+                // Só o autor do comentário o pode editar.
+                if (($c['user_id'] ?? null) !== $user->id) {
+                    return response()->json(['message' => 'Sem permissão'], 403);
+                }
+                $c['comment'] = $data['comment'];
+                $found = true;
+                break;
+            }
+        }
+        unset($c);
+
+        if (!$found) return response()->json(['message' => 'Comentário não encontrado'], 404);
+
+        $post->update(['comments' => $comments]);
+
+        return response()->json([
+            'id'        => $commentId,
+            'user_id'   => $user->id,
+            'username'  => $user->username,
+            'photo_url' => $user->photo_url ?? null,
+            'comment'   => $data['comment'],
+        ]);
+    }
+
+    public function deleteComment(Request $request, $id, $commentId)
+    {
+        $post = Post::find($id);
+        if (!$post) return response()->json(['message' => 'Não encontrado'], 404);
+
+        $user     = $request->user();
+        $comments = $post->comments ?? [];
+
+        $target = null;
+        foreach ($comments as $c) {
+            if (($c['id'] ?? null) === $commentId) { $target = $c; break; }
+        }
+
+        if (!$target) return response()->json(['message' => 'Comentário não encontrado'], 404);
+
+        // Pode apagar quem escreveu o comentário ou o dono do post.
+        $isAuthor    = ($target['user_id'] ?? null) === $user->id;
+        $isPostOwner = $post->user_id === $user->id;
+        if (!$isAuthor && !$isPostOwner) {
+            return response()->json(['message' => 'Sem permissão'], 403);
+        }
+
+        // Remove o comentário e, em cascata, as respostas que lhe apontam.
+        $comments = array_values(array_filter(
+            $comments,
+            fn($c) => ($c['id'] ?? null) !== $commentId
+                && ($c['parent_id'] ?? null) !== $commentId,
+        ));
+        $post->update(['comments' => $comments]);
+
+        return response()->json(['message' => 'Comentário removido']);
     }
 
     /**
@@ -194,6 +308,8 @@ class PostController extends Controller
                     'username'   => $u->username ?? 'utilizador',
                     'photo_url'  => $u->photo_url ?? null,
                     'comment'    => $c['comment'] ?? '',
+                    'parent_id'  => $c['parent_id'] ?? null,
+                    'likes'      => $c['likes'] ?? [],
                     'created_at' => $c['created_at'] ?? null,
                 ];
             }, $p->comments ?? []);

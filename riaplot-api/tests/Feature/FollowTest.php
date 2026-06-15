@@ -51,4 +51,26 @@ class FollowTest extends TestCase
 
         $this->postJson("/api/users/{$me->id}/follow")->assertStatus(422);
     }
+
+    public function test_followers_and_following_lists_resolve_users(): void
+    {
+        $me     = User::factory()->create();
+        $target = User::factory()->create();
+
+        Sanctum::actingAs($me);
+        $this->postJson("/api/users/{$target->id}/follow")->assertOk();
+
+        // Quem o $me segue inclui o $target.
+        $this->getJson("/api/users/{$me->id}/following")
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.id', (string) $target->id)
+            ->assertJsonPath('0.username', $target->username);
+
+        // Os seguidores do $target incluem o $me.
+        $this->getJson("/api/users/{$target->id}/followers")
+            ->assertOk()
+            ->assertJsonCount(1)
+            ->assertJsonPath('0.id', (string) $me->id);
+    }
 }

@@ -3,11 +3,11 @@ namespace App\Models;
 
 use MongoDB\Laravel\Auth\User as Authenticatable;
 use Laravel\Sanctum\HasApiTokens;
-use Illuminate\Database\Eloquent\Factories\HasFactory; // ← adicionar
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory; // ← adicionar HasFactory aqui
+    use HasApiTokens, HasFactory;
 
     protected $connection = 'mongodb';
     protected $collection = 'users';
@@ -15,16 +15,14 @@ class User extends Authenticatable
     protected $fillable = [
         'name', 'email', 'username', 'password',
         'photo_url', 'saved_routes', 'followers', 'following',
-        'email_verified_at', 'verification_token',
     ];
 
-    protected $hidden = ['password', 'verification_token'];
+    protected $hidden = ['password'];
 
     protected $casts = [
-        'saved_routes'      => 'array',
-        'followers'         => 'array',
-        'following'         => 'array',
-        'email_verified_at' => 'datetime',
+        'saved_routes' => 'array',
+        'followers'    => 'array',
+        'following'    => 'array',
     ];
 
     public function boats()

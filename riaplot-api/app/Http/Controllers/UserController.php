@@ -59,6 +59,45 @@ class UserController extends Controller
     }
 
     /**
+     * Lista (resumida) dos seguidores de um utilizador.
+     */
+    public function followers($id)
+    {
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(['message' => 'Utilizador não encontrado'], 404);
+        }
+        return response()->json($this->resolveUsers($user->followers ?? []));
+    }
+
+    /**
+     * Lista (resumida) de quem um utilizador segue.
+     */
+    public function following($id)
+    {
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(['message' => 'Utilizador não encontrado'], 404);
+        }
+        return response()->json($this->resolveUsers($user->following ?? []));
+    }
+
+    /**
+     * Converte um array de ids em dados públicos resumidos, numa única query.
+     */
+    private function resolveUsers(array $ids)
+    {
+        if (empty($ids)) return [];
+
+        return User::whereIn('_id', $ids)->get()->map(fn ($u) => [
+            'id'        => (string) $u->_id,
+            'name'      => $u->name,
+            'username'  => $u->username,
+            'photo_url' => $u->photo_url ?? null,
+        ])->values();
+    }
+
+    /**
      * Segue/deixa de seguir um utilizador (toggle). Mantém os dois lados
      * sincronizados (o meu `following` e o `followers` do alvo) e gera uma
      * notificação para o alvo quando começo a segui-lo.

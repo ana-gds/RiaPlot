@@ -1,7 +1,6 @@
 <?php
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\PasswordResetController;
 use App\Http\Controllers\BoatController;
 use App\Http\Controllers\RouteController;
 use App\Http\Controllers\PoiController;
@@ -16,11 +15,6 @@ use App\Http\Controllers\Api\HidromodController;
 // Auth (público)
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login',    [AuthController::class, 'login']);
-
-// Verificação de email (link público) + reposição de palavra-passe
-Route::post('/email/verify',     [AuthController::class, 'verifyEmail']);
-Route::post('/forgot-password',  [PasswordResetController::class, 'forgot']);
-Route::post('/reset-password',   [PasswordResetController::class, 'reset']);
 
 // Cais, Rotas e POIs (públicos — o mapa não precisa de login)
 Route::get('/docks',       [DockController::class, 'index']);
@@ -41,9 +35,6 @@ Route::middleware('auth:sanctum')->group(function () {
     // Perfil
     Route::get('/user',    fn(\Illuminate\Http\Request $r) => $r->user());
     Route::patch('/user',  [AuthController::class, 'update']);
-
-    // Reenvio do email de verificação
-    Route::post('/email/resend', [AuthController::class, 'resendVerification']);
 
     // Upload de imagens
     Route::post('/upload', function(\Illuminate\Http\Request $request) {
@@ -81,11 +72,16 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::apiResource('posts', PostController::class);
     Route::post('/posts/{id}/like',    [PostController::class, 'like']);
     Route::post('/posts/{id}/comment', [PostController::class, 'comment']);
+    Route::patch('/posts/{id}/comment/{commentId}',  [PostController::class, 'updateComment']);
+    Route::delete('/posts/{id}/comment/{commentId}', [PostController::class, 'deleteComment']);
+    Route::post('/posts/{id}/comment/{commentId}/like', [PostController::class, 'likeComment']);
 
     // Utilizadores (perfil público) + seguir / deixar de seguir
-    Route::get('/users',               [UserController::class, 'index']);
-    Route::get('/users/{id}',          [UserController::class, 'show']);
-    Route::post('/users/{id}/follow',  [UserController::class, 'follow']);
+    Route::get('/users',                  [UserController::class, 'index']);
+    Route::get('/users/{id}',             [UserController::class, 'show']);
+    Route::get('/users/{id}/followers',   [UserController::class, 'followers']);
+    Route::get('/users/{id}/following',   [UserController::class, 'following']);
+    Route::post('/users/{id}/follow',     [UserController::class, 'follow']);
 
     // Rotas guardadas
     Route::post('/routes/{id}/save',   [RouteController::class, 'save']);

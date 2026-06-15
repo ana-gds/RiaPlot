@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { IMAGES } from "../constants/images.js";
 import { Input, Label } from "../components/ui/Input.jsx";
 import { PrimaryButton } from "../components/ui/Button.jsx";
@@ -17,6 +18,7 @@ function extractId(raw) {
 
 export default function BoatSettings() {
   const { token } = useAuth();
+  const navigate = useNavigate();
   const [boatId, setBoatId] = useState(null);
   const [boatPhotoUrl, setBoatPhotoUrl] = useState(null);
   const [photoFile, setPhotoFile] = useState(null);
@@ -33,7 +35,6 @@ export default function BoatSettings() {
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState("");
-  const [success, setSuccess] = useState(false);
 
   useEffect(() => {
     getBoats(token)
@@ -81,8 +82,8 @@ export default function BoatSettings() {
         lower_clearance: parseFloat(form.folgaInferior),
         ...(photoUrl && { photo_url: photoUrl }),
       });
-      setSuccess(true);
-      setTimeout(() => setSuccess(false), 3000);
+      // Guardado com sucesso — volta à página anterior.
+      navigate(-1);
     } catch (err) {
       setError(err?.message ?? "Erro ao guardar. Tenta novamente.");
     } finally {
@@ -115,7 +116,6 @@ export default function BoatSettings() {
 
       <div className="flex flex-col gap-3.5 px-4 mt-6 flex-1">
         {error && <p className="text-xs text-danger text-center">{error}</p>}
-        {success && <p className="text-xs text-green-600 text-center">Alterações guardadas!</p>}
         <div>
           <Label>Nome da embarcação</Label>
           <Input placeholder="Ex: Gaivota" value={form.nome} onChange={set("nome")} />

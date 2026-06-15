@@ -58,36 +58,6 @@ export function logoutUser(token) {
     });
 }
 
-// --- Verificação de email e reposição de palavra-passe ---
-
-export function verifyEmail({ id, token }) {
-    return request("/email/verify", {
-        method: "POST",
-        body: JSON.stringify({ id, token }),
-    });
-}
-
-export function resendVerification(token) {
-    return request("/email/resend", {
-        method: "POST",
-        headers: { Authorization: `Bearer ${token}` },
-    });
-}
-
-export function forgotPassword(email) {
-    return request("/forgot-password", {
-        method: "POST",
-        body: JSON.stringify({ email }),
-    });
-}
-
-export function resetPassword({ email, token, password }) {
-    return request("/reset-password", {
-        method: "POST",
-        body: JSON.stringify({ email, token, password }),
-    });
-}
-
 export function updateUser(token, data) {
     return request("/user", {
         method: "PATCH",
@@ -157,11 +127,33 @@ export function likePost(token, id) {
     });
 }
 
-export function addComment(token, id, comment) {
+export function addComment(token, id, comment, parentId = null) {
     return request(`/posts/${id}/comment`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ comment, parent_id: parentId }),
+    });
+}
+
+export function likeComment(token, id, commentId) {
+    return request(`/posts/${id}/comment/${commentId}/like`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
+export function updateComment(token, id, commentId, comment) {
+    return request(`/posts/${id}/comment/${commentId}`, {
+        method: "PATCH",
+        headers: { Authorization: `Bearer ${token}` },
         body: JSON.stringify({ comment }),
+    });
+}
+
+export function deleteComment(token, id, commentId) {
+    return request(`/posts/${id}/comment/${commentId}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
     });
 }
 
@@ -210,6 +202,18 @@ export function getUser(token, id) {
 export function followUser(token, id) {
     return request(`/users/${id}/follow`, {
         method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
+export function getFollowers(token, id) {
+    return request(`/users/${id}/followers`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
+export function getFollowing(token, id) {
+    return request(`/users/${id}/following`, {
         headers: { Authorization: `Bearer ${token}` },
     });
 }

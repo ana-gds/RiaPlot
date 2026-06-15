@@ -3,9 +3,6 @@ import { AuthProvider } from "./contexts/AuthContext.jsx";
 import { NotificationsProvider } from "./contexts/NotificationsContext.jsx";
 import { AppShell, PageShell } from "./layouts/AppLayout.jsx";
 import Login from "./pages/Login.jsx";
-import ForgotPassword from "./pages/ForgotPassword.jsx";
-import ResetPassword from "./pages/ResetPassword.jsx";
-import VerifyEmail from "./pages/VerifyEmail.jsx";
 import ProfileRegister from "./pages/ProfileRegister.jsx";
 import BoatRegister from "./pages/BoatRegister.jsx";
 import FinalRegister from "./pages/FinalRegister.jsx";
@@ -39,9 +36,6 @@ export default function App() {
           {/* Stand-alone screens (auth, detail, settings) — no bottom nav */}
           <Route element={<PageShell />}>
             <Route path="/login" element={<Login />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/register/profile" element={<ProfileRegister />} />
             <Route path="/register/boat" element={<BoatRegister />} />
             <Route path="/register/final" element={<FinalRegister />} />

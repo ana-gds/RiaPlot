@@ -19,6 +19,7 @@ import { SimulationPolyline } from "../components/map/SimulationPolyline.jsx";
 import { RoutePath } from "../components/map/RoutePath.jsx";
 import { TidesPanel } from "../components/map/TidesPanel.jsx";
 import { SimulationSheet } from "../components/map/SimulationSheet.jsx";
+import { RoutePicker } from "../components/map/RoutePicker.jsx";
 import { LocatingToast } from "../components/map/LocatingToast.jsx";
 import { fetchGpxPoints } from "../utils/gpx.js";
 
@@ -35,6 +36,8 @@ export default function MapPage() {
   const [baseLayer, setBaseLayer] = useState("osm");
   const [nauticalVisible, setNauticalVisible] = useState(true);
   const [simOpen, setSimOpen] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
+  const [pickedRoute, setPickedRoute] = useState(null);
   const [simResults, setSimResults] = useState(null);
   const [locating, setLocating] = useState(false);
   const [tidesVisible, setTidesVisible] = useState(true);
@@ -72,8 +75,12 @@ export default function MapPage() {
     };
   }, [gpxResolved, gpxTitle]);
 
-  // A rota ativa no mapa: uma rota curada selecionada ou o GPX de um post.
-  const activeRoute = selectedRoute ?? gpxRoute;
+  // A rota ativa no mapa: rota da navegação, rota escolhida no picker ou o GPX
+  // de um post.
+  const activeRoute = selectedRoute ?? pickedRoute ?? gpxRoute;
+  const activeRouteId =
+    selectedRouteId ??
+    (pickedRoute ? pickedRoute.id ?? pickedRoute._id?.$oid ?? pickedRoute._id : null);
 
   const handleLocate = () => {
     setLocating(true);
@@ -82,6 +89,7 @@ export default function MapPage() {
 
   const handleClearRoute = () => {
     setSimResults(null);
+    setPickedRoute(null);
     navigate("/map", { replace: true, state: {} });
   };
 
@@ -111,7 +119,7 @@ export default function MapPage() {
             onToggleTides={() => setTidesVisible((v) => !v)}
           />
 
-          <RoutePolylines routes={mapRoutes} selectedRouteId={selectedRouteId} />
+          <RoutePolylines routes={mapRoutes} selectedRouteId={activeRouteId} />
           {simResults && <SimulationPolyline positions={simResults.positions} />}
           <DockMarkers docks={docks} />
           <PoiMarkers pois={pois} />
@@ -162,13 +170,22 @@ export default function MapPage() {
         {!activeRoute && tidesVisible && <TidesPanel />}
 
         {!activeRoute && !simResults && (
-          <PrimaryButton onClick={() => setSimOpen(true)} className="px-6">
-            Simular Rota
+          <PrimaryButton onClick={() => setPickerOpen(true)} className="px-6">
+            Planear Rota
           </PrimaryButton>
         )}
       </div>
 
       <LocatingToast visible={locating} />
+      <RoutePicker
+        open={pickerOpen}
+        onClose={() => setPickerOpen(false)}
+        routes={mapRoutes}
+        onSelectRoute={(r) => {
+          setPickedRoute(r);
+          setPickerOpen(false);
+        }}
+      />
       <SimulationSheet
         open={simOpen}
         onClose={() => setSimOpen(false)}
