@@ -160,7 +160,7 @@ export default function PublicProfile() {
             </div>
           )}
         </div>
-        <h1 className="text-xl font-bold mt-3 text-dark font-inter">{name}</h1>
+        <h1 className="text-xl font-bold mt-3 text-dark">{name}</h1>
         <p className="text-[11px] text-dark/60">@{username}</p>
         <div className="flex items-center gap-12 mt-3 mb-4">
           <StatItem value={posts.length} label="Posts" />

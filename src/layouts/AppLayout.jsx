@@ -12,7 +12,7 @@ const SIDEBAR_NAV_MAP = {
   rotas: "/routes",
   mapa: "/map",
   perfil: "/profile",
-  defConta: "/profile",
+  defConta: "/profile/settings",
   defBarco: "/profile/boat",
   editarPerfil: "/profile/edit",
 };
