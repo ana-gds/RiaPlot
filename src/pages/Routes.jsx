@@ -152,7 +152,7 @@ export default function Routes() {
   return (
     <>
       <div className="px-4 pb-3 flex-shrink-0 bg-white sticky top-0 z-10">
-        <div className="flex items-center gap-2.5 mb-3">
+        <div className="flex items-center gap-2.5">
           <CircularButton onClick={openSidebar} ariaLabel="Menu" className="md:hidden">
             <MenuIcon />
           </CircularButton>
@@ -180,7 +180,7 @@ export default function Routes() {
         </div>
 
         {showFilters && (
-          <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-1 scroll-x-hidden">
+          <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pt-3 pb-1 scroll-x-hidden">
             <Chip
               active={activeFilters.includes("az")}
               onClick={() => toggleFilter("az")}
