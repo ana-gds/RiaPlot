@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { COLORS } from "../constants/theme.js";
 import { PrimaryButton, TextLink } from "../components/ui/Button.jsx";
+import { BoatIcon } from "../components/ui/Icons.jsx";
 import { ProgressIndicator } from "../components/shared/ProgressIndicator.jsx";
 
 function AnimatedCheck() {
@@ -78,17 +79,7 @@ function SummaryCard({ userName, boatName, boatType }) {
         iconBg="rgba(219,139,49,0.15)"
         label="Embarcação"
         value={`${boatName} · ${boatType}`}
-        icon={
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-            <path
-              d="M2 20h20M4 17l2-7h12l2 7M8 10V6a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v4"
-              stroke={COLORS.primary}
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        }
+        icon={<BoatIcon size={18} color={COLORS.primary} />}
       />
     </div>
   );

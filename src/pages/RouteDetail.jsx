@@ -156,6 +156,7 @@ export default function RouteDetail() {
   const [tide, setTide] = useState(null);
   const [showDifficultyInfo, setShowDifficultyInfo] = useState(false);
   const [showCaladoInfo, setShowCaladoInfo] = useState(false);
+  const [descExpanded, setDescExpanded] = useState(false);
 
   // Calado do barco registado do utilizador, para avaliar a compatibilidade.
   useEffect(() => {
@@ -332,7 +333,26 @@ export default function RouteDetail() {
         {description && (
           <>
             <h2 className="text-base font-semibold mb-2 leading-6 text-dark">Descrição</h2>
-            <p className="text-sm leading-[22.4px] mb-6 text-muted">{description}</p>
+            <p
+              className={`text-sm leading-[22.4px] text-muted ${
+                !descExpanded ? "line-clamp-4" : ""
+              }`}
+            >
+              {description}
+            </p>
+            {/* Botão "Ler mais" só quando a descrição é longa o suficiente
+                para ser cortada. */}
+            {description.length > 220 && (
+              <button
+                type="button"
+                onClick={() => setDescExpanded((v) => !v)}
+                className="mt-1 text-sm font-semibold text-primary active:scale-95"
+                aria-expanded={descExpanded}
+              >
+                {descExpanded ? "Ler menos" : "Ler mais"}
+              </button>
+            )}
+            <div className="mb-6" />
           </>
         )}
 

@@ -14,7 +14,7 @@ export function ChevronDownIcon({ size = 12, color = "#86969c", className = "" }
   );
 }
 
-export function MenuIcon({ size = 22, color = "white", strokeWidth = 2.2, className = "" }) {
+export function MenuIcon({ size = 22, color = "currentColor", strokeWidth = 2.2, className = "" }) {
   return (
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
       <path d="M3 12h18M3 6h18M3 18h18" stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" />
@@ -273,6 +273,17 @@ export function AnchorIcon({ size = 16, color = "currentColor", className = "" }
     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true">
       <circle cx="12" cy="5" r="2" stroke={color} strokeWidth="2" />
       <path d="M12 7v15M5 12h14M5 17a7 7 0 007 4 7 7 0 007-4" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+export function BoatIcon({ size = 18, color = "currentColor", strokeWidth = 2, className = "" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true"
+      stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M22 18H2a4 4 0 0 0 4 4h12a4 4 0 0 0 4-4Z" />
+      <path d="M21 14 10 2 3 14h18Z" />
+      <path d="M10 2v16" />
     </svg>
   );
 }

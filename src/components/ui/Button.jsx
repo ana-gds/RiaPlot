@@ -64,7 +64,7 @@ export function SecondaryButton({
 export function CircularButton({
   children,
   onClick,
-  size = 46,
+  size = 48,
   className = "",
   ariaLabel,
   ...rest
@@ -74,7 +74,7 @@ export function CircularButton({
       type="button"
       onClick={onClick}
       aria-label={ariaLabel}
-      className={`rounded-full flex items-center justify-center flex-shrink-0 bg-secondary shadow-secondary-button transition-transform active:scale-95 ${className}`}
+      className={`rounded-full flex items-center justify-center flex-shrink-0 bg-cream text-dark border border-primary/20 shadow-[0_2px_10px_rgba(0,77,108,0.05)] transition-all hover:border-primary/40 active:scale-95 ${className}`}
       style={{ width: size, height: size }}
       {...rest}
     >

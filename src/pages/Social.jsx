@@ -13,6 +13,29 @@ function formatDate(iso) {
   return new Date(iso).toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" });
 }
 
+// Ícones das tabs (herdam a cor do texto da tab via currentColor).
+function PostsTabIcon({ active }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"
+      stroke="currentColor" strokeWidth={active ? 2.2 : 2} strokeLinecap="round" strokeLinejoin="round">
+      <rect x="3" y="3" width="18" height="18" rx="3" />
+      <circle cx="8.5" cy="8.5" r="1.5" />
+      <path d="M21 15l-5-5L5 21" />
+    </svg>
+  );
+}
+
+function UsersTabIcon({ active }) {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true"
+      stroke="currentColor" strokeWidth={active ? 2.2 : 2} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
 // Quantos posts pedir ao servidor de cada vez.
 const PAGE_SIZE = 10;
 
@@ -167,7 +190,7 @@ export default function Social() {
 
   return (
     <>
-      <div className="flex flex-col gap-2.5 px-4 pb-3 flex-shrink-0 sticky top-0 bg-white z-10 border-b border-secondary/5">
+      <div className="flex flex-col gap-2.5 px-4 pb-3 flex-shrink-0 sticky top-0 bg-white z-10">
         <div className="flex items-center gap-3">
           <CircularButton onClick={openSidebar} ariaLabel="Menu" className="md:hidden">
             <MenuIcon />
@@ -180,25 +203,34 @@ export default function Social() {
             placeholder={mode === "users" ? "Procura um utilizador" : "Procura um post"}
           />
         </div>
-        <div className="flex items-center gap-1 p-1 rounded-2xl bg-cream w-fit self-center md:self-start">
+        <div className="relative flex w-full border-b border-secondary/10">
           {[
-            { key: "posts", label: "Publicações" },
-            { key: "users", label: "Utilizadores" },
-          ].map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              onClick={() => handleMode(tab.key)}
-              aria-pressed={mode === tab.key}
-              className={`h-8 px-4 rounded-xl text-sm font-semibold transition-colors ${
-                mode === tab.key
-                  ? "bg-primary text-white shadow-primary-button"
-                  : "text-muted hover:text-dark"
-              }`}
-            >
-              {tab.label}
-            </button>
-          ))}
+            { key: "posts", label: "Publicações", icon: PostsTabIcon },
+            { key: "users", label: "Utilizadores", icon: UsersTabIcon },
+          ].map((tab) => {
+            const Icon = tab.icon;
+            const active = mode === tab.key;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => handleMode(tab.key)}
+                aria-pressed={active}
+                className={`flex-1 flex items-center justify-center gap-2 h-11 text-sm font-semibold transition-colors ${
+                  active ? "text-primary" : "text-muted hover:text-dark"
+                }`}
+              >
+                <Icon active={active} />
+                {tab.label}
+              </button>
+            );
+          })}
+          {/* Sublinhado que desliza para a tab ativa. */}
+          <span
+            aria-hidden="true"
+            className="absolute bottom-0 left-0 h-[2.5px] w-1/2 rounded-full bg-primary transition-transform duration-300 ease-out"
+            style={{ transform: mode === "users" ? "translateX(100%)" : "translateX(0)" }}
+          />
         </div>
       </div>
 
@@ -247,8 +279,7 @@ export default function Social() {
           ) : filtered.length > 0 ? (
             <>
               {filtered.map((post, i) => (
-                <div key={post.id}>
-                  {i > 0 && <div className="h-px mx-4 my-2 bg-secondary/10" />}
+                <div key={post.id} className={i > 0 ? "mt-4" : ""}>
                   <FeedPostCard
                     post={post}
                     onToggleLike={toggleLike}

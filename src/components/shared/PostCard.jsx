@@ -73,7 +73,7 @@ export function FeedPostCard({
         }}
       >
         <h3 className="text-base font-bold mb-1 text-dark">{post.title}</h3>
-        <p className="text-xs leading-relaxed text-dark/80 line-clamp-2">{post.description}</p>
+        <p className="text-[13px] leading-relaxed text-dark/80 line-clamp-2">{post.description}</p>
       </div>
 
       <div className="flex items-center gap-3.5 px-4 pt-2.5 pb-1">
@@ -130,7 +130,7 @@ export function ProfilePostCard({ post, onToggleLike, onOpenDetail }) {
         </div>
         <div className="px-4 pt-3 pb-1">
           <h3 className="text-base font-bold mb-1 text-dark">{post.title}</h3>
-          <p className="text-xs leading-relaxed text-dark/75 line-clamp-2">{post.description}</p>
+          <p className="text-[13px] leading-relaxed text-dark/75 line-clamp-2">{post.description}</p>
         </div>
       </div>
       <div className="flex items-center gap-4 px-4 py-3 mt-1 border-t border-divider/60">

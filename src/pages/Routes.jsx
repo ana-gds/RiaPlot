@@ -151,7 +151,7 @@ export default function Routes() {
 
   return (
     <>
-      <div className="px-4 pb-3 flex-shrink-0 bg-white sticky top-0 z-10 border-b border-secondary/5">
+      <div className="px-4 pb-3 flex-shrink-0 bg-white sticky top-0 z-10">
         <div className="flex items-center gap-2.5 mb-3">
           <CircularButton onClick={openSidebar} ariaLabel="Menu" className="md:hidden">
             <MenuIcon />
@@ -162,10 +162,10 @@ export default function Routes() {
             type="button"
             onClick={() => setShowFilters((s) => !s)}
             className={[
-              "w-[46px] h-[46px] rounded-[14px] flex items-center justify-center shrink-0 relative transition-colors border",
+              "w-12 h-12 rounded-full flex items-center justify-center shrink-0 relative border transition-all",
               showFilters || activeFilters.length > 0
-                ? "bg-primary/10 border-primary text-primary"
-                : "bg-white border-primary/25 text-dark",
+                ? "bg-primary/10 border-primary text-primary shadow-[0_6px_22px_rgba(219,139,49,0.22)]"
+                : "bg-cream border-primary/20 text-dark hover:border-primary/40 shadow-[0_2px_10px_rgba(0,77,108,0.05)]",
             ].join(" ")}
             aria-label="Mostrar filtros"
             aria-expanded={showFilters}
