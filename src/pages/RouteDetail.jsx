@@ -108,7 +108,7 @@ function NavigabilityCard({ status, title, message, tide }) {
       <div className="text-[11px] leading-[16.5px] text-muted">{message}</div>
       <div className="text-[11px] leading-[16.5px] mt-1.5 text-muted">{tide}</div>
       <div className="text-[10px] leading-[15px] mt-1 text-muted-soft">
-        Estimativa com base na maré da barra de Aveiro — não substitui a leitura local.
+        Estimativa com base na maré da barra de Aveiro, não substitui a leitura local.
       </div>
     </div>
   );
@@ -324,7 +324,7 @@ export default function RouteDetail() {
           <InfoModal title="Calado máximo recomendado" onClose={() => setShowCaladoInfo(false)}>
             É o calado máximo de embarcação aconselhado para percorrer esta rota com
             segurança, dado que ela atravessa zonas pouco profundas. É uma referência
-            fixa e curada da rota — não reflete a maré atual. Para saber se passas
+            fixa e curada da rota, não reflete a maré atual. Para saber se passas
             agora com a tua embarcação, vê a indicação de maré em tempo real abaixo.
           </InfoModal>
         )}

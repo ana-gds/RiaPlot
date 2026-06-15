@@ -527,7 +527,7 @@ export default function PostDetail() {
           <BackButton />
         </div>
         {images.length > 1 && (
-          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5">
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-1.5">
             {images.map((_, i) => (
               <button
                 key={i}
@@ -545,7 +545,7 @@ export default function PostDetail() {
           <button
             type="button"
             onClick={() => navigate("/map", { state: { gpxPoints, gpxUrl, gpxTitle: title } })}
-            className="absolute right-4 bottom-4 h-10 px-5 rounded-2xl bg-primary-soft text-white text-sm font-semibold shadow-primary-button backdrop-blur-[2px] active:scale-95"
+            className="absolute right-4 bottom-8 h-10 px-5 rounded-2xl bg-primary-soft text-white text-sm font-semibold shadow-primary-button backdrop-blur-[2px] active:scale-95"
           >
             Ver no mapa
           </button>

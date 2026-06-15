@@ -35,7 +35,7 @@ export default function PublicProfile() {
   const [followLoading, setFollowLoading] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
 
-  // Se for o próprio utilizador, vai para o perfil pessoal (com edição/rotas).
+  // Se for o próprio utilizador, vai para o perfil pessoal.
   useEffect(() => {
     if (isMe) navigate("/profile", { replace: true });
   }, [isMe, navigate]);

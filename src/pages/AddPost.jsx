@@ -4,7 +4,7 @@ import { Input, Textarea, Select, Label } from "../components/ui/Input.jsx";
 import { PrimaryButton } from "../components/ui/Button.jsx";
 import { BackButton } from "../components/ui/BackButton.jsx";
 import { MultiPhotoUpload, GpxUpload } from "../components/ui/PhotoUpload.jsx";
-import { PinIcon } from "../components/ui/Icons.jsx";
+import { LocationInput } from "../components/ui/LocationInput.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { createPost, updatePost, uploadFile, uploadGpx } from "../services/api.js";
 import { useRoutes } from "../hooks/useApi.js";
@@ -161,17 +161,11 @@ export default function AddPost() {
 
         <div className="mb-4">
           <Label>Localização</Label>
-          <div className="relative">
-            <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted">
-              <PinIcon size={16} color="currentColor" />
-            </span>
-            <Input
-              placeholder="Ex: Costa Nova, Aveiro"
-              value={form.location}
-              onChange={set("location")}
-              className="pl-10"
-            />
-          </div>
+          <LocationInput
+            placeholder="Ex: Costa Nova, Aveiro"
+            value={form.location}
+            onChange={(loc) => setForm((p) => ({ ...p, location: loc }))}
+          />
         </div>
 
         <div className="mb-4">

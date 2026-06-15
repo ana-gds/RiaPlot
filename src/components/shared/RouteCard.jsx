@@ -1,5 +1,6 @@
 import { BookmarkIcon } from "../ui/Icons.jsx";
 import { DifficultyBadge } from "./DifficultyBadge.jsx";
+import { RouteThumbnail } from "./RouteThumbnail.jsx";
 
 export function RouteCard({ route, onToggleSave, onClick }) {
   return (
@@ -27,10 +28,18 @@ export function RouteCard({ route, onToggleSave, onClick }) {
         <BookmarkIcon filled={route.saved} size={16} />
       </button>
 
-      {/* Mini-mapa da rota — escondido até termos os dados do GPX/traçado */}
-
-      <div className="absolute left-4 bottom-4 px-3.5 py-2.5 rounded-lg w-fit max-w-[calc(100%-2rem)] bg-black/45 backdrop-blur-[2px]">
-        <div className="text-lg font-bold text-white leading-tight">{route.title}</div>
+      {/* Faixa inferior única: nome à esquerda, mini-mapa à direita */}
+      <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-3 px-4 pt-10 pb-4 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
+        <div className="min-w-0 flex-1">
+          <div className="text-lg font-bold text-white leading-tight line-clamp-2">
+            {route.title}
+          </div>
+        </div>
+        {route.track && (
+          <div className="flex-shrink-0">
+            <RouteThumbnail points={route.track} dashed={route.trackDashed} />
+          </div>
+        )}
       </div>
     </article>
   );

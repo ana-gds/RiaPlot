@@ -47,7 +47,7 @@ export function FeedPostCard({
 
       <div className="px-4">
         <div
-          className="relative cursor-pointer"
+          className="relative cursor-pointer overflow-hidden rounded-2xl"
           role="button"
           tabIndex={0}
           onClick={() => onOpenDetail?.(post.id)}
@@ -58,7 +58,7 @@ export function FeedPostCard({
           <img
             src={post.image}
             alt={post.title}
-            className="w-full h-[300px] rounded-2xl object-cover"
+            className="block w-full h-[300px] object-cover"
           />
         </div>
       </div>

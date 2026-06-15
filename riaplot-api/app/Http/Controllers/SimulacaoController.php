@@ -57,6 +57,10 @@ class SimulacaoController extends Controller
      */
     public function iniciar(Request $request)
     {
+        if ($this->initialId <= 0) {
+            return $this->erroConfiguracao();
+        }
+
         $request->validate([
             'pontos'          => 'required|array|min:2',
             'pontos.*.latitude'  => 'required|numeric',
@@ -188,6 +192,10 @@ class SimulacaoController extends Controller
      */
     public function maresIniciar(Request $request)
     {
+        if ($this->initialId <= 0) {
+            return $this->erroConfiguracao();
+        }
+
         $request->validate([
             'latitude'  => 'required|numeric',
             'longitude' => 'required|numeric',
@@ -270,6 +278,17 @@ class SimulacaoController extends Controller
         Cache::put($cacheKey, $processed, now()->addDay());
 
         return response()->json($processed);
+    }
+
+    /**
+     * Resposta de erro quando o SISMAR_INITIAL_ID não está configurado no .env.
+     * Evita chamadas silenciosas a /Execution/Start/0 que devolvem 502 confusos.
+     */
+    private function erroConfiguracao()
+    {
+        return response()->json([
+            'error' => 'Simulação indisponível: SISMAR_INITIAL_ID não está configurado no servidor.',
+        ], 503);
     }
 
     // -------------------------------------------------------------------------
