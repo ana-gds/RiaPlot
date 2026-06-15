@@ -99,6 +99,23 @@ class AuthController extends Controller
         $user   = $request->user();
         $userId = $user->id;
 
+        // Reúne os URLs dos ficheiros carregados (foto de perfil, fotos de
+        // embarcações, imagens e GPX dos posts) antes de apagar os registos,
+        // para os remover do disco no fim.
+        $files   = [$user->photo_url ?? null];
+        $boats   = Boat::where('user_id', $userId)->get();
+        $ownPosts = Post::where('user_id', $userId)->get();
+
+        foreach ($boats as $boat) {
+            $files[] = $boat->photo_url ?? null;
+        }
+        foreach ($ownPosts as $post) {
+            foreach ((array) ($post->post_url ?? []) as $url) {
+                $files[] = $url;
+            }
+            $files[] = $post->gpx_url ?? null;
+        }
+
         // 1. Embarcações e posts próprios.
         Boat::where('user_id', $userId)->delete();
         Post::where('user_id', $userId)->delete();
@@ -164,6 +181,30 @@ class AuthController extends Controller
         $user->tokens()->delete();
         $user->delete();
 
+        // 6. Apaga os ficheiros carregados que ficaram órfãos.
+        $this->deleteUploadedFiles($files);
+
         return response()->json(['message' => 'Conta eliminada']);
+    }
+
+    /**
+     * Apaga do disco ficheiros carregados (em public/uploads) a partir dos seus
+     * URLs. Usa apenas o nome do ficheiro (basename), pelo que ignora qualquer
+     * tentativa de sair da pasta uploads; valores vazios são ignorados.
+     */
+    private function deleteUploadedFiles(array $urls): void
+    {
+        $dir = public_path('uploads');
+
+        foreach (array_filter($urls) as $url) {
+            $name = basename(parse_url($url, PHP_URL_PATH) ?? $url);
+            if ($name === '' || $name === '.' || $name === '..') {
+                continue;
+            }
+            $path = $dir . DIRECTORY_SEPARATOR . $name;
+            if (is_file($path)) {
+                @unlink($path);
+            }
+        }
     }
 }
