@@ -521,7 +521,7 @@ export default function PostDetail() {
 
   return (
     <div className="flex flex-col flex-1 -mt-6 md:mt-0">
-      <div className="relative w-full h-[328px] flex-shrink-0">
+      <div className="relative w-full h-[400px] flex-shrink-0">
         <img src={images[activeImage]} alt={title} className="w-full h-full object-cover" />
         <div className="absolute left-4 top-4">
           <BackButton />

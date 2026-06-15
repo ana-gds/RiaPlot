@@ -123,14 +123,14 @@ export function AppShell() {
   };
 
   return (
-    <div className="flex flex-1 min-h-svh">
+    <div className="flex h-svh overflow-hidden">
       <DesktopSidebar />
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
         onNavigate={handleSidebarNavigate}
       />
-      <div className="flex flex-col flex-1 min-h-svh min-w-0">
+      <div className="flex flex-col flex-1 min-h-0 min-w-0">
         {!isMap && <StatusBar className="md:hidden" />}
         <main className="flex-1 flex flex-col min-h-0">
           <Outlet context={{ openSidebar: () => setSidebarOpen(true) }} />
