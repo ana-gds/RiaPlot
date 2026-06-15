@@ -42,6 +42,10 @@ body,
   color: var(--color-dark);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* Proteção contra overflow horizontal acidental (risco branco à direita).
+     `clip` em vez de `hidden` para não criar contexto de scroll nem partir o
+     posicionamento `sticky` (ex.: cabeçalho da página de Rotas). */
+  overflow-x: clip;
 }
 
 #root {
@@ -56,6 +60,17 @@ body,
   flex-direction: column;
   min-height: 100svh;
   background: #fff;
+}
+
+/* App de estilo móvel: esconde a scrollbar nativa em todos os contentores com
+   scroll. No desktop, essa scrollbar aparecia como um risco branco à direita
+   por cima das imagens (a calha reserva largura que o conteúdo `w-full` não
+   ocupa). O scroll continua a funcionar por roda do rato e por toque. */
+* {
+  scrollbar-width: none; /* Firefox */
+}
+*::-webkit-scrollbar {
+  display: none; /* Chrome / Edge / Safari */
 }
 
 /* Hide scrollbars on chip rails */
@@ -238,7 +253,7 @@ body,
   background: var(--color-secondary);
 }
 
-/* ── Dock marker (Leaflet divIcon — needs raw CSS, not Tailwind) ──────── */
+/* ── Dock marker (Leaflet divIcon) ──────── */
 
 .dock-marker {
   position: relative;
