@@ -35,6 +35,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Perfil
     Route::get('/user',    fn(\Illuminate\Http\Request $r) => $r->user());
     Route::patch('/user',  [AuthController::class, 'update']);
+    Route::delete('/user', [AuthController::class, 'destroy']);
 
     // Upload de imagens
     Route::post('/upload', function(\Illuminate\Http\Request $request) {

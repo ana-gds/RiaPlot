@@ -121,20 +121,20 @@ body,
 
 .leaflet-control-zoom a,
 .leaflet-control-zoom a:focus {
-  width: 42px !important;
-  height: 42px !important;
-  border-radius: 12px !important;
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 14px !important;
   background: white !important;
   color: var(--color-secondary) !important;
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
-  box-shadow: 0 4px 14px rgba(0, 77, 108, 0.25) !important;
+  box-shadow: 0 6px 18px rgba(0, 77, 108, 0.18) !important;
   font-size: 22px !important;
   font-weight: 600 !important;
   line-height: 1 !important;
   text-decoration: none !important;
-  border: none !important;
+  border: 1px solid rgba(0, 77, 108, 0.08) !important;
   transition: all 0.2s ease-in-out !important;
 }
 
@@ -239,18 +239,30 @@ body,
 }
 
 .map-floating-btn {
-  width: 42px;
-  height: 42px;
-  border-radius: 12px;
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
   background: white;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 4px 14px rgba(0, 77, 108, 0.25);
+  box-shadow: 0 6px 18px rgba(0, 77, 108, 0.18);
+  border: 1px solid rgba(0, 77, 108, 0.08);
+  transition: all 0.2s ease-in-out;
+}
+
+.map-floating-btn:hover {
+  border-color: rgba(219, 139, 49, 0.4);
+}
+
+.map-floating-btn:active {
+  transform: scale(0.94);
 }
 
 .map-floating-btn--active {
   background: var(--color-secondary);
+  border-color: var(--color-secondary);
+  box-shadow: 0 6px 18px rgba(0, 77, 108, 0.28);
 }
 
 /* ── Dock marker (Leaflet divIcon) ──────── */

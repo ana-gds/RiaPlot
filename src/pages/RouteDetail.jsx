@@ -258,10 +258,10 @@ export default function RouteDetail() {
           <button
             type="button"
             onClick={handleSave}
-            className="p-1 active:scale-90"
+            className="p-1 -mr-1 active:scale-90"
             aria-label={saved ? "Remover dos guardados" : "Guardar rota"}
           >
-            <BookmarkIcon filled={saved} />
+            <BookmarkIcon filled={saved} size={26} />
           </button>
         </div>
 

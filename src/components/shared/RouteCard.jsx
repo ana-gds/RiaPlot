@@ -22,10 +22,10 @@ export function RouteCard({ route, onToggleSave, onClick }) {
           e.stopPropagation();
           onToggleSave?.(route.id);
         }}
-        className="absolute top-4 right-4 w-9 h-9 rounded-full flex items-center justify-center bg-white/95 shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-transform active:scale-95 hover:scale-105"
+        className="absolute top-4 right-4 w-10 h-10 rounded-full flex items-center justify-center bg-white/95 shadow-[0_2px_8px_rgba(0,0,0,0.15)] transition-transform active:scale-95 hover:scale-105"
         aria-label={route.saved ? "Remover dos guardados" : "Guardar rota"}
       >
-        <BookmarkIcon filled={route.saved} size={16} />
+        <BookmarkIcon filled={route.saved} size={20} />
       </button>
 
       {/* Faixa inferior única: nome à esquerda, mini-mapa à direita */}

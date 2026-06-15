@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { IMAGES } from "../constants/images.js";
 import { BackButton } from "../components/ui/BackButton.jsx";
-import { ProfilePostCard } from "../components/shared/PostCard.jsx";
+import { FeedPostCard } from "../components/shared/PostCard.jsx";
 import { RouteCard } from "../components/shared/RouteCard.jsx";
 import { UserListModal } from "../components/shared/UserListModal.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
@@ -101,6 +101,7 @@ export default function Profile() {
               id: p.id ?? p._id,
               user_id: p.user_id,
               username: p.username ?? user?.username ?? "",
+              avatar: p.photo_url ?? user?.photo_url ?? null,
               photo_url: p.photo_url ?? user?.photo_url ?? null,
               date: formatDate(p.created_at),
               location: p.location ?? "",
@@ -221,35 +222,41 @@ export default function Profile() {
         />
       </div>
 
-      <div className="px-4 py-4 flex flex-col gap-4">
+      <div className="py-4">
         {activeTab === "posts" &&
           (posts.length > 0 ? (
-            posts.map((p) => (
-              <ProfilePostCard
-                key={p.id}
-                post={p}
-                onToggleLike={toggleLike}
-                onOpenDetail={() => navigate("/social/post", { state: { post: p } })}
-              />
-            ))
+            <div className="flex flex-col gap-4 md:max-w-xl md:mx-auto">
+              {posts.map((p) => (
+                <FeedPostCard
+                  key={p.id}
+                  post={p}
+                  onToggleLike={toggleLike}
+                  onOpenComments={() => navigate("/social/post", { state: { post: p } })}
+                  onOpenDetail={() => navigate("/social/post", { state: { post: p } })}
+                  onOpenProfile={(uid) => navigate(`/users/${uid}`)}
+                />
+              ))}
+            </div>
           ) : (
-            <div className="text-center py-12 text-muted">
+            <div className="text-center py-12 px-4 text-muted">
               <p className="text-sm font-medium">Ainda não publicaste nada</p>
               <p className="text-xs mt-1">Partilha a tua primeira aventura na página Social</p>
             </div>
           ))}
         {activeTab === "rotas" &&
           (savedRoutes.length > 0 ? (
-            savedRoutes.map((r) => (
-              <RouteCard
-                key={r.id}
-                route={r}
-                onToggleSave={toggleSave}
-                onClick={() => navigate(`/routes/${r.id}`)}
-              />
-            ))
+            <div className="flex flex-col gap-4 px-4">
+              {savedRoutes.map((r) => (
+                <RouteCard
+                  key={r.id}
+                  route={r}
+                  onToggleSave={toggleSave}
+                  onClick={() => navigate(`/routes/${r.id}`)}
+                />
+              ))}
+            </div>
           ) : (
-            <div className="text-center py-12 text-muted">
+            <div className="text-center py-12 px-4 text-muted">
               <p className="text-sm font-medium">Ainda não guardaste rotas</p>
               <p className="text-xs mt-1">Toca no marcador de uma rota para a guardar aqui</p>
             </div>

@@ -263,7 +263,7 @@ export default function Notifications() {
 
   return (
     <>
-      <div className="flex items-center gap-3 px-4 pt-4 pb-3 flex-shrink-0">
+      <div className="flex items-center gap-2.5 px-4 pb-3 flex-shrink-0 bg-white sticky top-0 z-10">
         <CircularButton onClick={openSidebar} ariaLabel="Menu" className="md:hidden">
           <MenuIcon />
         </CircularButton>

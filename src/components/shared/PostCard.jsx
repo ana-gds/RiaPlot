@@ -1,9 +1,8 @@
-import { HeartIcon, CommentIcon, BookmarkIcon } from "../ui/Icons.jsx";
+import { HeartIcon, CommentIcon } from "../ui/Icons.jsx";
 
 export function FeedPostCard({
   post,
   onToggleLike,
-  onToggleSave,
   onOpenComments,
   onOpenDetail,
   onOpenProfile,
@@ -98,55 +97,6 @@ export function FeedPostCard({
           {post.commentCount > 0 && (
             <span className="text-xs font-semibold text-dark/80">{post.commentCount}</span>
           )}
-        </button>
-        <div className="flex-1" />
-        <button
-          type="button"
-          onClick={() => onToggleSave?.(post.id)}
-          className="p-1 active:scale-90"
-          aria-label={post.saved ? "Remover dos guardados" : "Guardar"}
-        >
-          <BookmarkIcon filled={post.saved} size={22} />
-        </button>
-      </div>
-    </article>
-  );
-}
-
-export function ProfilePostCard({ post, onToggleLike, onOpenDetail }) {
-  return (
-    <article className="rounded-2xl overflow-hidden bg-white shadow-card">
-      <div
-        className="cursor-pointer"
-        role="button"
-        tabIndex={0}
-        onClick={() => onOpenDetail?.(post.id)}
-        onKeyDown={(e) => {
-          if (e.key === "Enter" || e.key === " ") onOpenDetail?.(post.id);
-        }}
-      >
-        <div className="w-full h-[220px] overflow-hidden">
-          <img src={post.image} alt={post.title} className="w-full h-full object-cover" />
-        </div>
-        <div className="px-4 pt-3 pb-1">
-          <h3 className="text-base font-bold mb-1 text-dark">{post.title}</h3>
-          <p className="text-[13px] leading-relaxed text-dark/75 line-clamp-2">{post.description}</p>
-        </div>
-      </div>
-      <div className="flex items-center gap-4 px-4 py-3 mt-1 border-t border-divider/60">
-        <button
-          type="button"
-          onClick={() => onToggleLike?.(post.id)}
-          className={`flex items-center gap-1.5 text-xs font-semibold active:scale-90 ${
-            post.liked ? "text-primary" : "text-dark"
-          }`}
-        >
-          <HeartIcon filled={post.liked} size={20} />
-          <span>{post.likes}</span>
-        </button>
-        <button type="button" className="flex items-center gap-1.5 text-xs font-semibold text-dark">
-          <CommentIcon size={20} />
-          <span>{post.commentCount}</span>
         </button>
       </div>
     </article>
