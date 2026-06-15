@@ -2,7 +2,6 @@ import { useState } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { StatusBar } from "../components/ui/StatusBar.jsx";
 import { BottomNav } from "../components/shared/BottomNav.jsx";
-import VerificationBanner from "../components/shared/VerificationBanner.jsx";
 import Sidebar from "../components/shared/SideBar.jsx";
 import { NAV_ITEMS } from "../constants/mockData.js";
 import { IMAGES } from "../constants/images.js";
@@ -133,7 +132,6 @@ export function AppShell() {
       />
       <div className="flex flex-col flex-1 min-h-svh min-w-0">
         {!isMap && <StatusBar className="md:hidden" />}
-        {!isMap && <VerificationBanner />}
         <main className="flex-1 flex flex-col min-h-0">
           <Outlet context={{ openSidebar: () => setSidebarOpen(true) }} />
         </main>

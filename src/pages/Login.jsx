@@ -70,11 +70,6 @@ export default function Login() {
             onChange={(e) => setPassword(e.target.value)}
             autoComplete="current-password"
           />
-          <div className="text-right mt-1">
-            <TextLink className="text-sm" onClick={() => navigate("/forgot-password")}>
-              Repor palavra-passe
-            </TextLink>
-          </div>
         </div>
 
         <PrimaryButton type="submit" className="w-full mt-4" disabled={loading}>

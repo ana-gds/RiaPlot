@@ -3,7 +3,6 @@
 namespace Tests;
 
 use App\Models\Notification;
-use App\Models\PasswordResetToken;
 use App\Models\PersonalAccessToken;
 use App\Models\Post;
 use App\Models\User;
@@ -28,6 +27,5 @@ abstract class TestCase extends BaseTestCase
         Post::truncate();
         Notification::truncate();
         PersonalAccessToken::truncate();
-        PasswordResetToken::truncate();
     }
 }

@@ -4,9 +4,10 @@ import { IMAGES } from "../constants/images.js";
 import { BackButton } from "../components/ui/BackButton.jsx";
 import { ProfilePostCard } from "../components/shared/PostCard.jsx";
 import { RouteCard } from "../components/shared/RouteCard.jsx";
+import { UserListModal } from "../components/shared/UserListModal.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { useRoutes } from "../hooks/useApi.js";
-import { getPosts, saveRoute } from "../services/api.js";
+import { getPosts, saveRoute, getFollowers, getFollowing } from "../services/api.js";
 
 function formatDate(iso) {
   if (!iso) return "";
@@ -30,13 +31,25 @@ const TABS = [
   { key: "rotas", label: "Rotas" },
 ];
 
-function StatItem({ value, label }) {
-  return (
-    <div className="flex flex-col items-center gap-0.5">
+function StatItem({ value, label, onClick }) {
+  const content = (
+    <>
       <span className="text-lg font-bold text-dark">{value}</span>
       <span className="text-xs text-dark/70">{label}</span>
-    </div>
+    </>
   );
+  if (onClick) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="flex flex-col items-center gap-0.5 active:scale-95 transition-transform"
+      >
+        {content}
+      </button>
+    );
+  }
+  return <div className="flex flex-col items-center gap-0.5">{content}</div>;
 }
 
 export default function Profile() {
@@ -46,6 +59,29 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState("posts");
   const [posts, setPosts] = useState([]);
   const [savedIds, setSavedIds] = useState(() => user?.saved_routes ?? []);
+  // Modal de seguidores / a seguir
+  const [listModal, setListModal] = useState(null); // "followers" | "following" | null
+  const [listUsers, setListUsers] = useState([]);
+  const [listLoading, setListLoading] = useState(false);
+
+  const openList = async (type) => {
+    const myId = user?._id ?? user?.id;
+    if (!myId) return;
+    setListModal(type);
+    setListUsers([]);
+    setListLoading(true);
+    try {
+      const data =
+        type === "followers"
+          ? await getFollowers(token, myId)
+          : await getFollowing(token, myId);
+      setListUsers(Array.isArray(data) ? data : []);
+    } catch {
+      setListUsers([]);
+    } finally {
+      setListLoading(false);
+    }
+  };
 
   useEffect(() => {
     setSavedIds(user?.saved_routes ?? []);
@@ -142,8 +178,16 @@ export default function Profile() {
         <p className="text-[11px] text-dark/60">@{user?.username ?? ""}</p>
         <div className="flex items-center gap-12 mt-3 mb-4">
           <StatItem value={posts.length} label="Posts" />
-          <StatItem value={user?.followers?.length ?? 0} label="Seguidores" />
-          <StatItem value={user?.following?.length ?? 0} label="Seguindo" />
+          <StatItem
+            value={user?.followers?.length ?? 0}
+            label="Seguidores"
+            onClick={() => openList("followers")}
+          />
+          <StatItem
+            value={user?.following?.length ?? 0}
+            label="Seguindo"
+            onClick={() => openList("following")}
+          />
         </div>
         <button
           type="button"
@@ -215,6 +259,18 @@ export default function Profile() {
             </div>
           ))}
       </div>
+
+      <UserListModal
+        open={!!listModal}
+        title={listModal === "followers" ? "Seguidores" : "A seguir"}
+        users={listUsers}
+        loading={listLoading}
+        onClose={() => setListModal(null)}
+        onSelect={(u) => {
+          setListModal(null);
+          navigate(`/users/${u.id}`);
+        }}
+      />
     </>
   );
 }

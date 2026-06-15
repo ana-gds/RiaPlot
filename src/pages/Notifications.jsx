@@ -7,7 +7,6 @@ import { useAuth } from "../contexts/AuthContext.jsx";
 import { useNotifications } from "../contexts/NotificationsContext.jsx";
 import {
   getNotifications,
-  markNotificationRead,
   markAllNotificationsRead,
   getPost,
 } from "../services/api.js";
@@ -177,9 +176,8 @@ export default function Notifications() {
   const { openSidebar } = useOutletContext();
   const navigate = useNavigate();
   const { user, token } = useAuth();
-  const { unreadCount, decrementUnread, clearUnread } = useNotifications();
+  const { clearUnread } = useNotifications();
   const [notifications, setNotifications] = useState([]);
-  const [markingAll, setMarkingAll] = useState(false);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
@@ -196,6 +194,11 @@ export default function Notifications() {
         setNotifications(res.data ?? []);
         setPage(res.current_page ?? 1);
         setLastPage(res.last_page ?? 1);
+        // Ao abrir a página, marca tudo como lido: o badge desaparece já e, na
+        // próxima visita, estas notificações aparecem com fundo branco. O
+        // destaque mantém-se nesta visita (não mexemos no estado local).
+        clearUnread();
+        markAllNotificationsRead(token).catch(() => {});
       })
       .catch(() => {})
       .finally(() => {
@@ -204,7 +207,7 @@ export default function Notifications() {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [token, clearUnread]);
 
   // Carrega a página seguinte e acrescenta à lista.
   const loadMore = async () => {
@@ -245,31 +248,9 @@ export default function Notifications() {
     }));
   }, [notifications, now]);
 
-  // Marca todas como lidas (otimista) e zera o badge.
-  const handleMarkAll = async () => {
-    if (markingAll || unreadCount === 0) return;
-    setMarkingAll(true);
-    setNotifications((prev) => prev.map((x) => ({ ...x, read: true })));
-    clearUnread();
-    try {
-      await markAllNotificationsRead(token);
-    } catch {
-      // Falha de rede — o próximo poll do contador reconcilia o badge.
-    } finally {
-      setMarkingAll(false);
-    }
-  };
-
   const handleClick = async (n) => {
-    // Marca como lida (otimista).
-    if (!n.read) {
-      setNotifications((prev) =>
-        prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)),
-      );
-      decrementUnread();
-      markNotificationRead(token, n.id).catch(() => {});
-    }
-    // Abre o post associado (likes/comentários). Follow não tem destino.
+    // As notificações já foram marcadas como lidas ao abrir a página; aqui só
+    // tratamos da navegação para o post associado (likes/comentários).
     if (n.post_id && (n.type === "like" || n.type === "comment")) {
       try {
         const p = await getPost(token, n.post_id);
@@ -287,16 +268,6 @@ export default function Notifications() {
           <MenuIcon />
         </CircularButton>
         <h1 className="text-2xl font-bold text-dark">Notificações</h1>
-        {unreadCount > 0 && (
-          <button
-            type="button"
-            onClick={handleMarkAll}
-            disabled={markingAll}
-            className="ml-auto text-sm font-semibold text-primary hover:underline disabled:opacity-60"
-          >
-            Marcar todas como lidas
-          </button>
-        )}
       </div>
       <div className="flex-1 overflow-y-auto pb-4">
         <div className="w-full md:max-w-2xl md:mx-auto">
