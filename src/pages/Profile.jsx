@@ -1,13 +1,17 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { IMAGES } from "../constants/images.js";
+import { caisImage } from "../constants/caisImages.js";
 import { BackButton } from "../components/ui/BackButton.jsx";
 import { FeedPostCard } from "../components/shared/PostCard.jsx";
 import { RouteCard } from "../components/shared/RouteCard.jsx";
 import { UserListModal } from "../components/shared/UserListModal.jsx";
+import { SearchBar } from "../components/shared/SearchBar.jsx";
+import { Chip } from "../components/ui/Chip.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { useRoutes } from "../hooks/useApi.js";
-import { getPosts, saveRoute, getFollowers, getFollowing } from "../services/api.js";
+import { getPosts, saveRoute, getFollowers, getFollowing, getCurrentTide } from "../services/api.js";
+import { routeDifficulty } from "../utils/routeDifficulty.js";
 
 function formatDate(iso) {
   if (!iso) return "";
@@ -20,15 +24,41 @@ function extractId(raw) {
   return raw;
 }
 
-function calaoDifficulty(calado) {
-  if (!calado || calado <= 0.5) return 1;
-  if (calado <= 1.0) return 2;
-  return 3;
-}
-
 const TABS = [
   { key: "posts", label: "Posts" },
   { key: "rotas", label: "Rotas" },
+];
+
+// Ordenação das rotas guardadas (seleção única).
+const SAVED_SORTS = [
+  {
+    key: "nome",
+    label: "Nome",
+    icon: (
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M7 4v15m0 0l-3-3m3 3l3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M13 6h7M13 11h5M13 16h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    key: "dificuldade",
+    label: "Dificuldade",
+    icon: (
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M6 20V10M12 20V4M18 20v-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+      </svg>
+    ),
+  },
+  {
+    key: "distancia",
+    label: "Distância",
+    icon: (
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M3 12h18M3 12l3-3M3 12l3 3M21 12l-3-3M21 12l-3 3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    ),
+  },
 ];
 
 function StatItem({ value, label, onClick }) {
@@ -59,6 +89,9 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState("posts");
   const [posts, setPosts] = useState([]);
   const [savedIds, setSavedIds] = useState(() => user?.saved_routes ?? []);
+  const [savedSearch, setSavedSearch] = useState("");
+  const [savedSort, setSavedSort] = useState("nome");
+  const [tide, setTide] = useState(null);
   // Modal de seguidores / a seguir
   const [listModal, setListModal] = useState(null); // "followers" | "following" | null
   const [listUsers, setListUsers] = useState([]);
@@ -86,6 +119,17 @@ export default function Profile() {
   useEffect(() => {
     setSavedIds(user?.saved_routes ?? []);
   }, [user]);
+
+  // Maré atual no porto de Aveiro, para ajustar a dificuldade em tempo real.
+  useEffect(() => {
+    let cancelled = false;
+    getCurrentTide("aveiro")
+      .then((data) => {
+        if (!cancelled) setTide(data);
+      })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
 
   // Posts do próprio utilizador (filtrados pelo servidor via ?user=).
   useEffect(() => {
@@ -124,7 +168,8 @@ export default function Profile() {
   }, [token, user]);
 
   // Rotas realmente guardadas pelo utilizador (saved_routes vem do servidor).
-  // A foto já vem em `image_url` no payload de /routes.
+  // A foto é a do cais de partida e a dificuldade é a real (com maré), tal como
+  // na página de Rotas.
   const savedRoutes = useMemo(() => {
     if (savedIds.length === 0) return [];
     return apiRoutes
@@ -135,12 +180,30 @@ export default function Profile() {
           id,
           title: r.nome ?? "Rota",
           route: [r.cais_partida?.nome, r.cais_chegada?.nome].filter(Boolean).join(" → ") || "",
-          image: r.image_url || IMAGES.routes.detail,
-          difficulty: calaoDifficulty(r.calado_max),
+          image: caisImage(r.cais_partida?.nome) || IMAGES.routes.detail,
+          difficulty: routeDifficulty(r.calado_max, r.condicoes_mare, tide),
+          distance: r.distancia_nm ?? null,
           saved: true,
         };
       });
-  }, [apiRoutes, savedIds]);
+  }, [apiRoutes, savedIds, tide]);
+
+  // Pesquisa + ordenação sobre as rotas guardadas (no cliente).
+  const visibleSavedRoutes = useMemo(() => {
+    const q = savedSearch.trim().toLowerCase();
+    const list = savedRoutes.filter(
+      (r) => !q || r.title.toLowerCase().includes(q) || r.route.toLowerCase().includes(q),
+    );
+    const sorted = [...list];
+    if (savedSort === "nome") {
+      sorted.sort((a, b) => a.title.localeCompare(b.title, "pt", { sensitivity: "base" }));
+    } else if (savedSort === "dificuldade") {
+      sorted.sort((a, b) => a.difficulty - b.difficulty);
+    } else if (savedSort === "distancia") {
+      sorted.sort((a, b) => (a.distance ?? Infinity) - (b.distance ?? Infinity));
+    }
+    return sorted;
+  }, [savedRoutes, savedSearch, savedSort]);
 
   const toggleSave = async (id) => {
     setSavedIds((prev) => prev.filter((x) => x !== id));
@@ -245,15 +308,44 @@ export default function Profile() {
           ))}
         {activeTab === "rotas" &&
           (savedRoutes.length > 0 ? (
-            <div className="flex flex-col gap-4 px-4">
-              {savedRoutes.map((r) => (
-                <RouteCard
-                  key={r.id}
-                  route={r}
-                  onToggleSave={toggleSave}
-                  onClick={() => navigate(`/routes/${r.id}`)}
+            <div className="px-4">
+              <div className="flex flex-col gap-3 mb-4">
+                <SearchBar
+                  value={savedSearch}
+                  onChange={setSavedSearch}
+                  onClear={() => setSavedSearch("")}
+                  placeholder="Procura nos guardados..."
                 />
-              ))}
+                <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pb-1 scroll-x-hidden">
+                  {SAVED_SORTS.map((s) => (
+                    <Chip
+                      key={s.key}
+                      active={savedSort === s.key}
+                      onClick={() => setSavedSort(s.key)}
+                      icon={s.icon}
+                    >
+                      {s.label}
+                    </Chip>
+                  ))}
+                </div>
+              </div>
+              {visibleSavedRoutes.length > 0 ? (
+                <div className="flex flex-col gap-4">
+                  {visibleSavedRoutes.map((r) => (
+                    <RouteCard
+                      key={r.id}
+                      route={r}
+                      onToggleSave={toggleSave}
+                      onClick={() => navigate(`/routes/${r.id}`)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center py-10 text-muted">
+                  <p className="text-sm font-medium">Nenhuma rota encontrada</p>
+                  <p className="text-xs mt-1">Tenta ajustar a pesquisa</p>
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-12 px-4 text-muted">

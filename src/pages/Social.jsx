@@ -2,7 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useOutletContext } from "react-router-dom";
 import { IMAGES } from "../constants/images.js";
 import { CircularButton } from "../components/ui/Button.jsx";
-import { MenuIcon, PlusIcon, CommentIcon } from "../components/ui/Icons.jsx";
+import { MenuIcon, PlusIcon, CommentIcon, FilterIcon } from "../components/ui/Icons.jsx";
+import { Chip } from "../components/ui/Chip.jsx";
 import { SearchBar } from "../components/shared/SearchBar.jsx";
 import { FeedPostCard } from "../components/shared/PostCard.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
@@ -11,6 +12,13 @@ import { getPosts, getUsers, likePost } from "../services/api.js";
 function formatDate(iso) {
   if (!iso) return "";
   return new Date(iso).toLocaleDateString("pt-PT", { day: "2-digit", month: "2-digit" });
+}
+
+// Normaliza um id para string (lida com ids embrulhados, ex.: { $oid }).
+function idStr(v) {
+  if (v == null) return null;
+  if (typeof v === "object") return v.$oid ?? String(v);
+  return String(v);
 }
 
 // Ícones das tabs (herdam a cor do texto da tab via currentColor).
@@ -36,6 +44,46 @@ function UsersTabIcon({ active }) {
   );
 }
 
+// Ícones pequenos (12px) para as chips de filtro — herdam a cor via currentColor.
+function ClockChipIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7v5l3 2" />
+    </svg>
+  );
+}
+
+function HeartChipIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.6l-1-1a5.5 5.5 0 1 0-7.8 7.8l1 1L12 21l7.8-7.6 1-1a5.5 5.5 0 0 0 0-7.8Z" />
+    </svg>
+  );
+}
+
+function PeopleChipIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
+  );
+}
+
+function AzChipIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+      <path d="M7 4v15m0 0l-3-3m3 3l3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <path d="M13 6h7M13 11h5M13 16h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 // Quantos posts pedir ao servidor de cada vez.
 const PAGE_SIZE = 10;
 
@@ -56,6 +104,7 @@ function mapPost(p, myId) {
     route_doc: p.route_doc ?? "",
     title: p.title,
     description: p.description,
+    createdAt: p.created_at ?? null,
     comments: p.comments ?? [],
     liked: (p.likes ?? []).includes(myId),
     likes: (p.likes ?? []).length,
@@ -75,6 +124,25 @@ export default function Social() {
   const [page, setPage] = useState(1);
   const [lastPage, setLastPage] = useState(1);
   const [loadingMore, setLoadingMore] = useState(false);
+
+  // Filtros / ordenação.
+  const [showFilters, setShowFilters] = useState(false);
+  const [postSort, setPostSort] = useState("recent"); // "recent" | "old" | "liked"
+  const [postFollowing, setPostFollowing] = useState(false); // só de quem sigo
+  const [userAZ, setUserAZ] = useState(false); // ordenar utilizadores A-Z
+  const [userFollowing, setUserFollowing] = useState(false); // só quem sigo
+
+  // Ids de quem o utilizador segue (para os filtros "de quem sigo").
+  const followingSet = useMemo(
+    () => new Set((user?.following ?? []).map(idStr)),
+    [user?.following],
+  );
+
+  // Nº de filtros ativos (≠ predefinição) no modo atual, para o badge.
+  const activeFilterCount =
+    mode === "posts"
+      ? (postSort !== "recent" ? 1 : 0) + (postFollowing ? 1 : 0)
+      : (userAZ ? 1 : 0) + (userFollowing ? 1 : 0);
 
   // Primeira página do feed (e recarrega se o token mudar).
   useEffect(() => {
@@ -142,15 +210,42 @@ export default function Social() {
     }
   };
 
-  // Pesquisa de posts no cliente, sobre os já carregados. O botão "Carregar
-  // mais" traz páginas adicionais do servidor.
+  // Pesquisa + filtros + ordenação de posts no cliente, sobre os já carregados.
+  // O botão "Carregar mais" traz páginas adicionais do servidor.
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return posts;
-    return posts.filter(
-      (p) => p.title.toLowerCase().includes(q) || p.username.toLowerCase().includes(q),
-    );
-  }, [posts, search]);
+    let list = posts.filter((p) => {
+      if (
+        q &&
+        !p.title?.toLowerCase().includes(q) &&
+        !p.username.toLowerCase().includes(q)
+      )
+        return false;
+      if (postFollowing && !followingSet.has(idStr(p.user_id))) return false;
+      return true;
+    });
+    if (postSort === "liked") {
+      list = [...list].sort((a, b) => b.likes - a.likes);
+    } else if (postSort === "old") {
+      list = [...list].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    } else {
+      list = [...list].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    }
+    return list;
+  }, [posts, search, postFollowing, postSort, followingSet]);
+
+  // Utilizadores depois de aplicar filtro "quem sigo" e ordenação A-Z.
+  const visibleUsers = useMemo(() => {
+    let list = userFollowing
+      ? users.filter((u) => followingSet.has(idStr(u.user_id)))
+      : users;
+    if (userAZ) {
+      list = [...list].sort((a, b) =>
+        (a.username ?? "").localeCompare(b.username ?? "", "pt", { sensitivity: "base" }),
+      );
+    }
+    return list;
+  }, [users, userFollowing, userAZ, followingSet]);
 
   // Pesquisa de utilizadores no servidor (debounced). Só corre no modo
   // "users"; o backend filtra por nome/username via `?q=`.
@@ -186,7 +281,7 @@ export default function Social() {
 
   return (
     <>
-      <div className="flex flex-col gap-2.5 px-4 pb-3 flex-shrink-0 sticky top-0 bg-white z-10">
+      <div className="flex flex-col gap-2.5 px-4 pb-0 flex-shrink-0 sticky top-0 bg-white z-10">
         <div className="flex items-center gap-3">
           <CircularButton onClick={openSidebar} ariaLabel="Menu" className="md:hidden">
             <MenuIcon />
@@ -198,6 +293,25 @@ export default function Social() {
             onClear={() => handleSearch("")}
             placeholder={mode === "users" ? "Procura um utilizador" : "Procura um post"}
           />
+          <button
+            type="button"
+            onClick={() => setShowFilters((s) => !s)}
+            className={[
+              "w-12 h-12 rounded-full flex items-center justify-center shrink-0 relative border transition-all",
+              showFilters || activeFilterCount > 0
+                ? "bg-primary/10 border-primary text-primary shadow-[0_6px_22px_rgba(219,139,49,0.22)]"
+                : "bg-cream border-primary/20 text-dark hover:border-primary/40 shadow-[0_2px_10px_rgba(0,77,108,0.05)]",
+            ].join(" ")}
+            aria-label="Mostrar filtros"
+            aria-expanded={showFilters}
+          >
+            <FilterIcon color="currentColor" />
+            {activeFilterCount > 0 && (
+              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center bg-primary text-white text-[10px] font-bold border-2 border-white">
+                {activeFilterCount}
+              </span>
+            )}
+          </button>
         </div>
         <div className="relative flex w-full border-b border-secondary/10">
           {[
@@ -228,14 +342,64 @@ export default function Social() {
             style={{ transform: mode === "users" ? "translateX(100%)" : "translateX(0)" }}
           />
         </div>
+
+        {showFilters && (
+          <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pt-3 pb-1 scroll-x-hidden">
+            {mode === "posts" ? (
+              <>
+                <Chip
+                  active={postSort === "recent"}
+                  onClick={() => setPostSort("recent")}
+                  icon={<ClockChipIcon />}
+                >
+                  Mais recentes
+                </Chip>
+                <Chip active={postSort === "old"} onClick={() => setPostSort("old")}>
+                  Mais antigas
+                </Chip>
+                <Chip
+                  active={postSort === "liked"}
+                  onClick={() => setPostSort("liked")}
+                  icon={<HeartChipIcon />}
+                >
+                  Mais gostadas
+                </Chip>
+                <Chip
+                  active={postFollowing}
+                  onClick={() => setPostFollowing((v) => !v)}
+                  icon={<PeopleChipIcon />}
+                >
+                  De quem sigo
+                </Chip>
+              </>
+            ) : (
+              <>
+                <Chip
+                  active={userAZ}
+                  onClick={() => setUserAZ((v) => !v)}
+                  icon={<AzChipIcon />}
+                >
+                  A-Z
+                </Chip>
+                <Chip
+                  active={userFollowing}
+                  onClick={() => setUserFollowing((v) => !v)}
+                  icon={<PeopleChipIcon />}
+                >
+                  Quem sigo
+                </Chip>
+              </>
+            )}
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto pt-2 pb-4">
         <div className="w-full md:max-w-xl md:mx-auto">
           {mode === "users" ? (
-            users.length > 0 ? (
+            visibleUsers.length > 0 ? (
               <ul className="px-2">
-                {users.map((u) => (
+                {visibleUsers.map((u) => (
                   <li key={u.user_id ?? u.username}>
                     <button
                       type="button"
@@ -266,9 +430,11 @@ export default function Social() {
                 <CommentIcon size={48} color="var(--color-muted-soft)" className="mb-3" />
                 <p className="text-sm font-semibold text-dark">Sem utilizadores</p>
                 <p className="text-xs mt-1 text-muted">
-                  {search.trim()
-                    ? "Não encontrámos utilizadores com esse nome."
-                    : "Ainda não há utilizadores para mostrar."}
+                  {userFollowing
+                    ? "Não segues utilizadores que apareçam aqui."
+                    : search.trim()
+                      ? "Não encontrámos utilizadores com esse nome."
+                      : "Ainda não há utilizadores para mostrar."}
                 </p>
               </div>
             )
@@ -306,7 +472,9 @@ export default function Social() {
               <CommentIcon size={48} color="var(--color-muted-soft)" className="mb-3" />
               <p className="text-sm font-semibold text-dark">Sem publicações</p>
               <p className="text-xs mt-1 text-muted">
-                Sê o primeiro a partilhar uma aventura!
+                {postFollowing
+                  ? "Sem publicações de quem segues por aqui."
+                  : "Sê o primeiro a partilhar uma aventura!"}
               </p>
             </div>
           )}
