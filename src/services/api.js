@@ -66,6 +66,14 @@ export function updateUser(token, data) {
     });
 }
 
+// Elimina permanentemente a conta e todos os dados associados na base de dados.
+export function deleteAccount(token) {
+    return request("/user", {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
 export function getBoats(token) {
     return request("/boats", {
         headers: { Authorization: `Bearer ${token}` },

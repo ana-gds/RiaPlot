@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { IMAGES } from "../constants/images.js";
 import { BackButton } from "../components/ui/BackButton.jsx";
-import { ProfilePostCard } from "../components/shared/PostCard.jsx";
+import { FeedPostCard } from "../components/shared/PostCard.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { getUser, getPosts, followUser, likePost } from "../services/api.js";
 
@@ -66,6 +66,7 @@ export default function PublicProfile() {
               id: p.id ?? p._id,
               user_id: p.user_id,
               username: p.username ?? "",
+              avatar: p.photo_url ?? null,
               photo_url: p.photo_url ?? null,
               date: formatDate(p.created_at),
               location: p.location ?? "",
@@ -185,22 +186,26 @@ export default function PublicProfile() {
 
       <div className="border-b border-divider/70 mt-4" />
 
-      <div className="px-4 py-4 flex flex-col gap-4">
+      <div className="py-4">
         {loading ? (
-          <div className="text-center py-12 text-muted">
+          <div className="text-center py-12 px-4 text-muted">
             <p className="text-sm">A carregar…</p>
           </div>
         ) : posts.length > 0 ? (
-          posts.map((p) => (
-            <ProfilePostCard
-              key={p.id}
-              post={p}
-              onToggleLike={toggleLike}
-              onOpenDetail={() => navigate("/social/post", { state: { post: p } })}
-            />
-          ))
+          <div className="flex flex-col gap-4 md:max-w-xl md:mx-auto">
+            {posts.map((p) => (
+              <FeedPostCard
+                key={p.id}
+                post={p}
+                onToggleLike={toggleLike}
+                onOpenComments={() => navigate("/social/post", { state: { post: p } })}
+                onOpenDetail={() => navigate("/social/post", { state: { post: p } })}
+                onOpenProfile={(uid) => navigate(`/users/${uid}`)}
+              />
+            ))}
+          </div>
         ) : (
-          <div className="text-center py-12 text-muted">
+          <div className="text-center py-12 px-4 text-muted">
             <p className="text-sm font-medium">Ainda sem publicações</p>
             <p className="text-xs mt-1">Este utilizador ainda não partilhou nada.</p>
           </div>

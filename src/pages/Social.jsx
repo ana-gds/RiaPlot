@@ -60,7 +60,6 @@ function mapPost(p, myId) {
     liked: (p.likes ?? []).includes(myId),
     likes: (p.likes ?? []).length,
     commentCount: (p.comments ?? []).length,
-    saved: false,
   };
 }
 
@@ -142,9 +141,6 @@ export default function Social() {
       );
     }
   };
-
-  const toggleSave = (id) =>
-    setPosts((p) => p.map((x) => (x.id === id ? { ...x, saved: !x.saved } : x)));
 
   // Pesquisa de posts no cliente, sobre os já carregados. O botão "Carregar
   // mais" traz páginas adicionais do servidor.
@@ -283,7 +279,6 @@ export default function Social() {
                   <FeedPostCard
                     post={post}
                     onToggleLike={toggleLike}
-                    onToggleSave={toggleSave}
                     onOpenDetail={() => navigate("/social/post", { state: { post } })}
                     onOpenComments={() => navigate("/social/post", { state: { post } })}
                     onOpenProfile={(uid) => navigate(`/users/${uid}`)}

@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Input, PasswordInput, Label } from "../components/ui/Input.jsx";
-import { PrimaryButton, SecondaryButton, TextLink } from "../components/ui/Button.jsx";
-import { GoogleLogo, WarningIcon } from "../components/ui/Icons.jsx";
+import { PrimaryButton, TextLink } from "../components/ui/Button.jsx";
+import { WarningIcon } from "../components/ui/Icons.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { loginUser } from "../services/api.js";
 import logo from "../assets/logotipo/logotipo.png";
@@ -76,17 +76,6 @@ export default function Login() {
           {loading ? "A entrar…" : "Entrar"}
         </PrimaryButton>
       </form>
-
-      <div className="flex items-center gap-4 mt-6">
-        <span className="flex-1 h-px bg-divider" />
-        <span className="text-xs text-muted">ou</span>
-        <span className="flex-1 h-px bg-divider" />
-      </div>
-
-      <SecondaryButton onClick={() => console.log("Google login")} className="w-full mt-5">
-        <GoogleLogo />
-        Continuar com Google
-      </SecondaryButton>
 
       <p className="text-center mt-auto pt-8 text-sm text-muted">
         Não tem conta?

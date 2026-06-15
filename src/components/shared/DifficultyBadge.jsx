@@ -22,11 +22,11 @@ export function DifficultyBar({ level = 1, maxLevel = 4 }) {
   const color = DIFFICULTY.colors[level];
   return (
     <div>
-      <div className="flex gap-2 mb-1">
+      <div className="flex gap-2 mb-1.5">
         {Array.from({ length: maxLevel }).map((_, i) => (
           <span
             key={i}
-            className="w-[60px] h-1.5 rounded-full"
+            className="flex-1 h-2 rounded-full"
             style={{ background: i < level ? color : "var(--color-divider)" }}
           />
         ))}

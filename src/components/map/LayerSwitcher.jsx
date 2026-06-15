@@ -15,12 +15,16 @@ export function LayerSwitcher({ activeLayer, onChangeLayer, nautical, onToggleNa
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-label="Camadas do mapa"
-        className={`map-floating-btn flex-shrink-0 ${open ? "map-floating-btn--active" : ""}`}
+        className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 border transition-all ${
+          open
+            ? "bg-primary/10 border-primary text-primary shadow-[0_6px_22px_rgba(219,139,49,0.22)]"
+            : "bg-cream border-primary/20 text-dark hover:border-primary/40 shadow-[0_2px_10px_rgba(0,77,108,0.05)]"
+        }`}
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none">
-          <path d="M12 2L2 7l10 5 10-5L12 2z" stroke={open ? "white" : "#004D6C"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M2 17l10 5 10-5" stroke={open ? "white" : "#004D6C"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-          <path d="M2 12l10 5 10-5" stroke={open ? "white" : "#004D6C"} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M12 2L2 7l10 5 10-5L12 2z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M2 17l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+          <path d="M2 12l10 5 10-5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
         </svg>
       </button>
 

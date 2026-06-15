@@ -4,12 +4,13 @@ import { Input, PasswordInput, Label } from "../components/ui/Input.jsx";
 import { PrimaryButton, TextLink } from "../components/ui/Button.jsx";
 import { BackButton } from "../components/ui/BackButton.jsx";
 import { CircleAvatarUpload } from "../components/ui/PhotoUpload.jsx";
+import { ConfirmDialog } from "../components/ui/ConfirmDialog.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { updateUser, uploadFile } from "../services/api.js";
+import { updateUser, uploadFile, deleteAccount } from "../services/api.js";
 
 export default function EditProfile() {
   const navigate = useNavigate();
-  const { user, token, login } = useAuth();
+  const { user, token, login, logout } = useAuth();
 
   const [form, setForm] = useState({
     nome: user?.name ?? "",
@@ -20,8 +21,25 @@ export default function EditProfile() {
   const [avatarFile, setAvatarFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const set = (field) => (e) => setForm((p) => ({ ...p, [field]: e.target.value }));
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    setError("");
+    try {
+      await deleteAccount(token);
+      logout();
+      navigate("/login", { replace: true });
+    } catch (err) {
+      setError(err?.message ?? "Erro ao eliminar a conta.");
+      setConfirmDelete(false);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const handleSave = async () => {
     setLoading(true);
@@ -98,12 +116,21 @@ export default function EditProfile() {
           Guardar alterações
         </PrimaryButton>
         <TextLink
-          onClick={() => window.confirm("Eliminar conta?") && console.log("deleted")}
+          onClick={() => setConfirmDelete(true)}
           className="text-xs text-dark/60 hover:text-danger"
         >
           Eliminar conta
         </TextLink>
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Eliminar conta"
+        message="Esta ação é permanente. A tua conta e todos os dados associados (publicações, embarcações, comentários e notificações) serão eliminados definitivamente. Queres continuar?"
+        confirmLabel={deleting ? "A eliminar…" : "Eliminar conta"}
+        onConfirm={deleting ? undefined : handleDelete}
+        onCancel={() => !deleting && setConfirmDelete(false)}
+      />
     </>
   );
 }
