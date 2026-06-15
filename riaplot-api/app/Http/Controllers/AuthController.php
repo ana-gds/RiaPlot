@@ -57,16 +57,21 @@ class AuthController extends Controller
         $user = $request->user();
 
         $data = $request->validate([
-            'name'      => 'sometimes|string',
-            'username'  => 'sometimes|string|unique:users,username,' . $user->id . ',_id',
-            'email'     => 'sometimes|email|unique:users,email,' . $user->id . ',_id',
-            'password'  => 'sometimes|min:8',
-            'photo_url' => 'sometimes|string',
+            'name'             => 'sometimes|string',
+            'username'         => 'sometimes|string|unique:users,username,' . $user->id . ',_id',
+            'email'            => 'sometimes|email|unique:users,email,' . $user->id . ',_id',
+            'password'         => 'sometimes|min:8',
+            'current_password' => 'required_with:password',
+            'photo_url'        => 'sometimes|string',
         ]);
 
         if (isset($data['password'])) {
+            if (!Hash::check($data['current_password'] ?? '', $user->password)) {
+                return response()->json(['message' => 'A palavra-passe atual está incorreta.'], 422);
+            }
             $data['password'] = Hash::make($data['password']);
         }
+        unset($data['current_password']);
 
         $user->update($data);
         return response()->json($user);

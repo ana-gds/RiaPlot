@@ -15,6 +15,7 @@ import Notifications from "./pages/Notifications.jsx";
 import Profile from "./pages/Profile.jsx";
 import PublicProfile from "./pages/PublicProfile.jsx";
 import EditProfile from "./pages/EditProfile.jsx";
+import AccountSettings from "./pages/AccountSettings.jsx";
 import BoatSettings from "./pages/BoatSettings.jsx";
 import MapPage from "./pages/Map.jsx";
 
@@ -45,6 +46,7 @@ export default function App() {
             <Route path="/profile" element={<Profile />} />
             <Route path="/users/:id" element={<PublicProfile />} />
             <Route path="/profile/edit" element={<EditProfile />} />
+            <Route path="/profile/settings" element={<AccountSettings />} />
             <Route path="/profile/boat" element={<BoatSettings />} />
           </Route>
 
