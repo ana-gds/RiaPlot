@@ -63,6 +63,11 @@ class AuthController extends Controller
             'password'         => 'sometimes|min:8',
             'current_password' => 'required_with:password',
             'photo_url'        => 'sometimes|string',
+            'bio'              => 'sometimes|nullable|string|max:160',
+            'is_private'       => 'sometimes|boolean',
+            'hide_location'    => 'sometimes|boolean',
+            'hide_followers'   => 'sometimes|boolean',
+            'searchable'       => 'sometimes|boolean',
         ]);
 
         if (isset($data['password'])) {

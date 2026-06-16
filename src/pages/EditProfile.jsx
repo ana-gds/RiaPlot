@@ -1,11 +1,13 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { Input, Label } from "../components/ui/Input.jsx";
+import { Input, Label, Textarea } from "../components/ui/Input.jsx";
 import { PrimaryButton } from "../components/ui/Button.jsx";
 import { BackButton } from "../components/ui/BackButton.jsx";
 import { CircleAvatarUpload } from "../components/ui/PhotoUpload.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import { updateUser, uploadFile } from "../services/api.js";
+
+const BIO_MAX = 160;
 
 export default function EditProfile() {
   const navigate = useNavigate();
@@ -14,6 +16,7 @@ export default function EditProfile() {
   const [form, setForm] = useState({
     nome: user?.name ?? "",
     username: user?.username ?? "",
+    bio: user?.bio ?? "",
   });
   const [avatarFile, setAvatarFile] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -28,6 +31,7 @@ export default function EditProfile() {
       const payload = {};
       if (form.nome !== user?.name) payload.name = form.nome;
       if (form.username !== user?.username) payload.username = form.username;
+      if (form.bio !== (user?.bio ?? "")) payload.bio = form.bio;
 
       if (avatarFile) {
         const uploaded = await uploadFile(token, avatarFile);
@@ -72,6 +76,19 @@ export default function EditProfile() {
         <div>
           <Label>Nome de utilizador</Label>
           <Input value={form.username} onChange={set("username")} />
+        </div>
+        <div>
+          <Label>Biografia</Label>
+          <Textarea
+            value={form.bio}
+            onChange={set("bio")}
+            maxLength={BIO_MAX}
+            minHeight={88}
+            placeholder="Escreve algo sobre ti..."
+          />
+          <p className="mt-1 text-right text-[11px] text-muted">
+            {form.bio.length}/{BIO_MAX}
+          </p>
         </div>
       </div>
 

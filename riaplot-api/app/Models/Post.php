@@ -10,7 +10,7 @@ class Post extends Model
 
     protected $fillable = [
         'user_id', 'username', 'title', 'description',
-        'route_doc', 'location', 'post_url', 'gpx_url', 'gpx_points', 'likes', 'comments',
+        'route_doc', 'location', 'post_url', 'gpx_url', 'gpx_points', 'likes', 'likes_count', 'comments',
     ];
 
     // Nota: o MongoDB guarda/lê arrays nativamente, por isso NÃO usamos o cast

@@ -91,9 +91,11 @@ export function updateBoat(token, id, data) {
 // Devolve um envelope paginado: { data, current_page, last_page, total }.
 // `userId` filtra pelos posts de um autor (perfil); `page`/`perPage` controlam
 // a paginação do feed.
-export function getPosts(token, { page = 1, perPage = 10, userId } = {}) {
+export function getPosts(token, { page = 1, perPage = 10, userId, sort, following } = {}) {
     const params = new URLSearchParams({ page, per_page: perPage });
     if (userId) params.set("user", userId);
+    if (sort) params.set("sort", sort);
+    if (following) params.set("following", "1");
     return request(`/posts?${params.toString()}`, {
         headers: { Authorization: `Bearer ${token}` },
     });
@@ -210,6 +212,41 @@ export function getUser(token, id) {
 export function followUser(token, id) {
     return request(`/users/${id}/follow`, {
         method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
+export function blockUser(token, id) {
+    return request(`/users/${id}/block`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
+// Pedidos de seguidor (conta privada) do utilizador autenticado.
+export function getFollowRequests(token) {
+    return request(`/follow-requests`, {
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
+export function acceptFollowRequest(token, id) {
+    return request(`/follow-requests/${id}/accept`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
+export function rejectFollowRequest(token, id) {
+    return request(`/follow-requests/${id}/reject`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+    });
+}
+
+// Lista de utilizadores bloqueados pelo autenticado.
+export function getBlocked(token) {
+    return request(`/blocked`, {
         headers: { Authorization: `Bearer ${token}` },
     });
 }

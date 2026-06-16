@@ -213,7 +213,7 @@ export default function Sidebar({ open, onClose, onNavigate }) {
 
                     <SectionLabel>Suporte</SectionLabel>
                     <MenuItem icon={<HelpIcon />} label="Ajuda" hasArrow={false} onClick={() => handleNav("ajuda")} />
-                    <MenuItem icon={<PrivacyIcon />} label="Privacidade" hasArrow={false} onClick={() => handleNav("privacidade")} />
+                    <MenuItem icon={<PrivacyIcon />} label="Privacidade" onClick={() => handleNav("privacidade")} />
                 </div>
 
                 {/* Footer */}

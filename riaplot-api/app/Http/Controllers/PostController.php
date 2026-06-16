@@ -12,23 +12,88 @@ class PostController extends Controller
     public function index(Request $request)
     {
         $perPage = min(max((int) $request->query('per_page', 10), 1), 50);
+        $sort = $request->query('sort', 'recent');
+        $viewer = $request->user();
 
-        $query = Post::orderBy('created_at', 'desc');
+        $query = Post::query();
 
         // Filtro opcional por autor (perfil próprio/público) — feito no servidor
         // para não trazer o feed inteiro só para filtrar no cliente.
         if ($userId = $request->query('user')) {
             $query->where('user_id', $userId);
+
+            // Gating do perfil: bloqueios ou conta privada não seguida → vazio.
+            if ($viewer && $userId !== $viewer->id) {
+                $target = User::find($userId);
+                $blocked = in_array($userId, $viewer->blocked ?? [])
+                    || ($target && in_array($viewer->id, $target->blocked ?? []));
+                $privateHidden = $target
+                    && ($target->is_private ?? false)
+                    && !in_array($userId, $viewer->following ?? []);
+                if ($blocked || $privateHidden) {
+                    return response()->json([
+                        'data' => [], 'current_page' => 1, 'last_page' => 1, 'total' => 0,
+                    ]);
+                }
+            }
+        } else {
+            // Filtro "de quem sigo": só publicações de utilizadores que o
+            // autenticado segue. Lista vazia → sentinela que não casa com nada.
+            if ($request->boolean('following') && $viewer) {
+                $following = $viewer->following ?? [];
+                $query->whereIn('user_id', $following ?: ['__none__']);
+            }
+
+            // Esconde do feed os autores bloqueados (ambos os sentidos) e as
+            // contas privadas que o utilizador não segue.
+            if ($viewer) {
+                $hidden = $this->hiddenAuthorIds($viewer);
+                if (!empty($hidden)) $query->whereNotIn('user_id', $hidden);
+            }
+        }
+
+        // Ordenação no servidor (abrange todo o histórico, não só o carregado).
+        if ($sort === 'liked') {
+            // Garante likes_count nos posts antigos (corre só até estarem todos
+            // preenchidos; depois esta query não devolve nada).
+            Post::whereNull('likes_count')->get()->each(
+                fn($p) => $p->update(['likes_count' => count($p->likes ?? [])]),
+            );
+            $query->orderBy('likes_count', 'desc')->orderBy('created_at', 'desc');
+        } elseif ($sort === 'old') {
+            $query->orderBy('created_at', 'asc');
+        } else {
+            $query->orderBy('created_at', 'desc');
         }
 
         $paginator = $query->paginate($perPage);
 
         return response()->json([
-            'data'         => $this->enrichMany(collect($paginator->items())),
+            'data'         => $this->enrichMany(collect($paginator->items()), $viewer?->id),
             'current_page' => $paginator->currentPage(),
             'last_page'    => $paginator->lastPage(),
             'total'        => $paginator->total(),
         ]);
+    }
+
+    /**
+     * Ids de autores a esconder do feed para este utilizador: quem ele
+     * bloqueou, quem o bloqueou, e contas privadas que ele não segue.
+     */
+    private function hiddenAuthorIds($viewer): array
+    {
+        $myId = $viewer->id;
+
+        $iBlocked  = $viewer->blocked ?? [];
+        $blockedMe = User::where('blocked', $myId)->get()
+            ->map(fn ($u) => (string) $u->_id)->all();
+
+        $privateIds = User::where('is_private', true)->get()
+            ->map(fn ($u) => (string) $u->_id)->all();
+        $allowed = array_merge($viewer->following ?? [], [$myId]);
+        $privateHidden = array_values(array_diff($privateIds, $allowed));
+
+        return array_values(array_unique(array_merge($iBlocked, $blockedMe, $privateHidden)));
     }
 
     public function store(Request $request)
@@ -49,17 +114,35 @@ class PostController extends Controller
             'user_id'  => $request->user()->id,
             'username' => $request->user()->username,
             'likes'    => [],
+            'likes_count' => 0,
             'comments' => [],
         ]);
 
         return response()->json($post, 201);
     }
 
-    public function show($id)
+    public function show(Request $request, $id)
     {
         $post = Post::find($id);
         if (!$post) return response()->json(['message' => 'Não encontrado'], 404);
-        return response()->json($this->enrichMany(collect([$post]))->first());
+
+        // Mesma proteção do feed: post de conta privada não seguida ou de quem
+        // há bloqueio fica inacessível por link direto.
+        $viewer = $request->user();
+        if ($viewer && (string) $post->user_id !== $viewer->id) {
+            $author = User::find($post->user_id);
+            if ($author) {
+                $blocked = in_array((string) $post->user_id, $viewer->blocked ?? [])
+                    || in_array($viewer->id, $author->blocked ?? []);
+                $privateHidden = ($author->is_private ?? false)
+                    && !in_array((string) $post->user_id, $viewer->following ?? []);
+                if ($blocked || $privateHidden) {
+                    return response()->json(['message' => 'Não disponível'], 403);
+                }
+            }
+        }
+
+        return response()->json($this->enrichMany(collect([$post]), $viewer?->id)->first());
     }
 
     public function update(Request $request, $id)
@@ -110,7 +193,8 @@ class PostController extends Controller
             }
         }
 
-        $post->update(['likes' => array_values($likes)]);
+        $likes = array_values($likes);
+        $post->update(['likes' => $likes, 'likes_count' => count($likes)]);
 
         // Devolve a contagem e o estado atual para o cliente reconciliar sem
         // depender do palpite otimista (evita ficar dessincronizado).
@@ -282,7 +366,7 @@ class PostController extends Controller
      * comentário com o username/foto do respetivo autor — numa única query
      * de utilizadores para evitar o problema N+1.
      */
-    private function enrichMany($posts)
+    private function enrichMany($posts, $viewerId = null)
     {
         $ids = [];
         foreach ($posts as $p) {
@@ -296,10 +380,20 @@ class PostController extends Controller
         $users = User::whereIn('_id', $ids)->get()
             ->keyBy(fn($u) => (string) $u->_id);
 
-        return $posts->map(function ($p) use ($users) {
+        return $posts->map(function ($p) use ($users, $viewerId) {
             $author = $users->get((string) $p->user_id);
             $arr = $p->toArray();
             $arr['photo_url'] = $author->photo_url ?? null;
+
+            // Privacidade de localização: esconde localização e traçado das
+            // publicações do autor a toda a gente exceto o próprio autor.
+            if ($author && ($author->hide_location ?? false)
+                && (string) $p->user_id !== (string) $viewerId) {
+                $arr['location'] = null;
+                $arr['gpx_url'] = null;
+                $arr['gpx_points'] = null;
+            }
+
             $arr['comments'] = array_map(function ($c) use ($users) {
                 $u = $users->get((string) ($c['user_id'] ?? ''));
                 return [

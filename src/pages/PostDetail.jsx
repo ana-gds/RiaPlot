@@ -369,18 +369,25 @@ export default function PostDetail() {
   const [following, setFollowing] = useState(
     () => !!post && (user?.following ?? []).includes(post.user_id),
   );
+  const [requested, setRequested] = useState(false);
   const [followLoading, setFollowLoading] = useState(false);
 
   const handleFollow = async () => {
     if (!post || followLoading) return;
     setFollowLoading(true);
-    setFollowing((f) => !f);
     try {
       const res = await followUser(token, post.user_id);
-      if (typeof res?.is_following === "boolean") setFollowing(res.is_following);
-      if (Array.isArray(res?.following)) updateUser({ following: res.following });
+      if (res?.status === "requested") {
+        setRequested(true);
+      } else if (res?.status === "cancelled") {
+        setRequested(false);
+      } else {
+        setRequested(false);
+        if (typeof res?.is_following === "boolean") setFollowing(res.is_following);
+        if (Array.isArray(res?.following)) updateUser({ following: res.following });
+      }
     } catch {
-      setFollowing((f) => !f);
+      // mantém o estado atual
     } finally {
       setFollowLoading(false);
     }
@@ -598,12 +605,12 @@ export default function PostDetail() {
               onClick={handleFollow}
               disabled={followLoading}
               className={`ml-auto shrink-0 h-8 px-4 rounded-full text-[13px] font-semibold transition-colors active:scale-95 disabled:opacity-50 ${
-                following
+                following || requested
                   ? "bg-white text-dark border border-divider"
                   : "bg-primary text-white shadow-primary-button"
               }`}
             >
-              {following ? "A seguir" : "Seguir"}
+              {following ? "A seguir" : requested ? "Pedido enviado" : "Seguir"}
             </button>
           )}
           {isOwner && (

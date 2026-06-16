@@ -83,6 +83,13 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/users/{id}/followers',   [UserController::class, 'followers']);
     Route::get('/users/{id}/following',   [UserController::class, 'following']);
     Route::post('/users/{id}/follow',     [UserController::class, 'follow']);
+    Route::post('/users/{id}/block',      [UserController::class, 'block']);
+
+    // Privacidade: pedidos de seguidor (conta privada) e bloqueados
+    Route::get('/follow-requests',                 [UserController::class, 'followRequests']);
+    Route::post('/follow-requests/{id}/accept',    [UserController::class, 'acceptRequest']);
+    Route::post('/follow-requests/{id}/reject',    [UserController::class, 'rejectRequest']);
+    Route::get('/blocked',                         [UserController::class, 'blockedList']);
 
     // Rotas guardadas
     Route::post('/routes/{id}/save',   [RouteController::class, 'save']);

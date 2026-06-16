@@ -15,6 +15,7 @@ const SIDEBAR_NAV_MAP = {
   defConta: "/profile/settings",
   defBarco: "/profile/boat",
   editarPerfil: "/profile/edit",
+  privacidade: "/profile/privacy",
 };
 
 function DesktopSidebar() {

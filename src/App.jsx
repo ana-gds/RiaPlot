@@ -16,6 +16,7 @@ import Profile from "./pages/Profile.jsx";
 import PublicProfile from "./pages/PublicProfile.jsx";
 import EditProfile from "./pages/EditProfile.jsx";
 import AccountSettings from "./pages/AccountSettings.jsx";
+import Privacy from "./pages/Privacy.jsx";
 import BoatSettings from "./pages/BoatSettings.jsx";
 import MapPage from "./pages/Map.jsx";
 
@@ -47,6 +48,7 @@ export default function App() {
             <Route path="/users/:id" element={<PublicProfile />} />
             <Route path="/profile/edit" element={<EditProfile />} />
             <Route path="/profile/settings" element={<AccountSettings />} />
+            <Route path="/profile/privacy" element={<Privacy />} />
             <Route path="/profile/boat" element={<BoatSettings />} />
           </Route>
 
