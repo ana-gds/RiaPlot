@@ -40,6 +40,7 @@ class NotificationController extends Controller
             return [
                 'id'         => (string) $n->_id,
                 'type'       => $n->type,
+                'actor_id'   => $n->actor ? (string) $n->actor : null,
                 'username'   => $actor->username ?? 'utilizador',
                 'photo_url'  => $actor->photo_url ?? null,
                 'post_id'    => $n->post,

@@ -144,11 +144,12 @@ export default function Social() {
       ? (postSort !== "recent" ? 1 : 0) + (postFollowing ? 1 : 0)
       : (userAZ ? 1 : 0) + (userFollowing ? 1 : 0);
 
-  // Primeira página do feed (e recarrega se o token mudar).
+  // Primeira página do feed. Recarrega quando muda a ordenação ou o filtro
+  // "de quem sigo" (a filtragem/ordenação é feita no servidor).
   useEffect(() => {
     if (!token) return;
     let cancelled = false;
-    getPosts(token, { page: 1, perPage: PAGE_SIZE })
+    getPosts(token, { page: 1, perPage: PAGE_SIZE, sort: postSort, following: postFollowing })
       .then((res) => {
         if (cancelled) return;
         setPosts((res.data ?? []).map((p) => mapPost(p, myId)));
@@ -157,14 +158,19 @@ export default function Social() {
       })
       .catch(() => {});
     return () => { cancelled = true; };
-  }, [token, myId]);
+  }, [token, myId, postSort, postFollowing]);
 
   // Carrega a página seguinte e acrescenta ao feed.
   const loadMore = async () => {
     if (loadingMore || page >= lastPage) return;
     setLoadingMore(true);
     try {
-      const res = await getPosts(token, { page: page + 1, perPage: PAGE_SIZE });
+      const res = await getPosts(token, {
+        page: page + 1,
+        perPage: PAGE_SIZE,
+        sort: postSort,
+        following: postFollowing,
+      });
       setPosts((prev) => [...prev, ...(res.data ?? []).map((p) => mapPost(p, myId))]);
       setPage(res.current_page ?? page + 1);
       setLastPage(res.last_page ?? lastPage);
@@ -210,29 +216,15 @@ export default function Social() {
     }
   };
 
-  // Pesquisa + filtros + ordenação de posts no cliente, sobre os já carregados.
-  // O botão "Carregar mais" traz páginas adicionais do servidor.
+  // A ordenação e o filtro "de quem sigo" são feitos no servidor. Aqui só se
+  // aplica a pesquisa por texto, sobre os posts já carregados.
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    let list = posts.filter((p) => {
-      if (
-        q &&
-        !p.title?.toLowerCase().includes(q) &&
-        !p.username.toLowerCase().includes(q)
-      )
-        return false;
-      if (postFollowing && !followingSet.has(idStr(p.user_id))) return false;
-      return true;
-    });
-    if (postSort === "liked") {
-      list = [...list].sort((a, b) => b.likes - a.likes);
-    } else if (postSort === "old") {
-      list = [...list].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
-    } else {
-      list = [...list].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    }
-    return list;
-  }, [posts, search, postFollowing, postSort, followingSet]);
+    if (!q) return posts;
+    return posts.filter(
+      (p) => p.title?.toLowerCase().includes(q) || p.username.toLowerCase().includes(q),
+    );
+  }, [posts, search]);
 
   // Utilizadores depois de aplicar filtro "quem sigo" e ordenação A-Z.
   const visibleUsers = useMemo(() => {

@@ -15,8 +15,25 @@ const ICON_BG = {
   like: "rgba(219,139,49,0.12)",
   comment: "rgba(18,101,135,0.12)",
   follow: "rgba(119,181,211,0.12)",
+  follow_request: "rgba(119,181,211,0.12)",
+  follow_accept: "rgba(119,181,211,0.12)",
   save: "rgba(0,77,108,0.12)",
 };
+
+const FOLLOW_ICON = (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+    <path
+      d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
+      stroke="#77B5D3"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+    <circle cx="8.5" cy="7" r="4" stroke="#77B5D3" strokeWidth="2" />
+    <line x1="20" y1="8" x2="20" y2="14" stroke="#77B5D3" strokeWidth="2" strokeLinecap="round" />
+    <line x1="23" y1="11" x2="17" y2="11" stroke="#77B5D3" strokeWidth="2" strokeLinecap="round" />
+  </svg>
+);
 
 const ICONS = {
   like: (
@@ -35,20 +52,9 @@ const ICONS = {
       />
     </svg>
   ),
-  follow: (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-      <path
-        d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"
-        stroke="#77B5D3"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <circle cx="8.5" cy="7" r="4" stroke="#77B5D3" strokeWidth="2" />
-      <line x1="20" y1="8" x2="20" y2="14" stroke="#77B5D3" strokeWidth="2" strokeLinecap="round" />
-      <line x1="23" y1="11" x2="17" y2="11" stroke="#77B5D3" strokeWidth="2" strokeLinecap="round" />
-    </svg>
-  ),
+  follow: FOLLOW_ICON,
+  follow_request: FOLLOW_ICON,
+  follow_accept: FOLLOW_ICON,
   save: (
     <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
       <path
@@ -76,6 +82,10 @@ function messageFor(n) {
       return n.comment ? `comentou: "${truncate(n.comment, 60)}"` : "comentou no teu post";
     case "follow":
       return "começou a seguir-te";
+    case "follow_request":
+      return "pediu para te seguir";
+    case "follow_accept":
+      return "aceitou o teu pedido para te seguir";
     case "save":
       return "guardou a tua rota";
     default:
@@ -138,7 +148,11 @@ function mapPost(p, user) {
   };
 }
 
-function NotifItem({ n, onClick }) {
+function NotifItem({ n, onClick, onOpenProfile }) {
+  const openProfile = (e) => {
+    e.stopPropagation();
+    if (n.user_id) onOpenProfile?.(n.user_id);
+  };
   return (
     <div
       onClick={onClick}
@@ -159,7 +173,18 @@ function NotifItem({ n, onClick }) {
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm leading-[21px] mb-0.5 text-dark">
-          <span className="font-semibold">{n.username}</span> {n.message}
+          <span
+            onClick={openProfile}
+            role={n.user_id ? "button" : undefined}
+            tabIndex={n.user_id ? 0 : undefined}
+            onKeyDown={(e) => {
+              if (n.user_id && (e.key === "Enter" || e.key === " ")) openProfile(e);
+            }}
+            className={`font-semibold ${n.user_id ? "cursor-pointer hover:underline" : ""}`}
+          >
+            {n.username}
+          </span>{" "}
+          {n.message}
         </p>
         <p className="text-xs text-muted-soft">{n.time}</p>
       </div>
@@ -235,6 +260,7 @@ export default function Notifications() {
         id: n.id,
         type: n.type,
         username: n.username,
+        user_id: n.actor_id ?? null,
         message: messageFor(n),
         time: relativeTime(n.created_at, now),
         thumb: n.thumb ?? null,
@@ -295,7 +321,12 @@ export default function Notifications() {
                   </span>
                 </div>
                 {s.items.map((n) => (
-                  <NotifItem key={n.id} n={n} onClick={() => handleClick(n)} />
+                  <NotifItem
+                    key={n.id}
+                    n={n}
+                    onClick={() => handleClick(n)}
+                    onOpenProfile={(uid) => navigate(`/users/${uid}`)}
+                  />
                 ))}
               </section>
             ))

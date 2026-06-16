@@ -253,6 +253,11 @@ export default function Profile() {
             onClick={() => openList("following")}
           />
         </div>
+        {user?.bio && (
+          <p className="mb-4 max-w-[320px] text-center text-sm leading-snug text-dark/80 whitespace-pre-line">
+            {user.bio}
+          </p>
+        )}
         <button
           type="button"
           onClick={() => navigate("/profile/edit")}
