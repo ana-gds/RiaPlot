@@ -263,6 +263,29 @@ export function getFollowing(token, id) {
     });
 }
 
+// Denúncia de conteúdo. targetType = "post" | "user"; reason é uma das chaves
+// aceites pelo backend (spam, inappropriate, harassment, misinformation, other).
+export function reportContent(token, { targetType, targetId, reason, details }) {
+    return request(`/reports`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+            target_type: targetType,
+            target_id: targetId,
+            reason,
+            details: details || null,
+        }),
+    });
+}
+
+export function reportPost(token, postId, reason, details) {
+    return reportContent(token, { targetType: "post", targetId: postId, reason, details });
+}
+
+export function reportUser(token, userId, reason, details) {
+    return reportContent(token, { targetType: "user", targetId: userId, reason, details });
+}
+
 export function saveRoute(token, id) {
     return request(`/routes/${id}/save`, {
         method: "POST",

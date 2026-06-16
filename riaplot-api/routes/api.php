@@ -7,14 +7,16 @@ use App\Http\Controllers\PoiController;
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\Api\DockController;
 use App\Http\Controllers\Api\TideController;
 use App\Http\Controllers\SimulacaoController;
 use App\Http\Controllers\Api\HidromodController;
 
-// Auth (público)
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login',    [AuthController::class, 'login']);
+// Auth (público) — com rate-limiting para travar brute-force de passwords e
+// criação de contas em massa. Passado o limite, o Laravel responde 429.
+Route::post('/register', [AuthController::class, 'register'])->middleware('throttle:10,1');
+Route::post('/login',    [AuthController::class, 'login'])->middleware('throttle:10,1');
 
 // Cais, Rotas e POIs (públicos — o mapa não precisa de login)
 Route::get('/docks',       [DockController::class, 'index']);
@@ -39,10 +41,18 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Upload de imagens
     Route::post('/upload', function(\Illuminate\Http\Request $request) {
-        $request->validate(['image' => 'required|image|max:5120']);
+        // Restringe a formatos de imagem rasterizada seguros. SVG é
+        // deliberadamente excluído porque permite JavaScript embebido (XSS)
+        // quando servido a partir do mesmo domínio.
+        $request->validate([
+            'image' => 'required|image|mimes:jpg,jpeg,png,webp,gif|max:5120',
+        ]);
         $dir = public_path('uploads');
         if (!is_dir($dir)) mkdir($dir, 0755, true);
-        $ext      = $request->file('image')->getClientOriginalExtension();
+        // A extensão é derivada do conteúdo real do ficheiro (MIME), nunca do
+        // nome enviado pelo cliente — evita guardar ficheiros executáveis
+        // (ex.: .php) só por o cliente os nomear assim.
+        $ext      = $request->file('image')->extension() ?: 'jpg';
         $filename = uniqid('img_', true) . '.' . $ext;
         $request->file('image')->move($dir, $filename);
         return response()->json(['url' => url('uploads/' . $filename)]);
@@ -90,6 +100,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/follow-requests/{id}/accept',    [UserController::class, 'acceptRequest']);
     Route::post('/follow-requests/{id}/reject',    [UserController::class, 'rejectRequest']);
     Route::get('/blocked',                         [UserController::class, 'blockedList']);
+
+    // Denúncias (moderação). A criação é limitada para evitar abuso; a listagem
+    // e resolução são reservadas a administradores (verificado no controller).
+    Route::post('/reports',        [ReportController::class, 'store'])->middleware('throttle:20,1');
+    Route::get('/reports',         [ReportController::class, 'index']);
+    Route::patch('/reports/{id}',  [ReportController::class, 'resolve']);
 
     // Rotas guardadas
     Route::post('/routes/{id}/save',   [RouteController::class, 'save']);

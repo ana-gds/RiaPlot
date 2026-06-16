@@ -4,8 +4,9 @@ import { IMAGES } from "../constants/images.js";
 import { BackButton } from "../components/ui/BackButton.jsx";
 import { FeedPostCard } from "../components/shared/PostCard.jsx";
 import { ConfirmDialog } from "../components/ui/ConfirmDialog.jsx";
+import { ReportDialog } from "../components/shared/ReportDialog.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { getUser, getPosts, followUser, likePost, blockUser } from "../services/api.js";
+import { getUser, getPosts, followUser, likePost, blockUser, reportUser } from "../services/api.js";
 
 function formatDate(iso) {
   if (!iso) return "";
@@ -40,6 +41,10 @@ export default function PublicProfile() {
   const [followLoading, setFollowLoading] = useState(false);
   const [followerCount, setFollowerCount] = useState(0);
   const [confirmBlock, setConfirmBlock] = useState(false);
+  const [reportOpen, setReportOpen] = useState(false);
+  const [reporting, setReporting] = useState(false);
+  const [reportError, setReportError] = useState(null);
+  const [toast, setToast] = useState(null);
 
   // Se for o próprio utilizador, vai para o perfil pessoal.
   useEffect(() => {
@@ -132,6 +137,21 @@ export default function PublicProfile() {
     navigate(-1);
   };
 
+  const handleReport = async (reason, details) => {
+    setReporting(true);
+    setReportError(null);
+    try {
+      const res = await reportUser(token, id, reason, details);
+      setReportOpen(false);
+      setToast(res?.message ?? "Denúncia enviada.");
+      setTimeout(() => setToast(null), 3500);
+    } catch (err) {
+      setReportError(err?.message ?? "Não foi possível enviar a denúncia.");
+    } finally {
+      setReporting(false);
+    }
+  };
+
   const toggleLike = async (postId) => {
     setPosts((p) =>
       p.map((x) =>
@@ -194,19 +214,37 @@ export default function PublicProfile() {
       <div className="px-4 pt-2 pb-3 flex items-center justify-between">
         <BackButton />
         {!isMe && (
-          <button
-            type="button"
-            onClick={() => setConfirmBlock(true)}
-            className="w-9 h-9 rounded-full flex items-center justify-center text-dark/60 hover:bg-dark/5 active:scale-90"
-            aria-label="Bloquear utilizador"
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-              <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
-              <path d="M5.6 5.6l12.8 12.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => { setReportError(null); setReportOpen(true); }}
+              className="w-9 h-9 rounded-full flex items-center justify-center text-dark/60 hover:bg-dark/5 active:scale-90"
+              aria-label="Denunciar utilizador"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M4 21V4h11l-1 4h6l-1 4h-5l1 4H5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => setConfirmBlock(true)}
+              className="w-9 h-9 rounded-full flex items-center justify-center text-dark/60 hover:bg-dark/5 active:scale-90"
+              aria-label="Bloquear utilizador"
+            >
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
+                <path d="M5.6 5.6l12.8 12.8" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+              </svg>
+            </button>
+          </div>
         )}
       </div>
+
+      {toast && (
+        <div className="fixed left-1/2 -translate-x-1/2 bottom-8 z-[70] max-w-[90%] px-4 py-2.5 rounded-xl bg-dark text-white text-sm shadow-xl text-center">
+          {toast}
+        </div>
+      )}
 
       <div className="flex flex-col items-center px-4 gap-1">
         <div className="w-[100px] h-[100px] rounded-full overflow-hidden border-[3px] border-primary shadow-[0_4px_16px_rgba(219,139,49,0.3)]">
@@ -291,6 +329,15 @@ export default function PublicProfile() {
         confirmLabel="Bloquear"
         onConfirm={handleBlock}
         onCancel={() => setConfirmBlock(false)}
+      />
+
+      <ReportDialog
+        open={reportOpen}
+        targetLabel={`@${username}`}
+        submitting={reporting}
+        error={reportError}
+        onSubmit={handleReport}
+        onCancel={() => setReportOpen(false)}
       />
     </>
   );
