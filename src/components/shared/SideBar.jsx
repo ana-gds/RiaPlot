@@ -212,7 +212,7 @@ export default function Sidebar({ open, onClose, onNavigate }) {
                     <div className="h-px mx-5 my-2" style={{ background: "rgba(0,77,108,0.06)" }} />
 
                     <SectionLabel>Suporte</SectionLabel>
-                    <MenuItem icon={<HelpIcon />} label="Ajuda" hasArrow={false} onClick={() => handleNav("ajuda")} />
+                    <MenuItem icon={<HelpIcon />} label="Ajuda" onClick={() => handleNav("ajuda")} />
                     <MenuItem icon={<PrivacyIcon />} label="Privacidade" onClick={() => handleNav("privacidade")} />
                 </div>
 
