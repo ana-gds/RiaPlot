@@ -17,6 +17,10 @@
 /public/build
 /public/fonts-manifest.dev.json
 /public/hot
+# Ficheiros carregados pelos utilizadores (imagens/GPX) — conteúdo de runtime,
+# não pertence ao repositório. Mantém-se a pasta com .gitkeep.
+/public/uploads/*
+!/public/uploads/.gitkeep
 /public/storage
 /storage/*.key
 /storage/app/sim

@@ -52,7 +52,21 @@ class BoatController extends Controller
 
         if (!$boat) return response()->json(['message' => 'Não encontrado'], 404);
 
-        $boat->update($request->all());
+        // Whitelist explícita: impede que o cliente altere user_id (transferir
+        // a embarcação para outra conta) ou injete campos arbitrários.
+        $data = $request->validate([
+            'name'            => 'sometimes|string',
+            'type'            => 'sometimes|string',
+            'length'          => 'sometimes|numeric',
+            'height'          => 'sometimes|numeric',
+            'beam'            => 'sometimes|numeric',
+            'speed'           => 'sometimes|numeric',
+            'upper_clearance' => 'sometimes|numeric',
+            'lower_clearance' => 'sometimes|numeric',
+            'photo_url'       => 'sometimes|nullable|string',
+        ]);
+
+        $boat->update($data);
         return response()->json($boat);
     }
 

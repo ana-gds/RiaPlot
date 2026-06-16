@@ -13,7 +13,9 @@ import {
 
 const ICON_BG = {
   like: "rgba(219,139,49,0.12)",
+  comment_like: "rgba(219,139,49,0.12)",
   comment: "rgba(18,101,135,0.12)",
+  reply: "rgba(18,101,135,0.12)",
   follow: "rgba(119,181,211,0.12)",
   follow_request: "rgba(119,181,211,0.12)",
   follow_accept: "rgba(119,181,211,0.12)",
@@ -52,6 +54,24 @@ const ICONS = {
       />
     </svg>
   ),
+  // Resposta a um comentário usa o mesmo ícone de comentário; gosto num
+  // comentário usa o mesmo ícone de gosto.
+  comment_like: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="#DB8B31">
+      <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+    </svg>
+  ),
+  reply: (
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+      <path
+        d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"
+        stroke="#126587"
+        strokeWidth="2"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  ),
   follow: FOLLOW_ICON,
   follow_request: FOLLOW_ICON,
   follow_accept: FOLLOW_ICON,
@@ -80,6 +100,10 @@ function messageFor(n) {
       return "gostou do teu post";
     case "comment":
       return n.comment ? `comentou: "${truncate(n.comment, 60)}"` : "comentou no teu post";
+    case "reply":
+      return n.comment ? `respondeu: "${truncate(n.comment, 60)}"` : "respondeu ao teu comentário";
+    case "comment_like":
+      return "gostou do teu comentário";
     case "follow":
       return "começou a seguir-te";
     case "follow_request":
@@ -277,7 +301,7 @@ export default function Notifications() {
   const handleClick = async (n) => {
     // As notificações já foram marcadas como lidas ao abrir a página; aqui só
     // tratamos da navegação para o post associado (likes/comentários).
-    if (n.post_id && (n.type === "like" || n.type === "comment")) {
+    if (n.post_id && ["like", "comment", "reply", "comment_like"].includes(n.type)) {
       try {
         const p = await getPost(token, n.post_id);
         navigate("/social/post", { state: { post: mapPost(p, user) } });

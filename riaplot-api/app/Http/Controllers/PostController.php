@@ -153,7 +153,19 @@ class PostController extends Controller
 
         if (!$post) return response()->json(['message' => 'Não encontrado'], 404);
 
-        $post->update($request->all());
+        // Whitelist explícita: nunca deixar o cliente alterar campos sensíveis
+        // como user_id, likes, likes_count ou comments através do update.
+        $data = $request->validate([
+            'title'       => 'sometimes|string',
+            'description' => 'sometimes|nullable|string',
+            'location'    => 'sometimes|nullable|string',
+            'route_doc'   => 'sometimes|nullable|string',
+            'post_url'    => 'sometimes|nullable|array',
+            'gpx_url'     => 'sometimes|nullable|string',
+            'gpx_points'  => 'sometimes|nullable|array',
+        ]);
+
+        $post->update($data);
         return response()->json($post);
     }
 
@@ -226,11 +238,37 @@ class PostController extends Controller
         ];
 
         $comments   = $post->comments ?? [];
+
+        // Se é uma resposta, descobre o autor do comentário-pai para o notificar.
+        $parentAuthorId = null;
+        if (!empty($data['parent_id'])) {
+            foreach ($comments as $c) {
+                if (($c['id'] ?? null) === $data['parent_id']) {
+                    $parentAuthorId = $c['user_id'] ?? null;
+                    break;
+                }
+            }
+        }
+
         $comments[] = $newComment;
         $post->update(['comments' => $comments]);
 
-        // Notifica o dono do post (exceto ao comentar o próprio post).
-        if ($post->user_id !== $user->id) {
+        // Notifica o autor do comentário-pai de que houve uma resposta (exceto
+        // ao responder ao próprio comentário).
+        if ($parentAuthorId && $parentAuthorId !== $user->id) {
+            Notification::create([
+                'type'    => 'reply',
+                'user'    => $parentAuthorId,
+                'actor'   => $user->id,
+                'post'    => $post->id,
+                'comment' => $data['comment'],
+                'read'    => false,
+            ]);
+        }
+
+        // Notifica o dono do post (exceto ao comentar o próprio post e sem
+        // duplicar quando o dono é também o autor do comentário respondido).
+        if ($post->user_id !== $user->id && $post->user_id !== $parentAuthorId) {
             Notification::create([
                 'type'    => 'comment',
                 'user'    => $post->user_id,
@@ -265,9 +303,11 @@ class PostController extends Controller
         $found    = false;
         $liked    = false;
         $count    = 0;
+        $commentAuthorId = null;
 
         foreach ($comments as &$c) {
             if (($c['id'] ?? null) === $commentId) {
+                $commentAuthorId = $c['user_id'] ?? null;
                 $likes = $c['likes'] ?? [];
                 if (in_array($userId, $likes)) {
                     $likes = array_values(array_filter($likes, fn($l) => $l !== $userId));
@@ -287,6 +327,18 @@ class PostController extends Controller
         if (!$found) return response()->json(['message' => 'Comentário não encontrado'], 404);
 
         $post->update(['comments' => $comments]);
+
+        // Ao gostar (não ao retirar o gosto), notifica o autor do comentário —
+        // exceto se gostou do próprio comentário.
+        if ($liked && $commentAuthorId && $commentAuthorId !== $userId) {
+            Notification::create([
+                'type'  => 'comment_like',
+                'user'  => $commentAuthorId,
+                'actor' => $userId,
+                'post'  => $post->id,
+                'read'  => false,
+            ]);
+        }
 
         return response()->json(['likes' => $count, 'liked' => $liked]);
     }
