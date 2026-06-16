@@ -1,33 +1,7 @@
-/**
- * simulacaoService.js
- *
- * Lógica de simulação no frontend — chama os endpoints Laravel (proxy),
- * faz polling até status==2 e devolve os resultados prontos a colorir.
- *
- * Uso:
- *   import { simularRota, obterMares } from '@/services/simulacaoService';
- *
- *   const resultado = await simularRota({
- *     pontos: route.trackpoints,    // [{lat, lng, ele}, ...]
- *     data:   '2026-06-10',
- *     hora:   '14:30',
- *     calado: 0.5,
- *     folgaSuperior: 0.2,
- *     folgaInferior: 0.1,
- *     onProgress: (msg) => setStatus(msg),
- *   });
- *
- *   const mares = await obterMares({ latitude: 40.64, longitude: -8.73 });
- */
-
 import { API_URL } from '../config.js';
 
 const API_BASE = `${API_URL}/simulacao`;
-const POLL_INTERVAL_MS = 500;   // polling a cada 500ms (API é rápida)
-const POLL_MAX_TENTATIVAS = 60; // max 30 segundos antes de desistir
 
-// Os endpoints de simulação exigem autenticação (auth:sanctum). Constrói os
-// cabeçalhos incluindo o token quando disponível.
 function authHeaders(token, extra = {}) {
   return {
     Accept: 'application/json',
@@ -36,26 +10,22 @@ function authHeaders(token, extra = {}) {
   };
 }
 
-// ---------------------------------------------------------------------------
-// Simulação de rota — nível de água + cores
-// ---------------------------------------------------------------------------
-
 /**
- * Simula uma rota e devolve os pontos coloridos.
+ * Calcula a navegabilidade de uma rota para a data/hora e barco indicados.
  *
  * @param {Object} params
- * @param {Array}  params.pontos          - trackpoints [{lat, lng, ele}]
- * @param {string} params.data            - 'YYYY-MM-DD'
- * @param {string} params.hora            - 'HH:MM'
- * @param {number} params.calado          - calado do barco em metros
- * @param {number} params.folgaSuperior   - folga superior em metros (default 0.2)
- * @param {number} params.folgaInferior   - folga inferior em metros (default 0.1)
- * @param {Function} [params.onProgress] - callback com mensagens de estado
- *
+ * @param {string} params.routeId        - _id da rota no MongoDB
+ * @param {string} params.data           - 'YYYY-MM-DD'
+ * @param {string} params.hora           - 'HH:MM'
+ * @param {number} params.calado
+ * @param {number} params.folgaSuperior
+ * @param {number} params.folgaInferior
+ * @param {string} params.token
+ * @param {Function} [params.onProgress]
  * @returns {Promise<SimulacaoResultado>}
  */
 export async function simularRota({
-  pontos,
+  routeId,
   data,
   hora,
   calado = 1.0,
@@ -64,155 +34,30 @@ export async function simularRota({
   token,
   onProgress = () => {},
 }) {
-  // Converter trackpoints para o formato que a API espera
-  const pontosAPI = pontos.map((p) => ({
-    latitude:  p.lat,
-    longitude: p.lng,
-  }));
+  onProgress('A calcular...');
 
-  // 1. Iniciar execução
-  onProgress('A iniciar simulação...');
-  const inicioRes = await fetch(`${API_BASE}/iniciar`, {
-    method:  'POST',
+  const res = await fetch(`${API_BASE}/calcular`, {
+    method: 'POST',
     headers: authHeaders(token, { 'Content-Type': 'application/json' }),
-    body:    JSON.stringify({ pontos: pontosAPI, data, hora }),
+    body: JSON.stringify({
+      route_id:       routeId,
+      data,
+      hora,
+      calado,
+      folga_superior: folgaSuperior,
+      folga_inferior: folgaInferior,
+    }),
   });
 
-  if (!inicioRes.ok) {
-    const err = await inicioRes.json().catch(() => ({}));
-    throw new SimulacaoError('Não foi possível iniciar a simulação', err);
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new SimulacaoError(err.error ?? 'Não foi possível calcular a simulação.', err);
   }
 
-  const { executionId, cached } = await inicioRes.json();
-
-  if (cached) {
-    onProgress('A carregar resultado em cache...');
-  } else {
-    // 2. Polling de estado
-    onProgress('A calcular...');
-    await aguardarConclusao(executionId, 'rota', onProgress, token);
-  }
-
-  // 3. Obter resultados
-  onProgress('A processar resultados...');
-  const params = new URLSearchParams({
-    calado,
-    folga_superior: folgaSuperior,
-    folga_inferior: folgaInferior,
-  });
-
-  const dadosRes = await fetch(`${API_BASE}/${executionId}/dados?${params}`, {
-    headers: authHeaders(token),
-  });
-
-  if (!dadosRes.ok) {
-    throw new SimulacaoError('Erro ao obter dados da simulação');
-  }
-
-  const resultado = await dadosRes.json();
+  const resultado = await res.json();
   onProgress('Simulação concluída');
-
   return resultado;
 }
-
-// ---------------------------------------------------------------------------
-// Preia-mar / Baixa-mar
-// ---------------------------------------------------------------------------
-
-/**
- * Obtém PM/BM para os próximos 4 dias num ponto geográfico.
- *
- * @param {Object} params
- * @param {number} params.latitude
- * @param {number} params.longitude
- * @param {Function} [params.onProgress]
- *
- * @returns {Promise<{eventos: MaresEvento[]}>}
- */
-export async function obterMares({
-  latitude,
-  longitude,
-  token,
-  onProgress = () => {},
-}) {
-  onProgress('A calcular marés...');
-
-  const inicioRes = await fetch(`${API_BASE}/mares`, {
-    method:  'POST',
-    headers: authHeaders(token, { 'Content-Type': 'application/json' }),
-    body:    JSON.stringify({ latitude, longitude }),
-  });
-
-  if (!inicioRes.ok) {
-    throw new SimulacaoError('Não foi possível calcular marés');
-  }
-
-  const { executionId, cached } = await inicioRes.json();
-
-  if (!cached) {
-    await aguardarConclusao(executionId, 'mares', onProgress, token);
-  }
-
-  const dadosRes = await fetch(`${API_BASE}/mares/${executionId}/dados`, {
-    headers: authHeaders(token),
-  });
-
-  if (!dadosRes.ok) {
-    throw new SimulacaoError('Erro ao obter dados de marés');
-  }
-
-  const resultado = await dadosRes.json();
-  onProgress('Marés calculadas');
-
-  return resultado;
-}
-
-// ---------------------------------------------------------------------------
-// Helpers internos
-// ---------------------------------------------------------------------------
-
-/**
- * Polling genérico — aguarda até status==2 ou lança erro após timeout.
- *
- * @param {string} executionId
- * @param {'rota'|'mares'} tipo
- * @param {Function} onProgress
- */
-async function aguardarConclusao(executionId, tipo, onProgress, token) {
-  const urlStatus = tipo === 'mares'
-    ? `${API_BASE}/mares/${executionId}/status`
-    : `${API_BASE}/${executionId}/status`;
-
-  for (let tentativa = 0; tentativa < POLL_MAX_TENTATIVAS; tentativa++) {
-    await sleep(POLL_INTERVAL_MS);
-
-    const statusRes = await fetch(urlStatus, { headers: authHeaders(token) });
-    if (!statusRes.ok) continue;
-
-    const { status } = await statusRes.json();
-
-    if (status === 2) return; // concluído
-
-    if (status === -1) {
-      throw new SimulacaoError('A simulação falhou no servidor da Hidromod');
-    }
-
-    // Mensagens de progresso baseadas no número de tentativas
-    if (tentativa < 5)      onProgress('A processar...');
-    else if (tentativa < 15) onProgress('Ainda a calcular...');
-    else                    onProgress('A demorar mais que o habitual...');
-  }
-
-  throw new SimulacaoError('Timeout — a simulação demorou demasiado');
-}
-
-function sleep(ms) {
-  return new Promise((resolve) => setTimeout(resolve, ms));
-}
-
-// ---------------------------------------------------------------------------
-// Classe de erro customizada
-// ---------------------------------------------------------------------------
 
 export class SimulacaoError extends Error {
   constructor(message, details = null) {
@@ -222,29 +67,20 @@ export class SimulacaoError extends Error {
   }
 }
 
-// ---------------------------------------------------------------------------
-// JSDoc types
-// ---------------------------------------------------------------------------
-
 /**
  * @typedef {Object} SimulacaoResultado
  * @property {PontoColorido[]} positions
- * @property {string}          startDate
- * @property {number}          calado
- * @property {number}          folgaSup
- * @property {number}          folgaInf
+ * @property {string} startDate
+ * @property {number} calado
+ * @property {number} folgaSup
+ * @property {number} folgaInf
  *
  * @typedef {Object} PontoColorido
  * @property {number} lat
  * @property {number} lng
- * @property {number} z          - batimetria base
- * @property {number} waterLevel - nível de água simulado
- * @property {number} profReal   - profundidade real calculada
- * @property {number} folga
+ * @property {number} [z]
+ * @property {number} [waterLevel]
+ * @property {number} [profReal]
+ * @property {number} [folga]
  * @property {'green'|'yellow'|'red'|'black'|'purple'} color
- *
- * @typedef {Object} MaresEvento
- * @property {'PM'|'BM'} tipo
- * @property {string}    datetime  - ISO string
- * @property {number}    altura    - metros
  */

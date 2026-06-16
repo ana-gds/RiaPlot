@@ -117,20 +117,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/notifications/{id}/read',  [NotificationController::class, 'markRead']);
 });
 
-// Simulação e Hidromod proxiam serviços externos (Hidromod) que consomem
-// computação e permitem apagar execuções — por isso exigem autenticação.
 Route::middleware('auth:sanctum')->prefix('simulacao')->group(function () {
-
-    // Rota principal: nível de água + cores
-    Route::post ('iniciar',              [SimulacaoController::class, 'iniciar']);
-    Route::get  ('{id}/status',          [SimulacaoController::class, 'status']);
-    Route::get  ('{id}/dados',           [SimulacaoController::class, 'dados']);
-    Route::delete('{id}',                [SimulacaoController::class, 'apagar']);
-
-    // Marés (PM/BM)
-    Route::post ('mares',                [SimulacaoController::class, 'maresIniciar']);
-    Route::get  ('mares/{id}/status',    [SimulacaoController::class, 'maresStatus']);
-    Route::get  ('mares/{id}/dados',     [SimulacaoController::class, 'maresDados']);
+    Route::post('calcular', [SimulacaoController::class, 'calcular']);
 });
 
 Route::middleware('auth:sanctum')->prefix('hidromod')->group(function () {

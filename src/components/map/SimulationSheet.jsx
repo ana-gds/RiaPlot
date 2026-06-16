@@ -42,10 +42,14 @@ export function SimulationSheet({ open, onClose, route, onResults }) {
     setProgress("");
   }, [route]);
 
+  const routeId = route?._id?.$oid
+    ?? (typeof route?._id === 'string' ? route._id : null)
+    ?? route?.id
+    ?? null;
+
   const hasTrackpoints = Array.isArray(route?.trackpoints) && route.trackpoints.length > 1;
-  const canSimulate = hasTrackpoints
-    ? true
-    : form.partida && form.chegada && form.partida !== form.chegada;
+  const canSimulate = (routeId && hasTrackpoints)
+    || (!routeId && form.partida && form.chegada && form.partida !== form.chegada);
 
   const handleSimulate = async () => {
     if (!canSimulate || loading) return;
@@ -56,7 +60,7 @@ export function SimulationSheet({ open, onClose, route, onResults }) {
     try {
       const hora = String(form.hora).padStart(2, "0") + ":00";
       const resultado = await simularRota({
-        pontos: route.trackpoints,
+        routeId,
         data: form.data,
         hora,
         calado:         boat?.height          ?? 1.0,
