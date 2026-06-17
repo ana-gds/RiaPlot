@@ -3,7 +3,16 @@ import { LayerSwitcher } from "./LayerSwitcher.jsx";
 import { CircularButton } from "../ui/Button.jsx";
 import { MenuIcon } from "../ui/Icons.jsx";
 
-export function MapHeader({ baseLayer, onChangeLayer, nautical, onToggleNautical, onOpenMenu }) {
+export function MapHeader({
+  baseLayer,
+  onChangeLayer,
+  nautical,
+  onToggleNautical,
+  onOpenMenu,
+  docks,
+  pois,
+  onSearchSelect,
+}) {
   return (
     <div className="map-header" >
       <div className="map-header__row">
@@ -12,7 +21,7 @@ export function MapHeader({ baseLayer, onChangeLayer, nautical, onToggleNautical
             <MenuIcon />
           </CircularButton>
         )}
-        <MapSearchBar />
+        <MapSearchBar docks={docks} pois={pois} onSelect={onSearchSelect} />
         <LayerSwitcher
           activeLayer={baseLayer}
           onChangeLayer={onChangeLayer}

@@ -1,6 +1,14 @@
 import { SearchIcon, CloseIcon } from "../ui/Icons.jsx";
 
-export function SearchBar({ value, onChange, onClear, placeholder = "Procura uma rota..." }) {
+export function SearchBar({
+  value,
+  onChange,
+  onClear,
+  placeholder = "Procura uma rota...",
+  onFocus,
+  onBlur,
+  onKeyDown,
+}) {
   return (
     <div className="relative flex-1 group">
       <SearchIcon
@@ -12,6 +20,9 @@ export function SearchBar({ value, onChange, onClear, placeholder = "Procura uma
         type="text"
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onFocus={onFocus}
+        onBlur={onBlur}
+        onKeyDown={onKeyDown}
         placeholder={placeholder}
         className="w-full h-12 rounded-full bg-cream pl-11 pr-11 text-sm font-medium text-dark placeholder:text-muted/70 border border-primary/20 outline-none shadow-[0_2px_10px_rgba(0,77,108,0.05)] transition-all hover:border-primary/40 focus:bg-white focus:border-primary focus:shadow-[0_6px_22px_rgba(219,139,49,0.22)]"
       />

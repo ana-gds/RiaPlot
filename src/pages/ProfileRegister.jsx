@@ -37,12 +37,12 @@ const API_FIELD_MAP = { name: "nome", email: "email", username: "username", pass
 
 export default function ProfileRegister() {
   const navigate = useNavigate();
-  const { login, updateUser: patchUser } = useAuth();
+  const { login } = useAuth();
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [avatarPreview, setAvatarPreview] = useState(null);
+  const [avatarFile, setAvatarFile] = useState(null);
 
   const set = (field) => (e) => setForm((p) => ({ ...p, [field]: e.target.value }));
 
@@ -60,18 +60,23 @@ export default function ProfileRegister() {
         username: form.username,
         password: form.password,
       });
-      login(data.user, data.token);
 
-      if (avatarPreview) {
+      // Faz o upload e grava a foto ANTES de iniciar a sessão. Assim, quando o
+      // login muda o token e dispara o refreshUser (AuthContext), o servidor já
+      // tem o photo_url — sem isto, o refreshUser lê o estado antigo (sem foto)
+      // e sobrepõe-se ao user em cache, perdendo a foto.
+      let userData = data.user;
+      if (avatarFile) {
         try {
-          const uploaded = await uploadFile(data.token, avatarPreview);
-          await updateUser(data.token, { photo_url: uploaded.url });
-          patchUser({ photo_url: uploaded.url });
+          const uploaded = await uploadFile(data.token, avatarFile);
+          userData = await updateUser(data.token, { photo_url: uploaded.url });
         } catch (photoErr) {
-          console.error("Profile photo upload failed:", photoErr);
+          console.error("Falha ao guardar a foto de perfil:", photoErr);
+          userData = data.user;
         }
       }
 
+      login(userData, data.token);
       navigate("/register/boat");
     } catch (err) {
       if (err?.errors) {
@@ -94,7 +99,7 @@ export default function ProfileRegister() {
       <ProgressIndicator step={1} />
 
       <div className="mt-8">
-        <CircleAvatarUpload preview={avatarPreview} onFileChange={setAvatarPreview} />
+        <CircleAvatarUpload onFileChange={setAvatarFile} />
       </div>
 
       <div className="flex-1 px-5 mt-6 flex flex-col gap-3 overflow-y-auto">

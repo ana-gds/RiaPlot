@@ -55,6 +55,19 @@ function ClockChipIcon() {
   );
 }
 
+// "Mais antigas": relógio com seta anti-horária (histórico), a fazer par com o
+// relógio de "Mais recentes".
+function HistoryChipIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"
+      stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M3 3v5h5" />
+      <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" />
+      <path d="M12 7.5v5l3.5 2" />
+    </svg>
+  );
+}
+
 function HeartChipIcon() {
   return (
     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true"
@@ -369,7 +382,11 @@ export default function Social() {
                 >
                   Mais recentes
                 </Chip>
-                <Chip active={postSort === "old"} onClick={() => setPostSort("old")}>
+                <Chip
+                  active={postSort === "old"}
+                  onClick={() => setPostSort("old")}
+                  icon={<HistoryChipIcon />}
+                >
                   Mais antigas
                 </Chip>
                 <Chip
