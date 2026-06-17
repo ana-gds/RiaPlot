@@ -23,6 +23,7 @@ class BoatController extends Controller
             'speed'           => 'required|numeric',
             'upper_clearance' => 'required|numeric',
             'lower_clearance' => 'required|numeric',
+            'photo_url'       => 'sometimes|nullable|string',
         ]);
 
         $boat = Boat::create([
