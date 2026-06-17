@@ -547,6 +547,9 @@ export default function PostDetail() {
 
   const images = post?.images?.length ? post.images : [post?.image ?? IMAGES.posts.detail];
   const [activeImage, setActiveImage] = useState(0);
+  const galleryRef = useRef(null);
+  const dragStartX = useRef(null);
+  const [dragX, setDragX] = useState(0);
   const username = post?.username ?? "";
   const avatar = post?.photo_url ?? null;
   const date = post?.date ?? "";
@@ -568,10 +571,59 @@ export default function PostDetail() {
     }
   };
 
+  // Galeria de fotos arrastável (toque + rato). O dedo/cursor segue a foto e,
+  // ao largar, salta para a foto seguinte/anterior se ultrapassar o limiar.
+  const multipleImages = images.length > 1;
+
+  const beginDrag = (clientX) => {
+    if (multipleImages) dragStartX.current = clientX;
+  };
+  const moveDrag = (clientX) => {
+    if (dragStartX.current != null) setDragX(clientX - dragStartX.current);
+  };
+  const endDrag = () => {
+    if (dragStartX.current == null) return;
+    const width = galleryRef.current?.offsetWidth ?? 1;
+    const threshold = Math.min(70, width * 0.18);
+    if (dragX <= -threshold) setActiveImage((i) => Math.min(i + 1, images.length - 1));
+    else if (dragX >= threshold) setActiveImage((i) => Math.max(i - 1, 0));
+    dragStartX.current = null;
+    setDragX(0);
+  };
+
   return (
     <div className="flex flex-col flex-1 -mt-6 md:mt-0">
-      <div className="relative w-full h-[400px] flex-shrink-0">
-        <img src={images[activeImage]} alt={title} className="w-full h-full object-cover" />
+      <div className="relative w-full h-[400px] flex-shrink-0 overflow-hidden">
+        <div
+          ref={galleryRef}
+          className="absolute inset-0 touch-pan-y select-none"
+          style={{ cursor: multipleImages ? "grab" : "default" }}
+          onTouchStart={(e) => beginDrag(e.touches[0].clientX)}
+          onTouchMove={(e) => moveDrag(e.touches[0].clientX)}
+          onTouchEnd={endDrag}
+          onPointerDown={(e) => { if (e.pointerType === "mouse") beginDrag(e.clientX); }}
+          onPointerMove={(e) => { if (e.pointerType === "mouse") moveDrag(e.clientX); }}
+          onPointerUp={(e) => { if (e.pointerType === "mouse") endDrag(); }}
+          onPointerLeave={(e) => { if (e.pointerType === "mouse") endDrag(); }}
+        >
+          <div
+            className="flex h-full w-full"
+            style={{
+              transform: `translateX(calc(${-activeImage * 100}% + ${dragX}px))`,
+              transition: dragStartX.current != null ? "none" : "transform 0.3s ease",
+            }}
+          >
+            {images.map((src, i) => (
+              <img
+                key={i}
+                src={src}
+                alt={title}
+                draggable={false}
+                className="w-full h-full object-cover shrink-0"
+              />
+            ))}
+          </div>
+        </div>
         <div className="absolute left-4 top-4">
           <BackButton />
         </div>
