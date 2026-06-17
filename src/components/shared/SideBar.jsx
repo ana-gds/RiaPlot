@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../contexts/AuthContext.jsx";
 import { logoutUser } from "../../services/api.js";
 import { RoutesNavIcon } from "../ui/Icons.jsx";
+import { ConfirmDialog } from "../ui/ConfirmDialog.jsx";
 
 // ─── Icons ─────────────────────────────────────────────────────
 
@@ -89,6 +90,8 @@ export default function Sidebar({ open, onClose, onNavigate }) {
     const { user, token, logout } = useAuth();
     const navigate = useNavigate();
     const [activeItem, setActiveItem] = useState("rotas");
+    const [confirmLogout, setConfirmLogout] = useState(false);
+    const isAuthed = !!token;
 
     // Lock body scroll when open
     useEffect(() => {
@@ -101,6 +104,19 @@ export default function Sidebar({ open, onClose, onNavigate }) {
         setActiveItem(key);
         onNavigate?.(key);
         onClose?.();
+    };
+
+    const goLogin = () => {
+        onClose?.();
+        navigate("/login");
+    };
+
+    const doLogout = async () => {
+        try { await logoutUser(token); } catch { /* termina sempre localmente */ }
+        logout();
+        setConfirmLogout(false);
+        onClose?.();
+        navigate("/login");
     };
 
     return (
@@ -152,49 +168,81 @@ export default function Sidebar({ open, onClose, onNavigate }) {
                     />
 
                     {/* User info */}
-                    <div className="flex items-center gap-3.5 relative z-10">
-                        <button
-                            onClick={() => handleNav("perfil")}
-                            aria-label="Ver o meu perfil"
-                            className="w-[52px] h-[52px] rounded-full overflow-hidden flex-shrink-0 bg-primary-soft flex items-center justify-center text-white font-bold text-xl"
-                            style={{
-                                border: "2.5px solid rgba(219,139,49,0.8)",
-                                boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
-                                cursor: "pointer",
-                                padding: 0,
-                            }}
-                        >
-                            {user?.photo_url ? (
-                                <img src={user.photo_url} alt="Avatar" loading="lazy" decoding="async" className="w-full h-full object-cover" />
-                            ) : (
-                                user?.name?.charAt(0)?.toUpperCase() ?? "?"
-                            )}
-                        </button>
-                        <div>
+                    {isAuthed ? (
+                        <div className="flex items-center gap-3.5 relative z-10">
                             <button
                                 onClick={() => handleNav("perfil")}
-                                className="text-left"
-                                style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
-                            >
-                                <div className="text-base font-bold text-white leading-tight">{user?.name ?? ""}</div>
-                                <div className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.65)" }}>
-                                    @{user?.username ?? ""}
-                                </div>
-                            </button>
-                            <button
-                                onClick={() => handleNav("editarPerfil")}
-                                className="flex items-center gap-1 mt-1.5 text-[11px] font-medium"
+                                aria-label="Ver o meu perfil"
+                                className="w-[52px] h-[52px] rounded-full overflow-hidden flex-shrink-0 bg-primary-soft flex items-center justify-center text-white font-bold text-xl"
                                 style={{
-                                    color: "#DB8B31",
-                                    background: "none",
-                                    border: "none",
+                                    border: "2.5px solid rgba(219,139,49,0.8)",
+                                    boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
                                     cursor: "pointer",
+                                    padding: 0,
                                 }}
                             >
-                                Editar perfil <EditArrow />
+                                {user?.photo_url ? (
+                                    <img src={user.photo_url} alt="Avatar" loading="lazy" decoding="async" className="w-full h-full object-cover" />
+                                ) : (
+                                    user?.name?.charAt(0)?.toUpperCase() ?? "?"
+                                )}
                             </button>
+                            <div>
+                                <button
+                                    onClick={() => handleNav("perfil")}
+                                    className="text-left"
+                                    style={{ background: "none", border: "none", padding: 0, cursor: "pointer" }}
+                                >
+                                    <div className="text-base font-bold text-white leading-tight">{user?.name ?? ""}</div>
+                                    <div className="text-[11px] mt-0.5" style={{ color: "rgba(255,255,255,0.65)" }}>
+                                        @{user?.username ?? ""}
+                                    </div>
+                                </button>
+                                <button
+                                    onClick={() => handleNav("editarPerfil")}
+                                    className="flex items-center gap-1 mt-1.5 text-[11px] font-medium"
+                                    style={{
+                                        color: "#DB8B31",
+                                        background: "none",
+                                        border: "none",
+                                        cursor: "pointer",
+                                    }}
+                                >
+                                    Editar perfil <EditArrow />
+                                </button>
+                            </div>
                         </div>
-                    </div>
+                    ) : (
+                        <div className="flex items-center gap-3.5 relative z-10">
+                            <div
+                                className="w-[52px] h-[52px] rounded-full flex-shrink-0 bg-white/15 flex items-center justify-center text-white"
+                                style={{
+                                    border: "2.5px solid rgba(219,139,49,0.8)",
+                                    boxShadow: "0 4px 12px rgba(0,0,0,0.2)",
+                                }}
+                            >
+                                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                                    <circle cx="12" cy="7" r="4" stroke="white" strokeWidth="2" />
+                                </svg>
+                            </div>
+                            <div>
+                                <div className="text-base font-bold text-white leading-tight">Visitante</div>
+                                <button
+                                    onClick={goLogin}
+                                    className="flex items-center gap-1 mt-1.5 text-[11px] font-medium"
+                                    style={{
+                                        color: "#DB8B31",
+                                        background: "none",
+                                        border: "none",
+                                        cursor: "pointer",
+                                    }}
+                                >
+                                    Iniciar sessão <EditArrow />
+                                </button>
+                            </div>
+                        </div>
+                    )}
                 </div>
 
                 {/* Navigation */}
@@ -222,12 +270,7 @@ export default function Sidebar({ open, onClose, onNavigate }) {
                     style={{ borderTop: "1px solid rgba(0,77,108,0.08)" }}
                 >
                     <button
-                        onClick={async () => {
-                            try { await logoutUser(token); } catch { /* ignora falha de rede — termina sempre a sessão localmente */ }
-                            logout();
-                            onClose?.();
-                            navigate("/login");
-                        }}
+                        onClick={isAuthed ? () => setConfirmLogout(true) : goLogin}
                         className="flex items-center gap-3 w-full py-2.5"
                         style={{
                             background: "none",
@@ -237,7 +280,9 @@ export default function Sidebar({ open, onClose, onNavigate }) {
                         }}
                     >
                         <LogoutIcon />
-                        <span className="text-sm font-medium">Terminar sessão</span>
+                        <span className="text-sm font-medium">
+                            {isAuthed ? "Terminar sessão" : "Iniciar sessão"}
+                        </span>
                     </button>
                     <div
                         className="text-[10px] text-center mt-2"
@@ -247,6 +292,15 @@ export default function Sidebar({ open, onClose, onNavigate }) {
                     </div>
                 </div>
             </div>
+
+            <ConfirmDialog
+                open={confirmLogout}
+                title="Terminar sessão"
+                message="Queres mesmo terminar a sessão?"
+                confirmLabel="Terminar sessão"
+                onConfirm={doLogout}
+                onCancel={() => setConfirmLogout(false)}
+            />
         </>
     );
 }

@@ -26,6 +26,11 @@ Route::get('/routes/map',      [RouteController::class, 'mapIndex']);
 Route::get('/routes/{id}',     [RouteController::class, 'show']);
 Route::get('/pois',        [PoiController::class, 'index']);
 
+// Feed social — leitura pública (visitantes veem o feed). A autenticação é
+// opcional: se vier um token válido, o feed é personalizado (privados/bloqueios).
+Route::get('/posts',       [PostController::class, 'index']);
+Route::get('/posts/{id}',  [PostController::class, 'show']);
+
 // Marés (previsão FCUL/IH — pública)
 Route::get('/tides/current', [TideController::class, 'current']);
 Route::get('/tides',         [TideController::class, 'index']);
@@ -79,8 +84,8 @@ Route::middleware('auth:sanctum')->group(function () {
     // Embarcações
     Route::apiResource('boats', BoatController::class);
 
-    // Posts / Social
-    Route::apiResource('posts', PostController::class);
+    // Posts / Social (index e show são públicos — ver acima)
+    Route::apiResource('posts', PostController::class)->except(['index', 'show']);
     Route::post('/posts/{id}/like',    [PostController::class, 'like']);
     Route::post('/posts/{id}/comment', [PostController::class, 'comment']);
     Route::patch('/posts/{id}/comment/{commentId}',  [PostController::class, 'updateComment']);

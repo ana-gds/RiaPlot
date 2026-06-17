@@ -77,6 +77,14 @@ export default function Login() {
         </PrimaryButton>
       </form>
 
+      <button
+        type="button"
+        onClick={() => navigate("/routes")}
+        className="mt-4 text-center text-sm font-medium text-secondary hover:text-dark transition-colors"
+      >
+        Explorar sem conta
+      </button>
+
       <p className="text-center mt-auto pt-8 text-sm text-muted">
         Não tem conta?
         <TextLink

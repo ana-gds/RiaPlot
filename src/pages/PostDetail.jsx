@@ -396,6 +396,7 @@ export default function PostDetail() {
 
   const handleFollow = async () => {
     if (!post || followLoading) return;
+    if (!token) { navigate("/login"); return; }
     setFollowLoading(true);
     try {
       const res = await followUser(token, post.user_id);
@@ -448,6 +449,7 @@ export default function PostDetail() {
 
   const handleLike = async () => {
     if (!post) return;
+    if (!token) { navigate("/login"); return; }
     setLiked((l) => !l);
     setLikeCount((c) => c + (liked ? -1 : 1));
     try {
@@ -462,6 +464,7 @@ export default function PostDetail() {
 
   const handleAddComment = async (text) => {
     if (!post) return;
+    if (!token) { navigate("/login"); return; }
     try {
       const created = await addComment(token, post.id, text);
       setComments((list) => [...list, mapComment(created, myId)]);
@@ -472,6 +475,7 @@ export default function PostDetail() {
 
   const handleReply = async (parentId, text) => {
     if (!post) return;
+    if (!token) { navigate("/login"); return; }
     try {
       const created = await addComment(token, post.id, text, parentId);
       setComments((list) => [...list, mapComment(created, myId)]);
@@ -519,6 +523,7 @@ export default function PostDetail() {
 
   const handleLikeComment = async (commentId) => {
     if (!post) return;
+    if (!token) { navigate("/login"); return; }
     const prev = comments;
     setComments((list) =>
       list.map((c) =>

@@ -1,22 +1,12 @@
-import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { COLORS } from "../constants/theme.js";
 import { PrimaryButton, TextLink } from "../components/ui/Button.jsx";
 import { BoatIcon } from "../components/ui/Icons.jsx";
 import { ProgressIndicator } from "../components/shared/ProgressIndicator.jsx";
 
-function AnimatedCheck() {
-  const [show, setShow] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setShow(true), 200);
-    return () => clearTimeout(t);
-  }, []);
-
+function CheckBadge() {
   return (
-    <div
-      className="w-[120px] h-[120px] rounded-full flex items-center justify-center relative border-[3px] border-primary transition-all duration-500"
-      style={{ transform: show ? "scale(1)" : "scale(0)", opacity: show ? 1 : 0 }}
-    >
+    <div className="w-[120px] h-[120px] rounded-full flex items-center justify-center relative border-[3px] border-primary">
       <div className="absolute inset-2 rounded-full bg-primary/10" />
       <svg width="48" height="48" viewBox="0 0 24 24" fill="none" aria-hidden="true">
         <path
@@ -25,11 +15,6 @@ function AnimatedCheck() {
           strokeWidth="2.5"
           strokeLinecap="round"
           strokeLinejoin="round"
-          style={{
-            strokeDasharray: 40,
-            strokeDashoffset: show ? 0 : 40,
-            transition: "stroke-dashoffset 0.6s ease 0.4s",
-          }}
         />
       </svg>
     </div>
@@ -91,60 +76,38 @@ export default function FinalRegister() {
   const userName = state?.userName ?? "Navegador";
   const boatName = state?.boatName ?? "—";
   const boatType = state?.boatType ?? "—";
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    const t = setTimeout(() => setVisible(true), 100);
-    return () => clearTimeout(t);
-  }, []);
-
-  const fade = (delay) => ({
-    opacity: visible ? 1 : 0,
-    transform: visible ? "translateY(0)" : "translateY(12px)",
-    transition: "opacity 0.5s, transform 0.5s",
-    transitionDelay: delay,
-  });
 
   return (
     <div className="flex flex-col flex-1 pt-4 pb-10">
       <ProgressIndicator step={3} />
 
       <div className="flex-1 flex flex-col items-center justify-center px-8 text-center">
-        <AnimatedCheck />
+        <CheckBadge />
 
-        <h1
-          className="mt-8 text-[26px] font-bold leading-tight text-dark"
-          style={fade("0.4s")}
-        >
-          Tudo pronto!
-        </h1>
+        <h1 className="mt-8 text-[26px] font-bold leading-tight text-dark">Tudo pronto!</h1>
 
-        <p
-          className="mt-3 text-sm leading-relaxed max-w-[280px] text-muted"
-          style={fade("0.55s")}
-        >
+        <p className="mt-3 text-sm leading-relaxed max-w-[280px] text-muted">
           A tua conta foi criada com sucesso. Estás pronto para explorar a Ria de Aveiro em
           segurança.
         </p>
 
-        <div className="w-full" style={fade("0.7s")}>
+        <div className="w-full">
           <SummaryCard userName={userName} boatName={boatName} boatType={boatType} />
         </div>
       </div>
 
       <div className="flex flex-col items-center gap-3 px-8 pt-5">
-        <div className="w-full" style={fade("0.9s")}>
+        <div className="w-full">
           <PrimaryButton onClick={() => navigate("/routes")} className="w-full">
             Começar a navegar
           </PrimaryButton>
         </div>
-        <div style={fade("1s")}>
-          <TextLink
-            onClick={() => navigate("/routes")}
-            className="text-[13px] text-muted hover:text-dark"
-          >
-            Explorar primeiro
-          </TextLink>
-        </div>
+        <TextLink
+          onClick={() => navigate("/routes")}
+          className="text-[13px] text-muted hover:text-dark"
+        >
+          Explorar primeiro
+        </TextLink>
       </div>
     </div>
   );

@@ -33,9 +33,9 @@ function Switch({ checked, onChange, disabled }) {
 
 function ToggleRow({ title, desc, checked, onChange, disabled }) {
   return (
-    <div className="flex items-start gap-3 py-2.5">
+    <div className="flex items-start gap-3 rounded-2xl border border-divider bg-white px-4 py-3.5">
       <div className="flex-1">
-        <p className="text-sm font-medium text-dark">{title}</p>
+        <p className="text-sm font-semibold text-dark">{title}</p>
         {desc && <p className="text-xs leading-snug text-dark/55 mt-0.5">{desc}</p>}
       </div>
       <Switch checked={checked} onChange={onChange} disabled={disabled} />
@@ -44,12 +44,17 @@ function ToggleRow({ title, desc, checked, onChange, disabled }) {
 }
 
 function SectionTitle({ children }) {
-  return <h2 className="text-base font-semibold text-dark mb-1">{children}</h2>;
+  return (
+    <h2 className="flex items-center gap-2 text-base font-bold text-dark mb-3">
+      <span className="w-1 h-4 rounded-full bg-primary" />
+      {children}
+    </h2>
+  );
 }
 
 function UserRow({ u, children }) {
   return (
-    <div className="flex items-center gap-3 py-2">
+    <div className="flex items-center gap-3 rounded-2xl border border-divider bg-white p-3">
       {u.photo_url ? (
         <img
           src={u.photo_url}
@@ -81,13 +86,21 @@ export default function Privacy() {
   const [saving, setSaving] = useState(false);
 
   const [requests, setRequests] = useState([]);
+  const [requestsLoading, setRequestsLoading] = useState(true);
   const [blocked, setBlocked] = useState([]);
+  const [blockedLoading, setBlockedLoading] = useState(true);
 
   useEffect(() => {
     if (!token) return;
     let cancelled = false;
-    getFollowRequests(token).then((d) => !cancelled && setRequests(Array.isArray(d) ? d : [])).catch(() => {});
-    getBlocked(token).then((d) => !cancelled && setBlocked(Array.isArray(d) ? d : [])).catch(() => {});
+    getFollowRequests(token)
+      .then((d) => { if (!cancelled) setRequests(Array.isArray(d) ? d : []); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setRequestsLoading(false); });
+    getBlocked(token)
+      .then((d) => { if (!cancelled) setBlocked(Array.isArray(d) ? d : []); })
+      .catch(() => {})
+      .finally(() => { if (!cancelled) setBlockedLoading(false); });
     return () => { cancelled = true; };
   }, [token]);
 
@@ -147,7 +160,7 @@ export default function Privacy() {
       <div className="flex flex-col gap-7 px-4 mt-6 flex-1">
         <section>
           <SectionTitle>Conta</SectionTitle>
-          <div className="divide-y divide-divider/60">
+          <div className="flex flex-col gap-3">
             <ToggleRow
               title="Conta privada"
               desc="Só os teus seguidores veem as tuas publicações. Novos seguidores passam a precisar de aprovação."
@@ -182,10 +195,12 @@ export default function Privacy() {
         {isPrivate && (
           <section>
             <SectionTitle>Pedidos de seguidor</SectionTitle>
-            {requests.length === 0 ? (
-              <p className="text-xs text-muted py-2">Não tens pedidos pendentes.</p>
+            {requestsLoading ? (
+              <p className="rounded-2xl border border-divider bg-white px-4 py-3 text-xs text-muted">A carregar…</p>
+            ) : requests.length === 0 ? (
+              <p className="rounded-2xl border border-divider bg-white px-4 py-3 text-xs text-muted">Não tens pedidos pendentes.</p>
             ) : (
-              <div className="divide-y divide-divider/60">
+              <div className="flex flex-col gap-3">
                 {requests.map((u) => (
                   <UserRow key={u.id} u={u}>
                     <div className="flex items-center gap-2 flex-shrink-0">
@@ -213,10 +228,12 @@ export default function Privacy() {
 
         <section>
           <SectionTitle>Utilizadores bloqueados</SectionTitle>
-          {blocked.length === 0 ? (
-            <p className="text-xs text-muted py-2">Não bloqueaste ninguém.</p>
+          {blockedLoading ? (
+            <p className="text-xs text-muted py-2">A carregar…</p>
+          ) : blocked.length === 0 ? (
+            <p className="rounded-2xl border border-divider bg-white px-4 py-3 text-xs text-muted">Não bloqueaste ninguém.</p>
           ) : (
-            <div className="divide-y divide-divider/60">
+            <div className="flex flex-col gap-3">
               {blocked.map((u) => (
                 <UserRow key={u.id} u={u}>
                   <button

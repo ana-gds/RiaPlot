@@ -135,6 +135,8 @@ export default function Routes() {
   };
 
   const toggleSave = async (id) => {
+    // Guardar rotas exige sessão — visitante vai para o login.
+    if (!token) { navigate("/login"); return; }
     setSavedIds((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );

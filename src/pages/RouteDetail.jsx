@@ -200,6 +200,8 @@ export default function RouteDetail() {
   }, [id]);
 
   const handleSave = async () => {
+    // Guardar rotas exige sessão — visitante vai para o login.
+    if (!token) { navigate("/login"); return; }
     setSaved((s) => !s);
     try {
       const res = await saveRoute(token, id);

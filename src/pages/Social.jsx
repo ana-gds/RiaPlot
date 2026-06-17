@@ -209,6 +209,8 @@ export default function Social() {
   };
 
   const toggleLike = async (id) => {
+    // Gostar exige sessão — visitante vai para o login.
+    if (!token) { navigate("/login"); return; }
     // Atualização otimista da contagem e do estado.
     setPosts((p) =>
       p.map((x) =>
@@ -269,7 +271,8 @@ export default function Social() {
   // Pesquisa de utilizadores no servidor (debounced). Só corre no modo
   // "users"; o backend filtra por nome/username via `?q=`.
   useEffect(() => {
-    if (mode !== "users") return;
+    // A pesquisa de utilizadores exige sessão; visitantes veem um convite a entrar.
+    if (mode !== "users" || !token) return;
     let cancelled = false;
     setUsersLoading(true);
     const t = setTimeout(() => {
@@ -303,7 +306,7 @@ export default function Social() {
   const handleMode = (next) => {
     // Evita o flash do estado vazio: marca o carregamento já na troca de tab,
     // antes de o efeito de pesquisa correr.
-    if (next === "users" && mode !== "users") setUsersLoading(true);
+    if (next === "users" && mode !== "users" && token) setUsersLoading(true);
     setMode(next);
   };
 
@@ -429,7 +432,19 @@ export default function Social() {
       <div className="flex-1 overflow-y-auto pt-2 pb-4">
         <div className="w-full md:max-w-xl md:mx-auto">
           {mode === "users" ? (
-            usersLoading && users.length === 0 ? (
+            !token ? (
+              <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <CommentIcon size={48} color="var(--color-muted-soft)" className="mb-3" />
+                <p className="text-sm font-semibold text-dark">Inicia sessão para procurar utilizadores</p>
+                <button
+                  type="button"
+                  onClick={() => navigate("/login")}
+                  className="mt-3 h-10 px-5 rounded-2xl bg-primary text-white text-sm font-semibold shadow-primary-button active:scale-95"
+                >
+                  Iniciar sessão
+                </button>
+              </div>
+            ) : usersLoading && users.length === 0 ? (
               <LoadingState />
             ) : visibleUsers.length > 0 ? (
               <ul className="px-2">

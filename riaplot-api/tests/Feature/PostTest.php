@@ -9,9 +9,12 @@ use Tests\TestCase;
 
 class PostTest extends TestCase
 {
-    public function test_posts_index_requires_authentication(): void
+    public function test_posts_index_is_public(): void
     {
-        $this->getJson('/api/posts')->assertStatus(401);
+        // O feed social é público: visitantes recebem 200 (sem sessão).
+        $this->getJson('/api/posts')
+            ->assertOk()
+            ->assertJsonStructure(['data', 'current_page', 'last_page', 'total']);
     }
 
     public function test_authenticated_user_can_create_post(): void

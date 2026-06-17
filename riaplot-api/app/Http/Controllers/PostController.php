@@ -13,7 +13,8 @@ class PostController extends Controller
     {
         $perPage = min(max((int) $request->query('per_page', 10), 1), 50);
         $sort = $request->query('sort', 'recent');
-        $viewer = $request->user();
+        // Auth opcional: rota pública, mas se vier um token válido personaliza.
+        $viewer = $request->user('sanctum');
 
         $query = Post::query();
 
@@ -23,13 +24,16 @@ class PostController extends Controller
             $query->where('user_id', $userId);
 
             // Gating do perfil: bloqueios ou conta privada não seguida → vazio.
-            if ($viewer && $userId !== $viewer->id) {
+            // (Visitantes nunca seguem ninguém, por isso veem só contas públicas.)
+            $isSelf = $viewer && $userId === $viewer->id;
+            if (!$isSelf) {
                 $target = User::find($userId);
-                $blocked = in_array($userId, $viewer->blocked ?? [])
-                    || ($target && in_array($viewer->id, $target->blocked ?? []));
-                $privateHidden = $target
-                    && ($target->is_private ?? false)
-                    && !in_array($userId, $viewer->following ?? []);
+                $blocked = $viewer && (
+                    in_array($userId, $viewer->blocked ?? [])
+                    || ($target && in_array($viewer->id, $target->blocked ?? []))
+                );
+                $isFollower = $viewer && in_array($userId, $viewer->following ?? []);
+                $privateHidden = $target && ($target->is_private ?? false) && !$isFollower;
                 if ($blocked || $privateHidden) {
                     return response()->json([
                         'data' => [], 'current_page' => 1, 'last_page' => 1, 'total' => 0,
@@ -45,11 +49,9 @@ class PostController extends Controller
             }
 
             // Esconde do feed os autores bloqueados (ambos os sentidos) e as
-            // contas privadas que o utilizador não segue.
-            if ($viewer) {
-                $hidden = $this->hiddenAuthorIds($viewer);
-                if (!empty($hidden)) $query->whereNotIn('user_id', $hidden);
-            }
+            // contas privadas não seguidas. Para visitantes, esconde os privados.
+            $hidden = $this->hiddenAuthorIds($viewer);
+            if (!empty($hidden)) $query->whereNotIn('user_id', $hidden);
         }
 
         // Ordenação no servidor (abrange todo o histórico, não só o carregado).
@@ -82,14 +84,17 @@ class PostController extends Controller
      */
     private function hiddenAuthorIds($viewer): array
     {
-        $myId = $viewer->id;
+        $privateIds = User::where('is_private', true)->get()
+            ->map(fn ($u) => (string) $u->_id)->all();
 
+        // Visitante (sem sessão): esconde todas as contas privadas.
+        if (!$viewer) return $privateIds;
+
+        $myId = $viewer->id;
         $iBlocked  = $viewer->blocked ?? [];
         $blockedMe = User::where('blocked', $myId)->get()
             ->map(fn ($u) => (string) $u->_id)->all();
 
-        $privateIds = User::where('is_private', true)->get()
-            ->map(fn ($u) => (string) $u->_id)->all();
         $allowed = array_merge($viewer->following ?? [], [$myId]);
         $privateHidden = array_values(array_diff($privateIds, $allowed));
 
@@ -127,15 +132,19 @@ class PostController extends Controller
         if (!$post) return response()->json(['message' => 'Não encontrado'], 404);
 
         // Mesma proteção do feed: post de conta privada não seguida ou de quem
-        // há bloqueio fica inacessível por link direto.
-        $viewer = $request->user();
-        if ($viewer && (string) $post->user_id !== $viewer->id) {
+        // há bloqueio fica inacessível por link direto. Auth opcional (visitantes
+        // só acedem a posts de contas públicas).
+        $viewer = $request->user('sanctum');
+        $isOwner = $viewer && (string) $post->user_id === $viewer->id;
+        if (!$isOwner) {
             $author = User::find($post->user_id);
             if ($author) {
-                $blocked = in_array((string) $post->user_id, $viewer->blocked ?? [])
-                    || in_array($viewer->id, $author->blocked ?? []);
-                $privateHidden = ($author->is_private ?? false)
-                    && !in_array((string) $post->user_id, $viewer->following ?? []);
+                $blocked = $viewer && (
+                    in_array((string) $post->user_id, $viewer->blocked ?? [])
+                    || in_array($viewer->id, $author->blocked ?? [])
+                );
+                $isFollower = $viewer && in_array((string) $post->user_id, $viewer->following ?? []);
+                $privateHidden = ($author->is_private ?? false) && !$isFollower;
                 if ($blocked || $privateHidden) {
                     return response()->json(['message' => 'Não disponível'], 403);
                 }

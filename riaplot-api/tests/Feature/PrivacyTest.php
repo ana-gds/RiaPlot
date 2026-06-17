@@ -179,4 +179,23 @@ class PrivacyTest extends TestCase
         Sanctum::actingAs($me->fresh());
         $this->getJson("/api/posts?user={$target->id}")->assertOk()->assertJsonCount(1, 'data');
     }
+
+    // ── Visitante (sem sessão) ───────────────────────────────────────────
+
+    public function test_guest_sees_public_feed_without_private_accounts(): void
+    {
+        $publicUser  = User::factory()->create();
+        $privateUser = User::factory()->create(['is_private' => true]);
+        Post::create([
+            'user_id' => $publicUser->id, 'username' => $publicUser->username,
+            'title' => 'Público', 'likes' => [], 'comments' => [],
+        ]);
+        Post::create([
+            'user_id' => $privateUser->id, 'username' => $privateUser->username,
+            'title' => 'Privado', 'likes' => [], 'comments' => [],
+        ]);
+
+        // Sem autenticação: o feed responde 200 e esconde as contas privadas.
+        $this->getJson('/api/posts')->assertOk()->assertJsonCount(1, 'data');
+    }
 }

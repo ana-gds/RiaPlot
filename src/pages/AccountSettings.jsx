@@ -22,7 +22,12 @@ function LogoutIcon() {
 }
 
 function SectionTitle({ children }) {
-  return <h2 className="text-base font-semibold text-dark mb-3">{children}</h2>;
+  return (
+    <h2 className="flex items-center gap-2 text-base font-bold text-dark mb-3">
+      <span className="w-1 h-4 rounded-full bg-primary" />
+      {children}
+    </h2>
+  );
 }
 
 export default function AccountSettings() {
@@ -43,6 +48,7 @@ export default function AccountSettings() {
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
+  const [confirmLogout, setConfirmLogout] = useState(false);
 
   const setPwField = (field) => (e) => setPw((p) => ({ ...p, [field]: e.target.value }));
 
@@ -128,66 +134,66 @@ export default function AccountSettings() {
       <div className="flex flex-col gap-7 px-4 mt-6 flex-1">
         {/* Email */}
         <section>
-          <Label>Email</Label>
-          <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-          {emailMsg && <p className={`text-xs mt-2 ${msgClass(emailMsg)}`}>{emailMsg.text}</p>}
-          <div className="flex justify-center mt-4">
-            <PrimaryButton onClick={handleSaveEmail} loading={emailLoading} width={200} height={44}>
-              Guardar email
-            </PrimaryButton>
+          <SectionTitle>Email</SectionTitle>
+          <div className="rounded-2xl border border-divider bg-white p-4">
+            <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
+            {emailMsg && <p className={`text-xs mt-2 ${msgClass(emailMsg)}`}>{emailMsg.text}</p>}
+            <div className="flex justify-center mt-4">
+              <PrimaryButton onClick={handleSaveEmail} loading={emailLoading} width={200} height={44}>
+                Guardar email
+              </PrimaryButton>
+            </div>
           </div>
         </section>
-
-        <div className="h-px bg-divider/70" />
 
         {/* Palavra-passe */}
         <section>
           <SectionTitle>Alterar palavra-passe</SectionTitle>
-          <div className="flex flex-col gap-3">
-            <div>
-              <Label>Palavra-passe atual</Label>
-              <PasswordInput
-                value={pw.current}
-                onChange={setPwField("current")}
-                iconSize={18}
-                letterSpacing="2px"
-              />
+          <div className="rounded-2xl border border-divider bg-white p-4">
+            <div className="flex flex-col gap-3">
+              <div>
+                <Label>Palavra-passe atual</Label>
+                <PasswordInput
+                  value={pw.current}
+                  onChange={setPwField("current")}
+                  iconSize={18}
+                  letterSpacing="2px"
+                />
+              </div>
+              <div>
+                <Label>Nova palavra-passe</Label>
+                <PasswordInput
+                  value={pw.next}
+                  onChange={setPwField("next")}
+                  iconSize={18}
+                  letterSpacing="2px"
+                  placeholder="Mínimo 8 caracteres"
+                />
+              </div>
+              <div>
+                <Label>Confirmar nova palavra-passe</Label>
+                <PasswordInput
+                  value={pw.confirm}
+                  onChange={setPwField("confirm")}
+                  iconSize={18}
+                  letterSpacing="2px"
+                />
+              </div>
             </div>
-            <div>
-              <Label>Nova palavra-passe</Label>
-              <PasswordInput
-                value={pw.next}
-                onChange={setPwField("next")}
-                iconSize={18}
-                letterSpacing="2px"
-                placeholder="Mínimo 8 caracteres"
-              />
+            {pwMsg && <p className={`text-xs mt-2 ${msgClass(pwMsg)}`}>{pwMsg.text}</p>}
+            <div className="flex justify-center mt-4">
+              <PrimaryButton onClick={handleChangePassword} loading={pwLoading} width={200} height={44}>
+                Alterar palavra-passe
+              </PrimaryButton>
             </div>
-            <div>
-              <Label>Confirmar nova palavra-passe</Label>
-              <PasswordInput
-                value={pw.confirm}
-                onChange={setPwField("confirm")}
-                iconSize={18}
-                letterSpacing="2px"
-              />
-            </div>
-          </div>
-          {pwMsg && <p className={`text-xs mt-2 ${msgClass(pwMsg)}`}>{pwMsg.text}</p>}
-          <div className="flex justify-center mt-4">
-            <PrimaryButton onClick={handleChangePassword} loading={pwLoading} width={200} height={44}>
-              Alterar palavra-passe
-            </PrimaryButton>
           </div>
         </section>
-
-        <div className="h-px bg-divider/70" />
 
         {/* Sessão */}
         <button
           type="button"
-          onClick={handleLogout}
-          className="flex items-center gap-3 w-full py-3 px-4 rounded-2xl border border-divider/70 text-dark/70 active:scale-[0.98] transition-transform"
+          onClick={() => setConfirmLogout(true)}
+          className="flex items-center gap-3 w-full py-3.5 px-4 rounded-2xl border border-divider bg-white text-dark/70 active:scale-[0.98] transition-transform"
         >
           <LogoutIcon />
           <span className="text-sm font-medium">Terminar sessão</span>
@@ -203,6 +209,15 @@ export default function AccountSettings() {
           Eliminar conta
         </TextLink>
       </div>
+
+      <ConfirmDialog
+        open={confirmLogout}
+        title="Terminar sessão"
+        message="Queres mesmo terminar a sessão?"
+        confirmLabel="Terminar sessão"
+        onConfirm={handleLogout}
+        onCancel={() => setConfirmLogout(false)}
+      />
 
       <ConfirmDialog
         open={confirmDelete}
