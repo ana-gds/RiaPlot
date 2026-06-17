@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useDocks } from "../../hooks/useApi";
 import { SIM_LEGEND } from "./mapHelpers.js";
 import { simularRota } from "../../services/simulacaoService.js";
 import { useAuth } from "../../contexts/AuthContext.jsx";
 import { getBoats } from "../../services/api.js";
+import { DatePicker } from "../ui/DatePicker.jsx";
 
 export function SimulationSheet({ open, onClose, route, onResults }) {
   const { docks } = useDocks();
@@ -27,6 +28,7 @@ export function SimulationSheet({ open, onClose, route, onResults }) {
   }, [token]);
 
   const set = (f) => (e) => setForm((p) => ({ ...p, [f]: e.target.value }));
+  const setField = (f, v) => setForm((p) => ({ ...p, [f]: v }));
 
   // Reset ao fechar ou ao mudar de rota
   useEffect(() => {
@@ -106,10 +108,6 @@ export function SimulationSheet({ open, onClose, route, onResults }) {
         <div className="sim-sheet__body">
           {hasTrackpoints ? (
             <div className="sim-sheet__route-badge">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" className="flex-shrink-0">
-                <path d="M3 17h4l3-10 4 14 3-8h4" stroke="#007AFF" strokeWidth="2"
-                      strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
               <span className="text-sm font-semibold text-dark truncate">
                 {route.nome ?? "Rota seleccionada"}
               </span>
@@ -124,24 +122,19 @@ export function SimulationSheet({ open, onClose, route, onResults }) {
             </div>
           )}
 
-          <div className="sim-sheet__grid">
-            <div>
-              <label className="sim-sheet__label">Data</label>
-              <input type="date" value={form.data} onChange={set("data")} className="sim-sheet__input" />
-            </div>
-            <div>
-              <label className="sim-sheet__label">
-                Hora da partida —{" "}
-                <span className="text-primary font-bold">
-                  {String(form.hora).padStart(2, "0")}:00
-                </span>
-              </label>
-              <input
-                type="range" min="0" max="23" step="1"
-                value={form.hora} onChange={set("hora")}
-                className="sim-sheet__range"
-              />
-            </div>
+          <div>
+            <label className="sim-sheet__label">Data</label>
+            <DatePicker value={form.data} onChange={(v) => setField("data", v)} />
+          </div>
+
+          <div>
+            <label className="sim-sheet__label">
+              Hora da partida —{" "}
+              <span className="text-primary font-bold">
+                {String(form.hora).padStart(2, "0")}:00
+              </span>
+            </label>
+            <HourPicker value={form.hora} onChange={(h) => setField("hora", h)} />
           </div>
 
           <BoatInfo boat={boat} />
@@ -170,6 +163,44 @@ export function SimulationSheet({ open, onClose, route, onResults }) {
         </div>
       </div>
     </>
+  );
+}
+
+// Seletor de hora (0–23): carrossel de "pílulas" tocáveis, mais preciso e mais
+// bonito que o antigo slider. A hora escolhida fica centrada automaticamente.
+function HourPicker({ value, onChange }) {
+  const railRef = useRef(null);
+  const hour = Number(value);
+
+  useEffect(() => {
+    const rail = railRef.current;
+    const active = rail?.querySelector("[data-active='true']");
+    if (rail && active) {
+      rail.scrollLeft = active.offsetLeft - rail.clientWidth / 2 + active.clientWidth / 2;
+    }
+  }, [hour]);
+
+  return (
+    <div ref={railRef} className="flex gap-1.5 overflow-x-auto scroll-x-hidden py-1">
+      {Array.from({ length: 24 }, (_, h) => h).map((h) => {
+        const active = h === hour;
+        return (
+          <button
+            key={h}
+            type="button"
+            data-active={active}
+            onClick={() => onChange(h)}
+            className={`flex-shrink-0 w-11 h-11 rounded-xl text-sm font-semibold transition-colors ${
+              active
+                ? "bg-primary text-white shadow-primary-button"
+                : "bg-cream text-dark border border-primary/15 hover:border-primary/40"
+            }`}
+          >
+            {String(h).padStart(2, "0")}
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

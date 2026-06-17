@@ -116,6 +116,7 @@ body,
   display: flex;
   flex-direction: column;
   gap: 8px;
+  transition: margin-bottom 0.3s ease;
 }
 
 .leaflet-control-zoom a,
@@ -147,6 +148,25 @@ body,
   cursor: not-allowed !important;
   background: white !important;
   box-shadow: 0 2px 8px rgba(0, 77, 108, 0.1) !important;
+}
+
+/* Botões flutuantes (marés / localização / centrar) no canto inferior direito.
+   A margem é definida aqui (e não por utilitário Tailwind) para a transição e a
+   subida funcionarem sem guerras de !important entre camadas. */
+.map-floating-controls {
+  transition: margin-bottom 0.3s ease;
+}
+.leaflet-bottom.leaflet-right .map-floating-controls {
+  margin-bottom: 16px;
+}
+
+/* Com o cartão de rota visível (largura total), os controlos dos cantos sobem
+   para não ficarem tapados por ele. Caso contrário ficam nos cantos de baixo. */
+.map-page--route-active .leaflet-bottom.leaflet-left .leaflet-control-zoom {
+  margin-bottom: 88px;
+}
+.map-page--route-active .leaflet-bottom.leaflet-right .map-floating-controls {
+  margin-bottom: 88px;
 }
 
 /* ── Discreet attribution ─────────────────────────────────────────────── */
@@ -671,26 +691,19 @@ body,
   margin-bottom: 6px;
 }
 
-.sim-sheet__input,
 .sim-sheet__select {
   width: 100%;
   height: 42px;
   border-radius: 10px;
   border: 1px solid var(--color-border-soft);
   background: var(--color-cream);
-  padding: 0 12px;
+  padding: 0 32px 0 12px;
   font-size: 13px;
   font-weight: 500;
   color: var(--color-dark);
   outline: none;
   box-sizing: border-box;
-}
-.sim-sheet__input {
-  cursor: pointer;
-}
-.sim-sheet__select {
   appearance: none;
-  padding-right: 32px;
   cursor: pointer;
 }
 .sim-sheet__chevron {
@@ -701,12 +714,6 @@ body,
   color: var(--color-muted);
   font-size: 12px;
   pointer-events: none;
-}
-.sim-sheet__range {
-  width: 100%;
-  height: 44px;
-  accent-color: var(--color-primary);
-  cursor: pointer;
 }
 
 .sim-sheet__boat {

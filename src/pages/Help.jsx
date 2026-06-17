@@ -51,26 +51,64 @@ const GLOSSARY = [
 ];
 
 function SectionTitle({ children }) {
-  return <h2 className="text-base font-semibold text-dark mb-3">{children}</h2>;
+  return (
+    <h2 className="flex items-center gap-2 text-base font-bold text-dark mb-3">
+      <span className="w-1 h-4 rounded-full bg-primary" />
+      {children}
+    </h2>
+  );
 }
 
 function FaqItem({ q, a }) {
   const [open, setOpen] = useState(false);
   return (
-    <div className="py-1">
+    <div
+      className={`rounded-2xl border transition-colors ${
+        open ? "border-primary/40 bg-cream/60" : "border-divider bg-white"
+      }`}
+    >
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex items-center gap-3 w-full py-2.5 text-left"
+        className="flex items-center gap-3 w-full px-4 py-3.5 text-left"
       >
-        <span className="flex-1 text-sm font-medium text-dark">{q}</span>
-        <ChevronDownIcon
-          size={16}
-          className={`flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
-        />
+        <span className="flex-1 text-sm font-semibold text-dark">{q}</span>
+        <span
+          className={`flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full transition-all ${
+            open ? "bg-primary text-white rotate-180" : "bg-secondary/10 text-secondary"
+          }`}
+        >
+          <ChevronDownIcon size={15} />
+        </span>
       </button>
-      {open && <p className="text-[13px] leading-relaxed text-dark/70 pb-2.5 pr-7">{a}</p>}
+      {open && (
+        <p className="px-4 pb-4 text-[13px] leading-relaxed text-dark/70">{a}</p>
+      )}
+    </div>
+  );
+}
+
+// Cores alternadas para os emblemas do glossário — dão vida sem destoar.
+const GLOSSARY_ACCENTS = [
+  "from-primary to-warning-soft",
+  "from-secondary to-[#126587]",
+];
+
+function GlossaryItem({ term, def, index }) {
+  return (
+    <div className="flex gap-3 rounded-2xl border border-divider bg-white p-3.5">
+      <div
+        className={`flex-shrink-0 w-9 h-9 rounded-xl bg-gradient-to-br ${
+          GLOSSARY_ACCENTS[index % GLOSSARY_ACCENTS.length]
+        } flex items-center justify-center text-white text-sm font-bold`}
+      >
+        {term.charAt(0)}
+      </div>
+      <div className="min-w-0">
+        <dt className="text-sm font-semibold text-dark">{term}</dt>
+        <dd className="text-[13px] leading-relaxed text-dark/70 mt-0.5">{def}</dd>
+      </div>
     </div>
   );
 }
@@ -93,7 +131,7 @@ export default function Help() {
         {/* FAQ */}
         <section>
           <SectionTitle>Perguntas frequentes</SectionTitle>
-          <div className="divide-y divide-divider/60">
+          <div className="flex flex-col gap-2.5">
             {FAQS.map((f) => (
               <FaqItem key={f.q} q={f.q} a={f.a} />
             ))}
@@ -103,12 +141,9 @@ export default function Help() {
         {/* Glossário náutico */}
         <section>
           <SectionTitle>Glossário náutico</SectionTitle>
-          <dl className="flex flex-col gap-3">
-            {GLOSSARY.map(([term, def]) => (
-              <div key={term}>
-                <dt className="text-sm font-semibold text-dark">{term}</dt>
-                <dd className="text-[13px] leading-relaxed text-dark/70">{def}</dd>
-              </div>
+          <dl className="flex flex-col gap-2.5">
+            {GLOSSARY.map(([term, def], i) => (
+              <GlossaryItem key={term} term={term} def={def} index={i} />
             ))}
           </dl>
         </section>

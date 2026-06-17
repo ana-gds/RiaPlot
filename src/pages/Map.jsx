@@ -41,6 +41,9 @@ export default function MapPage() {
   const [simResults, setSimResults] = useState(null);
   const [locating, setLocating] = useState(false);
   const [tidesVisible, setTidesVisible] = useState(false);
+  // Local escolhido na barra de pesquisa para o qual o mapa deve voar. É um
+  // objeto novo a cada escolha (mesmo que repetida) para reativar o voo.
+  const [searchTarget, setSearchTarget] = useState(null);
 
   const { docks } = useDocks();
   const mapRoutes = useMapRoutes();
@@ -94,13 +97,16 @@ export default function MapPage() {
   };
 
   return (
-    <div className="map-page">
+    <div className={`map-page${activeRoute ? " map-page--route-active" : ""}`}>
       <MapHeader
         baseLayer={baseLayer}
         onChangeLayer={setBaseLayer}
         nautical={nauticalVisible}
         onToggleNautical={() => setNauticalVisible((v) => !v)}
         onOpenMenu={openSidebar}
+        docks={docks}
+        pois={pois}
+        onSearchSelect={(it) => setSearchTarget({ position: it.position })}
       />
 
       <div className="map-page__canvas">
@@ -117,6 +123,7 @@ export default function MapPage() {
             onLocate={handleLocate}
             tidesVisible={tidesVisible}
             onToggleTides={() => setTidesVisible((v) => !v)}
+            focusTarget={searchTarget}
           />
 
           <RoutePolylines routes={mapRoutes} selectedRouteId={activeRouteId} />
