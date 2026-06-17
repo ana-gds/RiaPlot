@@ -1,6 +1,6 @@
-// Placeholders locais (SVG em data-URI) — não fazem qualquer pedido de rede, ao
-// contrário dos antigos assets do Figma. Usados como fallback quando não há foto
-// real (rota sem foto da Wikipédia, post sem foto, utilizador sem avatar…).
+// Placeholders locais (SVG em data-URI) — não fazem qualquer pedido de rede.
+// Usados como fallback quando não há foto real (rota sem foto do cais, post sem
+// foto, utilizador sem avatar…).
 const svg = (markup) => `data:image/svg+xml,${encodeURIComponent(markup)}`;
 
 const COVER_PLACEHOLDER = svg(
@@ -23,31 +23,10 @@ const AVATAR_PLACEHOLDER = svg(
     `</svg>`,
 );
 
+// Apenas as chaves efetivamente usadas na app (ver usos de `IMAGES.*`).
 export const IMAGES = {
-  routes: {
-    caleDoOuro: COVER_PLACEHOLDER,
-    rioNovo: COVER_PLACEHOLDER,
-    monteFarinha: COVER_PLACEHOLDER,
-    mapThumb: COVER_PLACEHOLDER,
-    detail: COVER_PLACEHOLDER,
-  },
-  avatars: {
-    me: AVATAR_PLACEHOLDER,
-    profile: AVATAR_PLACEHOLDER,
-    user1: AVATAR_PLACEHOLDER,
-    user2: AVATAR_PLACEHOLDER,
-    postUser: AVATAR_PLACEHOLDER,
-  },
-  posts: {
-    profile: COVER_PLACEHOLDER,
-    feed1: COVER_PLACEHOLDER,
-    feed2: COVER_PLACEHOLDER,
-    detail: COVER_PLACEHOLDER,
-  },
-  boats: {
-    default: COVER_PLACEHOLDER,
-  },
-  icons: {
-    notifThumb: AVATAR_PLACEHOLDER,
-  },
+  routes: { detail: COVER_PLACEHOLDER },
+  avatars: { me: AVATAR_PLACEHOLDER },
+  posts: { feed1: COVER_PLACEHOLDER, detail: COVER_PLACEHOLDER },
+  boats: { default: COVER_PLACEHOLDER },
 };

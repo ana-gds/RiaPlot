@@ -33,7 +33,7 @@ export default function Routes() {
   const navigate = useNavigate();
   const { openSidebar } = useOutletContext();
   const { user, token, updateUser } = useAuth();
-  const apiRoutes = useRoutes();
+  const { routes: apiRoutes, loading: routesLoading } = useRoutes();
   const mapRoutes = useMapRoutes();
 
   const [savedIds, setSavedIds] = useState(() => user?.saved_routes ?? []);
@@ -215,7 +215,11 @@ export default function Routes() {
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6">
-        {filtered.length > 0 ? (
+        {routesLoading && apiRoutes.length === 0 ? (
+          <div className="flex items-center justify-center py-16">
+            <span className="text-sm text-muted">A carregar…</span>
+          </div>
+        ) : filtered.length > 0 ? (
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
               {visible.map((route) => (

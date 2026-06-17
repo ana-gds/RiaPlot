@@ -11,6 +11,8 @@ export function RouteCard({ route, onToggleSave, onClick }) {
       <img
         src={route.image}
         alt={route.title}
+        loading="lazy"
+        decoding="async"
         className="absolute inset-0 w-full h-full object-cover object-center"
       />
 

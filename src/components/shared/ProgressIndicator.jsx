@@ -1,4 +1,4 @@
-import { REGISTRATION_STEPS } from "../../constants/mockData.js";
+import { REGISTRATION_STEPS } from "../../constants/navigation.js";
 
 export function ProgressIndicator({ step, steps = REGISTRATION_STEPS }) {
   return (

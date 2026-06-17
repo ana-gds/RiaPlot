@@ -108,8 +108,8 @@ body,
 
 /* ── Custom Leaflet Controls ──────────────────────────────────────────── */
 
-.leaflet-bottom.leaflet-right .leaflet-control-zoom {
-  @apply mb-26;
+.leaflet-bottom.leaflet-left .leaflet-control-zoom {
+  margin-bottom: 16px;
   border: none;
   box-shadow: none;
   background: transparent;
@@ -151,12 +151,12 @@ body,
 
 /* ── Discreet attribution ─────────────────────────────────────────────── */
 
-.leaflet-bottom.leaflet-left {
+.leaflet-bottom.leaflet-right {
   bottom: 0 !important;
-  left: 0 !important;
+  right: 0 !important;
 }
 
-.leaflet-bottom.leaflet-left .leaflet-control-attribution {
+.leaflet-bottom.leaflet-right .leaflet-control-attribution {
   margin: 0 !important;
 }
 
@@ -165,7 +165,7 @@ body,
   color: var(--color-muted-soft) !important;
   font-size: 9px !important;
   padding: 1px 6px !important;
-  border-radius: 0 6px 0 0 !important;
+  border-radius: 6px 0 0 0 !important;
   box-shadow: none !important;
 }
 

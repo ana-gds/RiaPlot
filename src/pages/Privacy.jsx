@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { BackButton } from "../components/ui/BackButton.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
 import {
@@ -72,7 +71,6 @@ function UserRow({ u, children }) {
 }
 
 export default function Privacy() {
-  const navigate = useNavigate();
   const { user, token, login } = useAuth();
 
   // Estado dos toggles (lê do user; defaults seguros para contas antigas).

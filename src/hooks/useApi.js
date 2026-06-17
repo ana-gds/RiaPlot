@@ -17,16 +17,19 @@ export function useDocks() {
 
 export function useRoutes(recomendada = false) {
     const [routes, setRoutes] = useState([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const qs = recomendada ? '?recomendada=true' : '';
+        setLoading(true);
         fetch(`${API}/routes${qs}`)
             .then(r => r.json())
             .then(data => setRoutes(Array.isArray(data) ? data : []))
-            .catch(() => {});
+            .catch(() => {})
+            .finally(() => setLoading(false));
     }, [recomendada]);
 
-    return routes;
+    return { routes, loading };
 }
 
 // Rotas com trackpoints para o mapa — endpoint dedicado mais leve.

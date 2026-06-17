@@ -3,9 +3,10 @@ import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { StatusBar } from "../components/ui/StatusBar.jsx";
 import { BottomNav } from "../components/shared/BottomNav.jsx";
 import Sidebar from "../components/shared/SideBar.jsx";
-import { NAV_ITEMS } from "../constants/mockData.js";
+import { NAV_ITEMS } from "../constants/navigation.js";
 import { IMAGES } from "../constants/images.js";
 import { useNotifications } from "../contexts/NotificationsContext.jsx";
+import { useAuth } from "../contexts/AuthContext.jsx";
 import { NotificationBadge } from "../components/shared/NotificationBadge.jsx";
 
 const SIDEBAR_NAV_MAP = {
@@ -21,6 +22,7 @@ const SIDEBAR_NAV_MAP = {
 
 function DesktopSidebar() {
   const { unreadCount } = useNotifications();
+  const { user } = useAuth();
   return (
     <aside className="hidden md:flex flex-col w-64 shrink-0 sticky top-0 h-screen border-r border-secondary/10 bg-white overflow-y-auto">
       {/* Brand */}
@@ -96,13 +98,17 @@ function DesktopSidebar() {
           }
         >
           <img
-            src={IMAGES.avatars.me}
+            src={user?.photo_url || IMAGES.avatars.me}
             alt="Perfil"
+            loading="lazy"
+            decoding="async"
             className="w-8 h-8 rounded-full object-cover border-2 border-primary/40 shrink-0"
           />
           <div className="min-w-0">
-            <div className="text-sm font-semibold text-dark truncate">Ana Guedes</div>
-            <div className="text-xs text-muted truncate">@anacarol1na</div>
+            <div className="text-sm font-semibold text-dark truncate">{user?.name ?? "Perfil"}</div>
+            {user?.username && (
+              <div className="text-xs text-muted truncate">@{user.username}</div>
+            )}
           </div>
         </NavLink>
       </div>

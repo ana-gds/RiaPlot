@@ -87,6 +87,14 @@ function AzChipIcon() {
 // Quantos posts pedir ao servidor de cada vez.
 const PAGE_SIZE = 10;
 
+function LoadingState() {
+  return (
+    <div className="flex items-center justify-center py-16">
+      <span className="text-sm text-muted">A carregar…</span>
+    </div>
+  );
+}
+
 // Mapeia um post enriquecido da API para a forma usada pelo FeedPostCard.
 function mapPost(p, myId) {
   return {
@@ -119,6 +127,8 @@ export default function Social() {
   const myId = user?._id ?? user?.id;
   const [posts, setPosts] = useState([]);
   const [users, setUsers] = useState([]);
+  const [postsLoading, setPostsLoading] = useState(true);
+  const [usersLoading, setUsersLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [mode, setMode] = useState("posts"); // "posts" | "users"
   const [page, setPage] = useState(1);
@@ -149,6 +159,7 @@ export default function Social() {
   useEffect(() => {
     if (!token) return;
     let cancelled = false;
+    setPostsLoading(true);
     getPosts(token, { page: 1, perPage: PAGE_SIZE, sort: postSort, following: postFollowing })
       .then((res) => {
         if (cancelled) return;
@@ -156,7 +167,10 @@ export default function Social() {
         setPage(res.current_page ?? 1);
         setLastPage(res.last_page ?? 1);
       })
-      .catch(() => {});
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setPostsLoading(false);
+      });
     return () => { cancelled = true; };
   }, [token, myId, postSort, postFollowing]);
 
@@ -244,6 +258,7 @@ export default function Social() {
   useEffect(() => {
     if (mode !== "users") return;
     let cancelled = false;
+    setUsersLoading(true);
     const t = setTimeout(() => {
       getUsers(token, search.trim())
         .then((data) => {
@@ -259,6 +274,9 @@ export default function Social() {
         })
         .catch(() => {
           if (!cancelled) setUsers([]);
+        })
+        .finally(() => {
+          if (!cancelled) setUsersLoading(false);
         });
     }, 300);
     return () => {
@@ -269,7 +287,12 @@ export default function Social() {
 
   const handleSearch = (v) => setSearch(v);
 
-  const handleMode = (next) => setMode(next);
+  const handleMode = (next) => {
+    // Evita o flash do estado vazio: marca o carregamento já na troca de tab,
+    // antes de o efeito de pesquisa correr.
+    if (next === "users" && mode !== "users") setUsersLoading(true);
+    setMode(next);
+  };
 
   return (
     <>
@@ -389,7 +412,9 @@ export default function Social() {
       <div className="flex-1 overflow-y-auto pt-2 pb-4">
         <div className="w-full md:max-w-xl md:mx-auto">
           {mode === "users" ? (
-            visibleUsers.length > 0 ? (
+            usersLoading && users.length === 0 ? (
+              <LoadingState />
+            ) : visibleUsers.length > 0 ? (
               <ul className="px-2">
                 {visibleUsers.map((u) => (
                   <li key={u.user_id ?? u.username}>
@@ -430,6 +455,8 @@ export default function Social() {
                 </p>
               </div>
             )
+          ) : postsLoading && posts.length === 0 ? (
+            <LoadingState />
           ) : filtered.length > 0 ? (
             <>
               {filtered.map((post, i) => (

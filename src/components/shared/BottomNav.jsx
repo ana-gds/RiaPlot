@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { NAV_ITEMS } from "../../constants/mockData.js";
+import { NAV_ITEMS } from "../../constants/navigation.js";
 import { RoutesNavIcon } from "../ui/Icons.jsx";
 import { useNotifications } from "../../contexts/NotificationsContext.jsx";
 import { NotificationBadge } from "./NotificationBadge.jsx";

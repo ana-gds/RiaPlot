@@ -555,7 +555,18 @@ export default function PostDetail() {
   const description = post?.description ?? "";
   const gpxUrl = post?.gpxUrl ?? null;
   const gpxPoints = post?.gpxPoints ?? null;
-  const hasRoute = gpxPoints?.length > 0 || !!gpxUrl;
+  const routeDoc = post?.route_doc || null;
+  const hasRoute = gpxPoints?.length > 0 || !!gpxUrl || !!routeDoc;
+
+  // "Ver no mapa": o GPX percorrido tem prioridade; caso contrário mostra a
+  // rota curada associada ao post, destacada no mapa.
+  const handleViewOnMap = () => {
+    if (gpxPoints?.length || gpxUrl) {
+      navigate("/map", { state: { gpxPoints, gpxUrl, gpxTitle: title } });
+    } else if (routeDoc) {
+      navigate("/map", { state: { selectedRouteId: routeDoc } });
+    }
+  };
 
   return (
     <div className="flex flex-col flex-1 -mt-6 md:mt-0">
@@ -582,7 +593,7 @@ export default function PostDetail() {
         {hasRoute && (
           <button
             type="button"
-            onClick={() => navigate("/map", { state: { gpxPoints, gpxUrl, gpxTitle: title } })}
+            onClick={handleViewOnMap}
             className="absolute right-4 bottom-8 h-10 px-5 rounded-2xl bg-primary-soft text-white text-sm font-semibold shadow-primary-button backdrop-blur-[2px] active:scale-95"
           >
             Ver no mapa

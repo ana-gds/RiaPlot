@@ -287,3 +287,14 @@ export function BoatIcon({ size = 18, color = "currentColor", strokeWidth = 2, c
     </svg>
   );
 }
+
+export function ShareIcon({ size = 22, color = "#004D6C", strokeWidth = 2, className = "" }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" className={className} aria-hidden="true"
+      stroke={color} strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round">
+      <path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7" />
+      <path d="M12 15V3" />
+      <path d="m8 7 4-4 4 4" />
+    </svg>
+  );
+}

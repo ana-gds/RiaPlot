@@ -12,7 +12,9 @@ import {
   PlayIcon,
   InfoIcon,
   CloseIcon,
+  ShareIcon,
 } from "../components/ui/Icons.jsx";
+import { exportGpx } from "../utils/gpx.js";
 import { DifficultyBar } from "../components/shared/DifficultyBadge.jsx";
 import { fetchRoute } from "../hooks/useApi.js";
 import { useAuth } from "../contexts/AuthContext.jsx";
@@ -157,6 +159,8 @@ export default function RouteDetail() {
   const [showDifficultyInfo, setShowDifficultyInfo] = useState(false);
   const [showCaladoInfo, setShowCaladoInfo] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [toast, setToast] = useState(null);
 
   // Calado do barco registado do utilizador, para avaliar a compatibilidade.
   useEffect(() => {
@@ -206,6 +210,27 @@ export default function RouteDetail() {
     }
   };
 
+  const handleExport = async () => {
+    if (exporting || !route) return;
+    setExporting(true);
+    try {
+      const result = await exportGpx(route.trackpoints, {
+        name: route.nome ?? "Rota RiaPlot",
+        description: route.descricao_turistica ?? route.descricao ?? undefined,
+        waypoints: [route.cais_partida, route.cais_chegada].filter(Boolean),
+      });
+      if (result === "downloaded") {
+        setToast("Ficheiro GPX descarregado.");
+        setTimeout(() => setToast(null), 3000);
+      }
+    } catch {
+      setToast("Não foi possível exportar a rota.");
+      setTimeout(() => setToast(null), 3000);
+    } finally {
+      setExporting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -231,6 +256,8 @@ export default function RouteDetail() {
   const pois = route.pontos_interesse ?? [];
   const warnings = route.warnings ?? [];
   const warningText = warnings.join(" ");
+  // Só faz sentido exportar GPX quando a rota tem traçado detalhado.
+  const hasTrack = Array.isArray(route.trackpoints) && route.trackpoints.length > 1;
 
   return (
     <div className="flex flex-col flex-1 -mt-6 md:mt-0">
@@ -255,14 +282,27 @@ export default function RouteDetail() {
       <div className="-mt-4 rounded-t-2xl bg-white relative z-10 px-4 pt-6 pb-8 shadow-top-sheet">
         <div className="flex justify-between items-start mb-1">
           <h1 className="text-2xl font-bold text-dark">{title}</h1>
-          <button
-            type="button"
-            onClick={handleSave}
-            className="p-1 -mr-1 active:scale-90"
-            aria-label={saved ? "Remover dos guardados" : "Guardar rota"}
-          >
-            <BookmarkIcon filled={saved} size={26} />
-          </button>
+          <div className="flex items-center gap-1 -mr-1">
+            {hasTrack && (
+              <button
+                type="button"
+                onClick={handleExport}
+                disabled={exporting}
+                className="p-1 active:scale-90 disabled:opacity-40"
+                aria-label="Exportar ou partilhar rota (GPX)"
+              >
+                <ShareIcon size={24} />
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={handleSave}
+              className="p-1 active:scale-90"
+              aria-label={saved ? "Remover dos guardados" : "Guardar rota"}
+            >
+              <BookmarkIcon filled={saved} size={26} />
+            </button>
+          </div>
         </div>
 
         <div className="flex items-center gap-1 mb-5">
@@ -382,6 +422,12 @@ export default function RouteDetail() {
           Iniciar Navegação
         </PrimaryButton>
       </div>
+
+      {toast && (
+        <div className="fixed left-1/2 -translate-x-1/2 bottom-8 z-[70] max-w-[90%] px-4 py-2.5 rounded-xl bg-dark text-white text-sm shadow-xl text-center">
+          {toast}
+        </div>
+      )}
     </div>
   );
 }

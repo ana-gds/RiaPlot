@@ -85,7 +85,7 @@ function StatItem({ value, label, onClick }) {
 export default function Profile() {
   const navigate = useNavigate();
   const { user, token, updateUser } = useAuth();
-  const apiRoutes = useRoutes();
+  const { routes: apiRoutes } = useRoutes();
   const [activeTab, setActiveTab] = useState("posts");
   const [posts, setPosts] = useState([]);
   const [savedIds, setSavedIds] = useState(() => user?.saved_routes ?? []);

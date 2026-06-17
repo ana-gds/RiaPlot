@@ -1,5 +1,5 @@
-// Passos do fluxo de registo e itens da navegação inferior. As listas de
-// dados fictícios (MOCK_*) foram removidas — a app consome a API real.
+// Configuração de navegação: passos do fluxo de registo e itens da barra de
+// navegação inferior / lateral.
 
 export const REGISTRATION_STEPS = [
   { label: "Dados pessoais", key: 1 },

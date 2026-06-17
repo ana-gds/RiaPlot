@@ -90,7 +90,9 @@ export default function AccountSettings() {
   const handleLogout = async () => {
     try {
       await logoutUser(token);
-    } catch {}
+    } catch {
+      // ignora falha de rede — termina sempre a sessão localmente
+    }
     logout();
     navigate("/login", { replace: true });
   };
