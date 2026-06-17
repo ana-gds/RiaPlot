@@ -5,7 +5,7 @@ import { PrimaryButton } from "../components/ui/Button.jsx";
 import { CircleAvatarUpload } from "../components/ui/PhotoUpload.jsx";
 import { ProgressIndicator } from "../components/shared/ProgressIndicator.jsx";
 import { useAuth } from "../contexts/AuthContext.jsx";
-import { registerUser } from "../services/api.js";
+import { registerUser, uploadFile, updateUser } from "../services/api.js";
 
 function FieldError({ message }) {
   if (!message) return null;
@@ -37,7 +37,7 @@ const API_FIELD_MAP = { name: "nome", email: "email", username: "username", pass
 
 export default function ProfileRegister() {
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, updateUser: patchUser } = useAuth();
   const [form, setForm] = useState(initialForm);
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState("");
@@ -61,6 +61,17 @@ export default function ProfileRegister() {
         password: form.password,
       });
       login(data.user, data.token);
+
+      if (avatarPreview) {
+        try {
+          const uploaded = await uploadFile(data.token, avatarPreview);
+          await updateUser(data.token, { photo_url: uploaded.url });
+          patchUser({ photo_url: uploaded.url });
+        } catch (photoErr) {
+          console.error("Profile photo upload failed:", photoErr);
+        }
+      }
+
       navigate("/register/boat");
     } catch (err) {
       if (err?.errors) {
