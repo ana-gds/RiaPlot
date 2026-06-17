@@ -40,7 +40,7 @@ export default function MapPage() {
   const [pickedRoute, setPickedRoute] = useState(null);
   const [simResults, setSimResults] = useState(null);
   const [locating, setLocating] = useState(false);
-  const [tidesVisible, setTidesVisible] = useState(true);
+  const [tidesVisible, setTidesVisible] = useState(false);
 
   const { docks } = useDocks();
   const mapRoutes = useMapRoutes();
@@ -130,8 +130,8 @@ export default function MapPage() {
             <RoutePath points={gpxPoints} gpxUrl={gpxUrl} />
           )}
 
-          <ZoomControl position="bottomright" />
-          <AttributionControl position="bottomleft" prefix={false} />
+          <ZoomControl position="bottomleft" />
+          <AttributionControl position="bottomright" prefix={false} />
         </MapContainer>
       </div>
 

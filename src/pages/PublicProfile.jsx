@@ -249,7 +249,7 @@ export default function PublicProfile() {
       <div className="flex flex-col items-center px-4 gap-1">
         <div className="w-[100px] h-[100px] rounded-full overflow-hidden border-[3px] border-primary shadow-[0_4px_16px_rgba(219,139,49,0.3)]">
           {photo ? (
-            <img src={photo} alt={name} className="w-full h-full object-cover" />
+            <img src={photo} alt={name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-primary-soft text-white text-3xl font-bold">
               {name?.charAt(0)?.toUpperCase() ?? "?"}

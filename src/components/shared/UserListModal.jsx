@@ -41,6 +41,8 @@ export function UserListModal({ open, title, users, loading, onClose, onSelect }
                       <img
                         src={u.photo_url}
                         alt={u.username}
+                        loading="lazy"
+                        decoding="async"
                         className="w-11 h-11 rounded-full object-cover flex-shrink-0 border-2 border-[#E6A45A]"
                       />
                     ) : (

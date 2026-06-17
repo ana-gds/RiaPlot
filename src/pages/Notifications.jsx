@@ -214,7 +214,7 @@ function NotifItem({ n, onClick, onOpenProfile }) {
       </div>
       {n.thumb && (
         <div className="w-12 h-12 rounded-[10px] overflow-hidden flex-shrink-0 bg-sand">
-          <img src={n.thumb} alt="" className="w-full h-full object-cover" />
+          <img src={n.thumb} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
         </div>
       )}
     </div>

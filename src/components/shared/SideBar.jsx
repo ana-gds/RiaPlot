@@ -165,7 +165,7 @@ export default function Sidebar({ open, onClose, onNavigate }) {
                             }}
                         >
                             {user?.photo_url ? (
-                                <img src={user.photo_url} alt="Avatar" className="w-full h-full object-cover" />
+                                <img src={user.photo_url} alt="Avatar" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                             ) : (
                                 user?.name?.charAt(0)?.toUpperCase() ?? "?"
                             )}
@@ -223,7 +223,7 @@ export default function Sidebar({ open, onClose, onNavigate }) {
                 >
                     <button
                         onClick={async () => {
-                            try { await logoutUser(token); } catch {}
+                            try { await logoutUser(token); } catch { /* ignora falha de rede — termina sempre a sessão localmente */ }
                             logout();
                             onClose?.();
                             navigate("/login");

@@ -16,6 +16,8 @@ export function FeedPostCard({
             src={post.avatar}
             alt={post.username}
             onClick={openProfile}
+            loading="lazy"
+            decoding="async"
             className="w-10 h-10 rounded-full object-cover flex-shrink-0 border-2 border-[#E6A45A] cursor-pointer"
           />
         ) : (
@@ -57,6 +59,8 @@ export function FeedPostCard({
           <img
             src={post.image}
             alt={post.title}
+            loading="lazy"
+            decoding="async"
             className="block w-full h-[300px] object-cover"
           />
         </div>

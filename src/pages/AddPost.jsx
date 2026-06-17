@@ -21,11 +21,19 @@ function CharCount({ current, max }) {
 
 const DESCRIPTION_MAX = 600;
 
+// O `_id` das rotas pode vir como string ou como `{ $oid }`; normaliza para o
+// id em string que é guardado em `route_doc` e usado para o destacar no mapa.
+function extractId(raw) {
+  if (!raw) return null;
+  if (typeof raw === "object") return raw.$oid ?? String(raw);
+  return raw;
+}
+
 export default function AddPost() {
   const navigate = useNavigate();
   const { state } = useLocation();
   const { token } = useAuth();
-  const apiRoutes = useRoutes();
+  const { routes: apiRoutes } = useRoutes();
 
   const editPost = state?.editPost ?? null;
   const isEdit = !!editPost;
@@ -175,11 +183,14 @@ export default function AddPost() {
           </Label>
           <Select value={form.route} onChange={set("route")}>
             <option value="">Nenhuma rota</option>
-            {apiRoutes.map((r) => (
-              <option key={r._id} value={r._id}>
-                {r.nome}
-              </option>
-            ))}
+            {apiRoutes.map((r) => {
+              const rid = extractId(r._id ?? r.id);
+              return (
+                <option key={rid} value={rid}>
+                  {r.nome}
+                </option>
+              );
+            })}
           </Select>
         </div>
 

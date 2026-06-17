@@ -1,25 +1,38 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext.jsx";
 import { NotificationsProvider } from "./contexts/NotificationsContext.jsx";
 import { AppShell, PageShell } from "./layouts/AppLayout.jsx";
-import Login from "./pages/Login.jsx";
-import ProfileRegister from "./pages/ProfileRegister.jsx";
-import BoatRegister from "./pages/BoatRegister.jsx";
-import FinalRegister from "./pages/FinalRegister.jsx";
-import RoutesPage from "./pages/Routes.jsx";
-import RouteDetail from "./pages/RouteDetail.jsx";
-import Social from "./pages/Social.jsx";
-import PostDetail from "./pages/PostDetail.jsx";
-import AddPost from "./pages/AddPost.jsx";
-import Notifications from "./pages/Notifications.jsx";
-import Profile from "./pages/Profile.jsx";
-import PublicProfile from "./pages/PublicProfile.jsx";
-import EditProfile from "./pages/EditProfile.jsx";
-import AccountSettings from "./pages/AccountSettings.jsx";
-import Privacy from "./pages/Privacy.jsx";
-import Help from "./pages/Help.jsx";
-import BoatSettings from "./pages/BoatSettings.jsx";
-import MapPage from "./pages/Map.jsx";
+
+// Cada página é um chunk separado (carregamento preguiçoso). Assim o arranque
+// só transfere o código da primeira página visitada — o pesado (mapa/Leaflet,
+// detalhe de publicações…) só é descarregado quando o utilizador lá chega.
+const Login = lazy(() => import("./pages/Login.jsx"));
+const ProfileRegister = lazy(() => import("./pages/ProfileRegister.jsx"));
+const BoatRegister = lazy(() => import("./pages/BoatRegister.jsx"));
+const FinalRegister = lazy(() => import("./pages/FinalRegister.jsx"));
+const RoutesPage = lazy(() => import("./pages/Routes.jsx"));
+const RouteDetail = lazy(() => import("./pages/RouteDetail.jsx"));
+const Social = lazy(() => import("./pages/Social.jsx"));
+const PostDetail = lazy(() => import("./pages/PostDetail.jsx"));
+const AddPost = lazy(() => import("./pages/AddPost.jsx"));
+const Notifications = lazy(() => import("./pages/Notifications.jsx"));
+const Profile = lazy(() => import("./pages/Profile.jsx"));
+const PublicProfile = lazy(() => import("./pages/PublicProfile.jsx"));
+const EditProfile = lazy(() => import("./pages/EditProfile.jsx"));
+const AccountSettings = lazy(() => import("./pages/AccountSettings.jsx"));
+const Privacy = lazy(() => import("./pages/Privacy.jsx"));
+const Help = lazy(() => import("./pages/Help.jsx"));
+const BoatSettings = lazy(() => import("./pages/BoatSettings.jsx"));
+const MapPage = lazy(() => import("./pages/Map.jsx"));
+
+function PageFallback() {
+  return (
+    <div className="flex-1 flex items-center justify-center py-16">
+      <span className="text-sm text-muted">A carregar…</span>
+    </div>
+  );
+}
 
 export default function App() {
   return (
@@ -27,6 +40,7 @@ export default function App() {
       <AuthProvider>
         <NotificationsProvider>
         <div className="app-frame">
+          <Suspense fallback={<PageFallback />}>
           <Routes>
           {/* Tab pages share the bottom navigation */}
           <Route element={<AppShell />}>
@@ -56,6 +70,7 @@ export default function App() {
 
           <Route path="*" element={<Navigate to="/routes" replace />} />
           </Routes>
+          </Suspense>
         </div>
         </NotificationsProvider>
       </AuthProvider>
