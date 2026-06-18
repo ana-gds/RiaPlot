@@ -313,13 +313,15 @@ export default function Notifications() {
 
   return (
     <>
-      <div className="flex items-center gap-2.5 px-4 pb-3 flex-shrink-0 bg-white sticky top-0 z-10">
+      <div className="px-4 pb-3 flex-shrink-0 bg-white sticky top-0 z-10">
+        <div className="md:max-w-2xl md:mx-auto flex items-center gap-2.5">
         <CircularButton onClick={openSidebar} ariaLabel="Menu" className="md:hidden">
           <MenuIcon />
         </CircularButton>
         <div className="flex flex-col">
           <h1 className="text-xl font-bold text-dark leading-tight">Notificações</h1>
           <span className="text-xs text-muted">As tuas atividades recentes</span>
+        </div>
         </div>
       </div>
       <div className="flex-1 overflow-y-auto pb-4">

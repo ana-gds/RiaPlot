@@ -228,7 +228,7 @@ export default function Profile() {
         <BackButton onClick={() => navigate("/routes")} />
       </div>
 
-      <div className="flex flex-col items-center px-4 gap-1">
+      <div className="flex flex-col items-center px-4 gap-1 md:max-w-2xl md:mx-auto md:w-full">
         <div className="w-[100px] h-[100px] rounded-full overflow-hidden border-[3px] border-primary shadow-[0_4px_16px_rgba(219,139,49,0.3)]">
           {user?.photo_url ? (
             <img src={user.photo_url} alt="Avatar" className="w-full h-full object-cover" />
@@ -293,7 +293,7 @@ export default function Profile() {
       <div className="py-4">
         {activeTab === "posts" &&
           (posts.length > 0 ? (
-            <div className="flex flex-col gap-4 md:max-w-xl md:mx-auto">
+            <div className="flex flex-col gap-4 md:max-w-2xl md:mx-auto">
               {posts.map((p) => (
                 <FeedPostCard
                   key={p.id}
@@ -313,7 +313,7 @@ export default function Profile() {
           ))}
         {activeTab === "rotas" &&
           (savedRoutes.length > 0 ? (
-            <div className="px-4">
+            <div className="px-4 md:max-w-2xl md:mx-auto">
               <div className="flex flex-col gap-3 mb-4">
                 <SearchBar
                   value={savedSearch}
@@ -335,7 +335,7 @@ export default function Profile() {
                 </div>
               </div>
               {visibleSavedRoutes.length > 0 ? (
-                <div className="flex flex-col gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {visibleSavedRoutes.map((r) => (
                     <RouteCard
                       key={r.id}

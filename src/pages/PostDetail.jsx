@@ -613,43 +613,52 @@ export default function PostDetail() {
   };
 
   return (
-    <div className="flex flex-col flex-1 -mt-6 md:mt-0">
-      <div className="relative w-full h-[400px] flex-shrink-0 overflow-hidden">
+    <div className="flex flex-col flex-1 -mt-6 md:mt-0 overflow-x-hidden">
+      {/* Outer relative wrapper so overlays are positioned relative to content width */}
+      <div className="relative flex-shrink-0">
+        {/* Full-bleed gallery via CSS breakout */}
         <div
-          ref={galleryRef}
-          className="absolute inset-0 touch-pan-y select-none"
-          style={{ cursor: multipleImages ? "grab" : "default" }}
-          onTouchStart={(e) => beginDrag(e.touches[0].clientX)}
-          onTouchMove={(e) => moveDrag(e.touches[0].clientX)}
-          onTouchEnd={endDrag}
-          onPointerDown={(e) => { if (e.pointerType === "mouse") beginDrag(e.clientX); }}
-          onPointerMove={(e) => { if (e.pointerType === "mouse") moveDrag(e.clientX); }}
-          onPointerUp={(e) => { if (e.pointerType === "mouse") endDrag(); }}
-          onPointerLeave={(e) => { if (e.pointerType === "mouse") endDrag(); }}
+          className="relative h-[400px] md:h-[480px] overflow-hidden"
+          style={{ marginLeft: "calc(50% - 50vw)", width: "100vw" }}
         >
           <div
-            className="flex h-full w-full"
-            style={{
-              transform: `translateX(calc(${-activeImage * 100}% + ${dragX}px))`,
-              transition: dragStartX.current != null ? "none" : "transform 0.3s ease",
-            }}
+            ref={galleryRef}
+            className="absolute inset-0 touch-pan-y select-none"
+            style={{ cursor: multipleImages ? "grab" : "default" }}
+            onTouchStart={(e) => beginDrag(e.touches[0].clientX)}
+            onTouchMove={(e) => moveDrag(e.touches[0].clientX)}
+            onTouchEnd={endDrag}
+            onPointerDown={(e) => { if (e.pointerType === "mouse") beginDrag(e.clientX); }}
+            onPointerMove={(e) => { if (e.pointerType === "mouse") moveDrag(e.clientX); }}
+            onPointerUp={(e) => { if (e.pointerType === "mouse") endDrag(); }}
+            onPointerLeave={(e) => { if (e.pointerType === "mouse") endDrag(); }}
           >
-            {images.map((src, i) => (
-              <img
-                key={i}
-                src={src}
-                alt={title}
-                draggable={false}
-                className="w-full h-full object-cover shrink-0"
-              />
-            ))}
+            <div
+              className="flex h-full w-full"
+              style={{
+                transform: `translateX(calc(${-activeImage * 100}% + ${dragX}px))`,
+                transition: dragStartX.current != null ? "none" : "transform 0.3s ease",
+              }}
+            >
+              {images.map((src, i) => (
+                <img
+                  key={i}
+                  src={src}
+                  alt={title}
+                  draggable={false}
+                  className="w-full h-full object-cover shrink-0"
+                />
+              ))}
+            </div>
           </div>
         </div>
-        <div className="absolute left-4 top-4">
+
+        {/* Overlays: positioned relative to the content-width container */}
+        <div className="absolute left-4 top-4 z-10">
           <BackButton />
         </div>
         {images.length > 1 && (
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-1.5">
+          <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex gap-1.5 z-10">
             {images.map((_, i) => (
               <button
                 key={i}
@@ -667,14 +676,14 @@ export default function PostDetail() {
           <button
             type="button"
             onClick={handleViewOnMap}
-            className="absolute right-4 bottom-8 h-10 px-5 rounded-2xl bg-primary-soft text-white text-sm font-semibold shadow-primary-button backdrop-blur-[2px] active:scale-95"
+            className="absolute right-4 bottom-8 h-10 px-5 rounded-2xl bg-primary-soft text-white text-sm font-semibold shadow-primary-button backdrop-blur-[2px] active:scale-95 z-10"
           >
             Ver no mapa
           </button>
         )}
       </div>
 
-      <article className="flex-1 -mt-4 rounded-t-2xl bg-white relative z-10 px-4 pt-6 pb-8 shadow-top-sheet">
+      <article className="flex-1 -mt-4 rounded-t-2xl bg-white relative z-10 px-4 pt-6 pb-8 shadow-top-sheet md:mt-6 md:rounded-none md:shadow-none md:px-0 md:pb-12 md:max-w-2xl md:mx-auto md:w-full">
         <header className="flex items-center gap-3 mb-5">
           <div
             onClick={goToProfile}

@@ -318,7 +318,8 @@ export default function Social() {
 
   return (
     <>
-      <div className="flex flex-col gap-2.5 px-4 pb-0 flex-shrink-0 sticky top-0 bg-white z-10">
+      <div className="flex-shrink-0 sticky top-0 bg-white z-10">
+        <div className="max-w-2xl mx-auto px-4 pb-0 flex flex-col gap-2.5">
         <div className="flex items-center gap-3">
           <CircularButton onClick={openSidebar} ariaLabel="Menu" className="md:hidden">
             <MenuIcon />
@@ -433,10 +434,11 @@ export default function Social() {
             )}
           </div>
         )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto pt-2 pb-4">
-        <div className="w-full md:max-w-xl md:mx-auto">
+        <div className="w-full md:max-w-2xl md:mx-auto">
           {mode === "users" ? (
             !token ? (
               <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
