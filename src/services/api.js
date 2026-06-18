@@ -96,9 +96,8 @@ export function getPosts(token, { page = 1, perPage = 10, userId, sort, followin
     if (userId) params.set("user", userId);
     if (sort) params.set("sort", sort);
     if (following) params.set("following", "1");
-    return request(`/posts?${params.toString()}`, {
-        headers: { Authorization: `Bearer ${token}` },
-    });
+    const opts = token ? { headers: { Authorization: `Bearer ${token}` } } : {};
+    return request(`/posts?${params.toString()}`, opts);
 }
 
 export function getPost(token, id) {

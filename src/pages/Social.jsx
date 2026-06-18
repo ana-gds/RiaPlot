@@ -167,10 +167,17 @@ export default function Social() {
       ? (postSort !== "recent" ? 1 : 0) + (postFollowing ? 1 : 0)
       : (userAZ ? 1 : 0) + (userFollowing ? 1 : 0);
 
+  const [authWarning, setAuthWarning] = useState(false);
+
+  useEffect(() => {
+    if (!authWarning) return;
+    const t = setTimeout(() => setAuthWarning(false), 5000);
+    return () => clearTimeout(t);
+  }, [authWarning]);
+
   // Primeira página do feed. Recarrega quando muda a ordenação ou o filtro
   // "de quem sigo" (a filtragem/ordenação é feita no servidor).
   useEffect(() => {
-    if (!token) return;
     let cancelled = false;
     setPostsLoading(true);
     getPosts(token, { page: 1, perPage: PAGE_SIZE, sort: postSort, following: postFollowing })
@@ -209,8 +216,7 @@ export default function Social() {
   };
 
   const toggleLike = async (id) => {
-    // Gostar exige sessão — visitante vai para o login.
-    if (!token) { navigate("/login"); return; }
+    if (!token) { setAuthWarning(true); return; }
     // Atualização otimista da contagem e do estado.
     setPosts((p) =>
       p.map((x) =>
@@ -434,7 +440,11 @@ export default function Social() {
           {mode === "users" ? (
             !token ? (
               <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                <CommentIcon size={48} color="var(--color-muted-soft)" className="mb-3" />
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" aria-hidden="true" stroke="var(--color-muted-soft)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-3">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
                 <p className="text-sm font-semibold text-dark">Inicia sessão para procurar utilizadores</p>
                 <button
                   type="button"
@@ -476,7 +486,11 @@ export default function Social() {
               </ul>
             ) : (
               <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
-                <CommentIcon size={48} color="var(--color-muted-soft)" className="mb-3" />
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" aria-hidden="true" stroke="var(--color-muted-soft)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="mb-3">
+                  <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
+                  <circle cx="9" cy="7" r="4" />
+                  <path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75" />
+                </svg>
                 <p className="text-sm font-semibold text-dark">Sem utilizadores</p>
                 <p className="text-xs mt-1 text-muted">
                   {userFollowing
@@ -540,6 +554,44 @@ export default function Social() {
       >
         <PlusIcon />
       </button>
+
+      {authWarning && (
+        <div className="fixed left-1/2 -translate-x-1/2 bottom-[calc(72px+12px)] md:bottom-6 z-[60] w-[92%] max-w-[360px] pointer-events-auto">
+          <div className="rounded-2xl bg-[#0e2c38] border border-white/10 shadow-2xl overflow-hidden">
+            <div className="flex items-start gap-3 px-4 pt-4 pb-2">
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#DB8B31" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="3" y="11" width="18" height="11" rx="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-white leading-snug">Precisas de uma conta</p>
+                <p className="text-[12px] text-white/55 mt-0.5 leading-snug">Inicia sessão para gostar e comentar publicações.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAuthWarning(false)}
+                aria-label="Fechar"
+                className="p-1 -mr-1 -mt-0.5 text-white/35 hover:text-white/70 active:scale-90 flex-shrink-0"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="px-4 pb-4 pt-2">
+              <button
+                type="button"
+                onClick={() => navigate("/login")}
+                className="w-full h-9 rounded-xl bg-primary text-white text-sm font-semibold active:scale-95 hover:bg-primary/90 transition-colors"
+              >
+                Iniciar sessão
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
