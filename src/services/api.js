@@ -293,7 +293,7 @@ export function saveRoute(token, id) {
     });
 }
 
-// Marés (previsão FCUL/IH — público, sem token).
+// Marés (modelo Valida4D da Hidromod — público, sem token).
 export function getTides(port = "aveiro", date) {
     const params = new URLSearchParams({ port });
     if (date) params.set("date", date);
@@ -302,6 +302,13 @@ export function getTides(port = "aveiro", date) {
 
 export function getCurrentTide(port = "aveiro") {
     return request(`/tides/current?port=${encodeURIComponent(port)}`);
+}
+
+// Marés da coordenada exata (modelo Valida4D — varia de sítio para sítio).
+export function getLocalTides(lat, lng, date) {
+    const params = new URLSearchParams({ lat, lng });
+    if (date) params.set("date", date);
+    return request(`/tides/local?${params.toString()}`);
 }
 
 export async function uploadFile(token, file) {

@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useLocation, useNavigate, useOutletContext } from "react-router-dom";
 import {
   MapContainer,
@@ -44,6 +44,17 @@ export default function MapPage() {
   // Local escolhido na barra de pesquisa para o qual o mapa deve voar. É um
   // objeto novo a cada escolha (mesmo que repetida) para reativar o voo.
   const [searchTarget, setSearchTarget] = useState(null);
+
+  // Centro do mapa (arredondado a ~100 m) para as marés do sítio visto. Só
+  // atualiza quando o centro muda de facto, para não refazer pedidos a cada pan.
+  const [tideCoords, setTideCoords] = useState(null);
+  const handleCenterChange = useCallback((c) => {
+    const lat = +c.lat.toFixed(3);
+    const lng = +c.lng.toFixed(3);
+    setTideCoords((prev) =>
+      prev && prev.lat === lat && prev.lng === lng ? prev : { lat, lng }
+    );
+  }, []);
 
   const { docks } = useDocks();
   const mapRoutes = useMapRoutes();
@@ -121,6 +132,7 @@ export default function MapPage() {
             baseLayer={baseLayer}
             nauticalVisible={nauticalVisible}
             onLocate={handleLocate}
+            onCenterChange={handleCenterChange}
             tidesVisible={tidesVisible}
             onToggleTides={() => setTidesVisible((v) => !v)}
             focusTarget={searchTarget}
@@ -174,7 +186,7 @@ export default function MapPage() {
           </div>
         )}
 
-        {!activeRoute && tidesVisible && <TidesPanel />}
+        {!activeRoute && tidesVisible && <TidesPanel coords={tideCoords} />}
 
         {!activeRoute && !simResults && (
           <PrimaryButton onClick={() => setPickerOpen(true)} className="px-6">

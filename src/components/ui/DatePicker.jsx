@@ -27,7 +27,7 @@ function parse(value) {
   return { y, m, d };
 }
 
-export function DatePicker({ value, onChange }) {
+export function DatePicker({ value, onChange, min, max }) {
   const sel = parse(value);
   const [open, setOpen] = useState(false);
   const [view, setView] = useState({ y: sel.y, m: sel.m });
@@ -67,11 +67,27 @@ export function DatePicker({ value, onChange }) {
     ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
   ];
 
-  const prevMonth = () =>
+  // Limites opcionais (YYYY-MM-DD). Como as datas estão zero-padded, a
+  // comparação de strings equivale à comparação cronológica.
+  const monthStart = fmt(view.y, view.m, 1);
+  const monthEnd = fmt(view.y, view.m, daysInMonth);
+  const canPrev = !min || min < monthStart;
+  const canNext = !max || max > monthEnd;
+  const outOfRange = (d) => {
+    const ds = fmt(view.y, view.m, d);
+    return (min && ds < min) || (max && ds > max);
+  };
+
+  const prevMonth = () => {
+    if (!canPrev) return;
     setView((v) => (v.m === 1 ? { y: v.y - 1, m: 12 } : { y: v.y, m: v.m - 1 }));
-  const nextMonth = () =>
+  };
+  const nextMonth = () => {
+    if (!canNext) return;
     setView((v) => (v.m === 12 ? { y: v.y + 1, m: 1 } : { y: v.y, m: v.m + 1 }));
+  };
   const pick = (d) => {
+    if (outOfRange(d)) return;
     onChange(fmt(view.y, view.m, d));
     setOpen(false);
   };
@@ -98,8 +114,11 @@ export function DatePicker({ value, onChange }) {
             <button
               type="button"
               onClick={prevMonth}
+              disabled={!canPrev}
               aria-label="Mês anterior"
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-secondary transition-colors hover:bg-cream"
+              className={`flex h-8 w-8 items-center justify-center rounded-lg text-secondary transition-colors ${
+                canPrev ? "hover:bg-cream" : "opacity-30 cursor-not-allowed"
+              }`}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                 <path d="M15 6l-6 6 6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -111,8 +130,11 @@ export function DatePicker({ value, onChange }) {
             <button
               type="button"
               onClick={nextMonth}
+              disabled={!canNext}
               aria-label="Mês seguinte"
-              className="flex h-8 w-8 items-center justify-center rounded-lg text-secondary transition-colors hover:bg-cream"
+              className={`flex h-8 w-8 items-center justify-center rounded-lg text-secondary transition-colors ${
+                canNext ? "hover:bg-cream" : "opacity-30 cursor-not-allowed"
+              }`}
             >
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
                 <path d="M9 6l6 6-6 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
@@ -132,6 +154,14 @@ export function DatePicker({ value, onChange }) {
             {cells.map((d, i) =>
               d === null ? (
                 <span key={`b${i}`} />
+              ) : outOfRange(d) ? (
+                <span
+                  key={d}
+                  aria-disabled="true"
+                  className="mx-auto flex h-9 w-9 items-center justify-center rounded-lg text-[13px] text-muted-soft/40 cursor-not-allowed"
+                >
+                  {d}
+                </span>
               ) : (
                 <button
                   key={d}

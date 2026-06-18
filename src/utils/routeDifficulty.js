@@ -37,7 +37,7 @@ function mareScore(condicoes) {
   }
 }
 
-// Ajuste pela maré atual (altura ao Zero Hidrográfico, da previsão FCUL/IH).
+// Ajuste pela maré atual (altura ao Zero Hidrográfico, do modelo Valida4D).
 // Mais água => mais profundidade sobre os sequeiros => mais fácil; e vice-versa.
 // Devolve 0 quando não há maré disponível (recai na dificuldade intrínseca).
 function tideModifier(tide) {

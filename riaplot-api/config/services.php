@@ -38,18 +38,18 @@ return [
         'base_url' => env('HIDROMOD_BASE_URL', 'https://sismarservices.hidromod.com/reader'),
     ],
 
-    // Previsão de marés da FCUL (Prof. Carlos Antunes), ajustada ao marégrafo de
-    // Aveiro com dados do Instituto Hidrográfico. Ficheiros anuais em texto.
-    // {port} e {year} são substituídos pelo comando de importação tides:import.
-    'tides' => [
-        'fcul_url_template' => env(
-            'TIDES_FCUL_URL_TEMPLATE',
-            'https://webpages.ciencias.ulisboa.pt/~cmantunes/hidrografia/{port}FCUL{year}.TXT'
-        ),
-        // Fuso dos ficheiros FCUL: TU (UTC). A hora legal é calculada na leitura.
-        'timezone'    => env('TIDES_TIMEZONE', 'Europe/Lisbon'),
-        // Folga de segurança (m) por baixo do calado para considerar navegável.
-        'safety_margin' => (float) env('TIDES_SAFETY_MARGIN', 0.3),
+    // Modelo hidrodinâmico Valida4D da Hidromod — devolve marés/níveis de água
+    // dependentes da localização (ao contrário da FCUL, que é ponto único).
+    // Os GUIDs identificam os modelos provisionados para este projeto.
+    'valida4d' => [
+        'base_url'          => env('VALIDA4D_BASE_URL', 'https://service.hidromod.com/valida4dapi'),
+        'extreme_event_id'  => env('VALIDA4D_EXTREME_EVENT_ID', 'BEC5D42AF6BA4A2D8A65E5D5CE8F4065'),
+        'execution_id'      => env('VALIDA4D_EXECUTION_ID', '2A2F4FE6592648BD9D881A153183C8A8'),
+        'timeout'           => (int) env('VALIDA4D_TIMEOUT', 20),
+        'poll_attempts'     => (int) env('VALIDA4D_POLL_ATTEMPTS', 90),
+        'poll_interval_ms'  => (int) env('VALIDA4D_POLL_INTERVAL_MS', 400),
+        // Tempo de cache dos extremos por local (horas). Os extremos não mudam.
+        'cache_hours'       => (int) env('VALIDA4D_CACHE_HOURS', 6),
     ],
 
     'slack' => [

@@ -174,7 +174,7 @@ export default function RouteDetail() {
     return () => { cancelled = true; };
   }, [token]);
 
-  // Maré atual no porto de Aveiro (previsão FCUL/IH).
+  // Maré atual no ponto de Aveiro (modelo Valida4D).
   useEffect(() => {
     let cancelled = false;
     getCurrentTide("aveiro")
