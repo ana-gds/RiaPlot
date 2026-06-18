@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { NavLink, Outlet, useNavigate, useLocation } from "react-router-dom";
 import { StatusBar } from "../components/ui/StatusBar.jsx";
 import { BottomNav } from "../components/shared/BottomNav.jsx";
@@ -20,9 +20,10 @@ const SIDEBAR_NAV_MAP = {
   ajuda: "/profile/help",
 };
 
-function DesktopSidebar() {
+function DesktopSidebar({ onNotificationsClick }) {
   const { unreadCount } = useNotifications();
   const { user } = useAuth();
+  const location = useLocation();
   return (
     <aside className="hidden md:flex flex-col w-64 shrink-0 sticky top-0 h-screen border-r border-secondary/10 bg-white overflow-y-auto">
       {/* Brand */}
@@ -45,45 +46,66 @@ function DesktopSidebar() {
 
       {/* Nav links */}
       <nav className="flex-1 px-3 py-4 flex flex-col gap-0.5">
-        {NAV_ITEMS.map((item) => (
-          <NavLink
-            key={item.key}
-            to={item.path}
-            className={({ isActive }) =>
-              [
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
-                isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted hover:bg-cream hover:text-dark",
-              ].join(" ")
-            }
-          >
-            {() => (
-              <>
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  className="shrink-0"
-                  aria-hidden="true"
-                >
-                  <path
-                    d={item.d}
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
+        {NAV_ITEMS.map((item) => {
+          if (item.key === "notificacoes") {
+            const isActive = location.pathname === item.path;
+            return (
+              <button
+                key={item.key}
+                type="button"
+                onClick={onNotificationsClick}
+                className={[
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors w-full text-left",
+                  isActive
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted hover:bg-cream hover:text-dark",
+                ].join(" ")}
+              >
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="shrink-0" aria-hidden="true">
+                  <path d={item.d} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                 </svg>
                 {item.label}
-                {item.key === "notificacoes" && (
-                  <NotificationBadge count={unreadCount} className="ml-auto" />
-                )}
-              </>
-            )}
-          </NavLink>
-        ))}
+                <NotificationBadge count={unreadCount} className="ml-auto" />
+              </button>
+            );
+          }
+          return (
+            <NavLink
+              key={item.key}
+              to={item.path}
+              className={({ isActive }) =>
+                [
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
+                  isActive
+                    ? "bg-primary/10 text-primary"
+                    : "text-muted hover:bg-cream hover:text-dark",
+                ].join(" ")
+              }
+            >
+              {() => (
+                <>
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    className="shrink-0"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d={item.d}
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                  {item.label}
+                </>
+              )}
+            </NavLink>
+          );
+        })}
       </nav>
 
       {/* Profile shortcut */}
@@ -122,8 +144,21 @@ function DesktopSidebar() {
 export function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { token } = useAuth();
   const isMap = location.pathname === "/map";
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [authWarning, setAuthWarning] = useState(false);
+
+  useEffect(() => {
+    if (!authWarning) return;
+    const t = setTimeout(() => setAuthWarning(false), 5000);
+    return () => clearTimeout(t);
+  }, [authWarning]);
+
+  const handleNotificationsClick = () => {
+    if (!token) { setAuthWarning(true); return; }
+    navigate("/notifications");
+  };
 
   const handleSidebarNavigate = (key) => {
     const path = SIDEBAR_NAV_MAP[key];
@@ -132,7 +167,7 @@ export function AppShell() {
 
   return (
     <div className="flex h-svh overflow-hidden">
-      <DesktopSidebar />
+      <DesktopSidebar onNotificationsClick={handleNotificationsClick} />
       <Sidebar
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
@@ -143,8 +178,46 @@ export function AppShell() {
         <main className="flex-1 flex flex-col min-h-0">
           <Outlet context={{ openSidebar: () => setSidebarOpen(true) }} />
         </main>
-        <BottomNav />
+        <BottomNav onNotificationsClick={handleNotificationsClick} />
       </div>
+
+      {authWarning && (
+        <div className="fixed left-1/2 -translate-x-1/2 bottom-[calc(72px+12px)] md:bottom-6 z-[70] w-[92%] max-w-[360px] pointer-events-auto">
+          <div className="rounded-2xl bg-[#0e2c38] border border-white/10 shadow-2xl overflow-hidden">
+            <div className="flex items-start gap-3 px-4 pt-4 pb-2">
+              <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#DB8B31" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <rect x="3" y="11" width="18" height="11" rx="2" />
+                  <path d="M7 11V7a5 5 0 0 1 10 0v4" />
+                </svg>
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-[13px] font-semibold text-white leading-snug">Precisas de uma conta</p>
+                <p className="text-[12px] text-white/55 mt-0.5 leading-snug">Inicia sessão para aceder às notificações.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAuthWarning(false)}
+                aria-label="Fechar"
+                className="p-1 -mr-1 -mt-0.5 text-white/35 hover:text-white/70 active:scale-90 flex-shrink-0"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="px-4 pb-4 pt-2">
+              <button
+                type="button"
+                onClick={() => navigate("/login")}
+                className="w-full h-9 rounded-xl bg-primary text-white text-sm font-semibold active:scale-95 hover:bg-primary/90 transition-colors"
+              >
+                Iniciar sessão
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
