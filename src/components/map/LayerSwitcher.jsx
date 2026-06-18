@@ -4,9 +4,10 @@ import { MapIcon, SatelliteIcon, AnchorIcon } from "../ui/Icons.jsx";
 const BASE_LAYERS = [
   { key: "osm", label: "Mapa", Icon: MapIcon },
   { key: "satellite", label: "Satélite", Icon: SatelliteIcon },
+  { key: "nautical", label: "Carta Náutica IH", Icon: AnchorIcon },
 ];
 
-export function LayerSwitcher({ activeLayer, onChangeLayer, nautical, onToggleNautical }) {
+export function LayerSwitcher({ activeLayer, onChangeLayer }) {
   const [open, setOpen] = useState(false);
 
   return (
@@ -43,14 +44,6 @@ export function LayerSwitcher({ activeLayer, onChangeLayer, nautical, onToggleNa
               }}
             />
           ))}
-          <div className="layer-switcher-divider" />
-          <SwitcherSection label="Sobreposições" />
-          <SwitcherToggle
-            Icon={AnchorIcon}
-            label="Carta Náutica IH"
-            active={nautical}
-            onToggle={onToggleNautical}
-          />
         </div>
       )}
     </div>
@@ -80,22 +73,6 @@ function SwitcherItem({ Icon, label, active, onClick }) {
           </svg>
         </span>
       )}
-    </button>
-  );
-}
-
-function SwitcherToggle({ Icon, label, active, onToggle }) {
-  return (
-    <button
-      type="button"
-      onClick={onToggle}
-      className={`layer-switcher-item ${active ? "layer-switcher-item--toggle-on" : ""}`}
-    >
-      <Icon size={16} color="#0e2c38" />
-      <span className="text-[13px] font-medium text-dark">{label}</span>
-      <span className={`layer-switcher-toggle ${active ? "layer-switcher-toggle--on" : ""}`}>
-        <span className="layer-switcher-toggle-knob" />
-      </span>
     </button>
   );
 }

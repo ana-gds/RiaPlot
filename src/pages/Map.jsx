@@ -33,14 +33,14 @@ export default function MapPage() {
   const gpxTitle = state?.gpxTitle ?? null;
   const selectedRouteId = state?.selectedRouteId ?? null;
 
-  const [baseLayer, setBaseLayer] = useState("osm");
-  const [nauticalVisible, setNauticalVisible] = useState(true);
+  const [baseLayer, setBaseLayer] = useState("nautical");
   const [simOpen, setSimOpen] = useState(false);
   const [pickerOpen, setPickerOpen] = useState(false);
   const [pickedRoute, setPickedRoute] = useState(null);
   const [simResults, setSimResults] = useState(null);
   const [locating, setLocating] = useState(false);
   const [tidesVisible, setTidesVisible] = useState(false);
+  const [markersVisible, setMarkersVisible] = useState(true);
   // Local escolhido na barra de pesquisa para o qual o mapa deve voar. É um
   // objeto novo a cada escolha (mesmo que repetida) para reativar o voo.
   const [searchTarget, setSearchTarget] = useState(null);
@@ -112,8 +112,6 @@ export default function MapPage() {
       <MapHeader
         baseLayer={baseLayer}
         onChangeLayer={setBaseLayer}
-        nautical={nauticalVisible}
-        onToggleNautical={() => setNauticalVisible((v) => !v)}
         onOpenMenu={openSidebar}
         docks={docks}
         pois={pois}
@@ -130,18 +128,20 @@ export default function MapPage() {
         >
           <MapInner
             baseLayer={baseLayer}
-            nauticalVisible={nauticalVisible}
+            nauticalVisible={baseLayer === "nautical"}
             onLocate={handleLocate}
             onCenterChange={handleCenterChange}
             tidesVisible={tidesVisible}
             onToggleTides={() => setTidesVisible((v) => !v)}
+            markersVisible={markersVisible}
+            onToggleMarkers={() => setMarkersVisible((v) => !v)}
             focusTarget={searchTarget}
           />
 
           <RoutePolylines routes={mapRoutes} selectedRouteId={activeRouteId} />
           {simResults && <SimulationPolyline positions={simResults.positions} />}
-          <DockMarkers docks={docks} />
-          <PoiMarkers pois={pois} />
+          {markersVisible && <DockMarkers docks={docks} />}
+          {markersVisible && <PoiMarkers pois={pois} />}
 
           {/* Desenha o traçado do GPX enquanto não há resultado de simulação
               (depois é a polyline colorida da simulação que manda). */}
@@ -166,15 +166,13 @@ export default function MapPage() {
               )}
             </div>
             <div className="flex gap-2 flex-shrink-0">
-              {!simResults && (
-                <button
-                  type="button"
-                  onClick={() => setSimOpen(true)}
-                  className="text-xs font-medium px-3 py-1.5 rounded-xl bg-primary text-white active:scale-95"
-                >
-                  Simular
-                </button>
-              )}
+              <button
+                type="button"
+                onClick={() => setSimOpen(true)}
+                className="text-xs font-medium px-3 py-1.5 rounded-xl bg-primary text-white active:scale-95"
+              >
+                {simResults ? "Editar" : "Simular"}
+              </button>
               <button
                 type="button"
                 onClick={handleClearRoute}

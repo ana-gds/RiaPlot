@@ -10,6 +10,27 @@ import { getBoats, updateBoat, uploadFile } from "../services/api.js";
 
 const numberProps = { type: "number", step: "0.1", min: "0", noSpinner: true, placeholder: "0.0" };
 
+// Campos obrigatórios. Os que não são `nome`/`tipo` são numéricos e têm de ser
+// um número válido >= 0.
+const TEXT_FIELDS = ["nome", "tipo"];
+const REQUIRED_FIELDS = [
+  "nome", "tipo", "calado", "comprimento", "boca",
+  "velocidade", "folgaSuperior", "folgaInferior",
+];
+
+function validateForm(form) {
+  const errors = {};
+  for (const key of REQUIRED_FIELDS) {
+    const value = String(form[key] ?? "").trim();
+    if (value === "") {
+      errors[key] = true;
+    } else if (!TEXT_FIELDS.includes(key) && !(parseFloat(value) >= 0)) {
+      errors[key] = true;
+    }
+  }
+  return errors;
+}
+
 function extractId(raw) {
   if (!raw) return null;
   if (typeof raw === 'object') return raw.$oid ?? String(raw);
@@ -35,6 +56,7 @@ export default function BoatSettings() {
   const [loading, setLoading] = useState(false);
   const [fetchLoading, setFetchLoading] = useState(true);
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
 
   useEffect(() => {
     getBoats(token)
@@ -59,10 +81,22 @@ export default function BoatSettings() {
       .finally(() => setFetchLoading(false));
   }, [token]);
 
-  const set = (f) => (e) => setForm((p) => ({ ...p, [f]: e.target.value }));
+  const set = (f) => (e) => {
+    setForm((p) => ({ ...p, [f]: e.target.value }));
+    // Limpa o erro do campo assim que o utilizador o corrige.
+    setFieldErrors((p) => (p[f] ? { ...p, [f]: false } : p));
+  };
 
   const handleSave = async () => {
     if (!boatId) return;
+
+    const errors = validateForm(form);
+    if (Object.keys(errors).some((k) => errors[k])) {
+      setFieldErrors(errors);
+      setError("Preenche todos os campos antes de guardar.");
+      return;
+    }
+
     setLoading(true);
     setError("");
     try {
@@ -91,6 +125,10 @@ export default function BoatSettings() {
     }
   };
 
+  // Borda vermelha (com !important para vencer a borda base do Input) quando o
+  // campo está marcado como inválido.
+  const errClass = (f) => (fieldErrors[f] ? "border-danger!" : "");
+
   if (fetchLoading) {
     return (
       <div className="flex-1 flex items-center justify-center">
@@ -118,7 +156,7 @@ export default function BoatSettings() {
         {error && <p className="text-xs text-danger text-center">{error}</p>}
         <div>
           <Label>Nome da embarcação</Label>
-          <Input placeholder="Ex: Gaivota" value={form.nome} onChange={set("nome")} />
+          <Input placeholder="Ex: Gaivota" value={form.nome} onChange={set("nome")} className={errClass("nome")} />
         </div>
         <div>
           <Label>Tipo de embarcação</Label>
@@ -126,32 +164,33 @@ export default function BoatSettings() {
             placeholder="Ex: Veleiro, Lancha, Caiaque..."
             value={form.tipo}
             onChange={set("tipo")}
+            className={errClass("tipo")}
           />
         </div>
         <div className="grid grid-cols-2 gap-4">
           <div>
             <Label>Calado (m)</Label>
-            <Input {...numberProps} value={form.calado} onChange={set("calado")} />
+            <Input {...numberProps} value={form.calado} onChange={set("calado")} className={errClass("calado")} />
           </div>
           <div>
             <Label>Comprimento (m)</Label>
-            <Input {...numberProps} value={form.comprimento} onChange={set("comprimento")} />
+            <Input {...numberProps} value={form.comprimento} onChange={set("comprimento")} className={errClass("comprimento")} />
           </div>
           <div>
             <Label>Boca (m)</Label>
-            <Input {...numberProps} value={form.boca} onChange={set("boca")} />
+            <Input {...numberProps} value={form.boca} onChange={set("boca")} className={errClass("boca")} />
           </div>
           <div>
             <Label>Velocidade (nós)</Label>
-            <Input {...numberProps} value={form.velocidade} onChange={set("velocidade")} />
+            <Input {...numberProps} value={form.velocidade} onChange={set("velocidade")} className={errClass("velocidade")} />
           </div>
           <div>
             <Label>Folga superior (m)</Label>
-            <Input {...numberProps} value={form.folgaSuperior} onChange={set("folgaSuperior")} />
+            <Input {...numberProps} value={form.folgaSuperior} onChange={set("folgaSuperior")} className={errClass("folgaSuperior")} />
           </div>
           <div>
             <Label>Folga inferior (m)</Label>
-            <Input {...numberProps} value={form.folgaInferior} onChange={set("folgaInferior")} />
+            <Input {...numberProps} value={form.folgaInferior} onChange={set("folgaInferior")} className={errClass("folgaInferior")} />
           </div>
         </div>
       </div>

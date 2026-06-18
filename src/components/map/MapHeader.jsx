@@ -6,8 +6,6 @@ import { MenuIcon } from "../ui/Icons.jsx";
 export function MapHeader({
   baseLayer,
   onChangeLayer,
-  nautical,
-  onToggleNautical,
   onOpenMenu,
   docks,
   pois,
@@ -25,8 +23,6 @@ export function MapHeader({
         <LayerSwitcher
           activeLayer={baseLayer}
           onChangeLayer={onChangeLayer}
-          nautical={nautical}
-          onToggleNautical={onToggleNautical}
         />
       </div>
     </div>
