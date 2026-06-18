@@ -20,6 +20,7 @@ function authHeaders(token, extra = {}) {
  * @param {number} params.calado
  * @param {number} params.folgaSuperior
  * @param {number} params.folgaInferior
+ * @param {number} [params.velocidade]   - velocidade média (nós); data cada ponto
  * @param {string} params.token
  * @param {Function} [params.onProgress]
  * @returns {Promise<SimulacaoResultado>}
@@ -31,6 +32,7 @@ export async function simularRota({
   calado = 1.0,
   folgaSuperior = 0.2,
   folgaInferior = 0.1,
+  velocidade,
   token,
   onProgress = () => {},
 }) {
@@ -46,6 +48,7 @@ export async function simularRota({
       calado,
       folga_superior: folgaSuperior,
       folga_inferior: folgaInferior,
+      ...(velocidade != null ? { velocidade } : {}),
     }),
   });
 

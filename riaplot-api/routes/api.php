@@ -31,8 +31,10 @@ Route::get('/pois',        [PoiController::class, 'index']);
 Route::get('/posts',       [PostController::class, 'index']);
 Route::get('/posts/{id}',  [PostController::class, 'show']);
 
-// Marés (previsão FCUL/IH — pública)
+// Marés (pública), todas do modelo Valida4D. /local varia com a coordenada;
+// /current e /tides usam o ponto de referência de Aveiro.
 Route::get('/tides/current', [TideController::class, 'current']);
+Route::get('/tides/local',   [TideController::class, 'local']);
 Route::get('/tides',         [TideController::class, 'index']);
 
 // Tudo o resto precisa de autenticação

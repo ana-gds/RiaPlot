@@ -3,8 +3,13 @@ import { useDocks } from "../../hooks/useApi";
 import { SIM_LEGEND } from "./mapHelpers.js";
 import { simularRota } from "../../services/simulacaoService.js";
 import { useAuth } from "../../contexts/AuthContext.jsx";
-import { getBoats } from "../../services/api.js";
+import { getBoats, getLocalTides } from "../../services/api.js";
 import { DatePicker } from "../ui/DatePicker.jsx";
+
+// A previsão de marés do Valida4D (modelo Hidromod) só cobre ~72h. Por isso a
+// simulação só deixa escolher datas dentro dessa janela (hoje + 2 dias); além
+// disso a maré deixaria de ser específica do local (cairia no ponto único FCUL).
+const SIM_MAX_DIAS = 2;
 
 export function SimulationSheet({ open, onClose, route, onResults }) {
   const { docks } = useDocks();
@@ -50,8 +55,27 @@ export function SimulationSheet({ open, onClose, route, onResults }) {
     ?? null;
 
   const hasTrackpoints = Array.isArray(route?.trackpoints) && route.trackpoints.length > 1;
+
+  // Coordenadas de partida da rota, para mostrar as marés do local.
+  const startCoords = (() => {
+    const tp = route?.trackpoints?.[0];
+    if (tp?.lat != null && tp?.lng != null) return { lat: tp.lat, lng: tp.lng };
+    const cp = route?.cais_partida;
+    if (cp?.latitude != null && cp?.longitude != null) {
+      return { lat: cp.latitude, lng: cp.longitude };
+    }
+    return null;
+  })();
   const canSimulate = (routeId && hasTrackpoints)
     || (!routeId && form.partida && form.chegada && form.partida !== form.chegada);
+
+  // Janela de datas simulável (~72h do Valida4D): de hoje a hoje + SIM_MAX_DIAS.
+  const hoje = new Date().toISOString().slice(0, 10);
+  const dataMax = (() => {
+    const d = new Date();
+    d.setDate(d.getDate() + SIM_MAX_DIAS);
+    return d.toISOString().slice(0, 10);
+  })();
 
   const handleSimulate = async () => {
     if (!canSimulate || loading) return;
@@ -68,6 +92,7 @@ export function SimulationSheet({ open, onClose, route, onResults }) {
         calado:         boat?.height          ?? 1.0,
         folgaSuperior:  boat?.upper_clearance  ?? 0.2,
         folgaInferior:  boat?.lower_clearance  ?? 0.1,
+        velocidade:     boat?.speed ?? undefined,
         token,
         onProgress: setProgress,
       });
@@ -124,7 +149,7 @@ export function SimulationSheet({ open, onClose, route, onResults }) {
 
           <div>
             <label className="sim-sheet__label">Data</label>
-            <DatePicker value={form.data} onChange={(v) => setField("data", v)} />
+            <DatePicker value={form.data} onChange={(v) => setField("data", v)} min={hoje} max={dataMax} />
           </div>
 
           <div>
@@ -136,6 +161,8 @@ export function SimulationSheet({ open, onClose, route, onResults }) {
             </label>
             <HourPicker value={form.hora} onChange={(h) => setField("hora", h)} />
           </div>
+
+          <SimTideTable coords={startCoords} date={form.data} />
 
           <BoatInfo boat={boat} />
 
@@ -217,6 +244,61 @@ function DockSelect({ label, value, onChange, docks }) {
         </select>
         <div className="sim-sheet__chevron">▾</div>
       </div>
+    </div>
+  );
+}
+
+// Tabela de marés (preia/baixa-mar) do dia, no local de partida da rota.
+function SimTideTable({ coords, date }) {
+  const [tides, setTides] = useState([]);
+  const [meta, setMeta] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (!coords) return;
+    let cancelled = false;
+    setLoading(true);
+    getLocalTides(coords.lat, coords.lng, date)
+      .then((d) => {
+        if (cancelled) return;
+        setTides(d?.tides ?? []);
+        setMeta(d ?? null);
+      })
+      .catch(() => { if (!cancelled) setTides([]); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [coords?.lat, coords?.lng, date]);
+
+  if (!coords) return null;
+
+  return (
+    <div className="rounded-2xl bg-secondary/10 border border-secondary/20 p-3">
+      <label className="sim-sheet__label">
+        Marés{meta?.point?.name ? ` — ${meta.point.name}` : ""}
+      </label>
+      {loading && tides.length === 0 ? (
+        <p className="text-xs text-muted">A calcular marés…</p>
+      ) : tides.length === 0 ? (
+        <p className="text-xs text-muted">Marés indisponíveis para este dia.</p>
+      ) : (
+        <div className="flex gap-2" style={loading ? { opacity: 0.5 } : undefined}>
+          {tides.map((t) => (
+            <div
+              key={t.datetime_utc}
+              className="flex-1 rounded-xl bg-white border border-secondary/15 px-2 py-1.5 text-center"
+            >
+              <div
+                className="text-[10px] font-semibold"
+                style={{ color: t.type === "PM" ? "#DB8B31" : "#77B5D3" }}
+              >
+                {t.type}
+              </div>
+              <div className="text-[13px] font-bold text-dark">{t.height}m</div>
+              <div className="text-[11px] text-muted">{t.time}</div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

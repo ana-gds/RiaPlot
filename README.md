@@ -2,7 +2,8 @@
 
 Aplicação de planeamento de navegação para a **Ria de Aveiro**. Reúne num mapa
 interativo os cais, as rotas (importadas de ficheiros GPX), a previsão de marés
-e a **simulação de profundidade** ao longo de uma rota (tendo em conta o calado
+por local (modelo Valida4D da Hidromod) e a **simulação de profundidade** ao
+longo de uma rota (tendo em conta o calado
 e as folgas da embarcação). Inclui ainda uma vertente **social** — publicações,
 gostos, comentários, seguir utilizadores e notificações.
 
@@ -13,7 +14,7 @@ gostos, comentários, seguir utilizadores e notificações.
 | Frontend  | React 19 · Vite · Tailwind CSS 4 · React Router · Leaflet |
 | Backend   | Laravel 13 · Laravel Sanctum (auth) |
 | Base de dados | MongoDB (via `mongodb/laravel-mongodb`) |
-| Serviços externos | Simulação Hidromod · Previsão de marés (FCUL/IH) |
+| Serviços externos | Hidromod Valida4D (simulação + marés por local) |
 
 O repositório é um monorepo: a aplicação React vive na raiz e a API Laravel em
 [`riaplot-api/`](riaplot-api/).
@@ -99,7 +100,7 @@ A API inclui comandos Artisan para popular as rotas, marés e dados de simulaç�
 | `php artisan sim:import`        | Importa rotas e dados de simulação dos JSON em `storage/app/sim/` |
 | `php artisan sim:backfill-depth`| Preenche `min_depth` em rotas com `sim_file` mas sem profundidade |
 | `php artisan sim:fix-unmatched` | Liga rotas sem trackpoints aos JSON de simulação pelo nome dos cais |
-| `php artisan tides:import`      | Importa a previsão anual de marés da FCUL para a coleção `tides` |
+| `php artisan tides:refresh-points` | Pré-calcula a maré (Valida4D) dos pontos de referência da Ria para a coleção `tide_points` (agendado diariamente) |
 | `php artisan routes:fetch-images` | Procura e guarda uma foto (Wikipédia) para cada rota |
 
 ## Testes
