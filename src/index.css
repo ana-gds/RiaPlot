@@ -459,12 +459,6 @@ body,
   color: var(--color-muted-soft);
 }
 
-.layer-switcher-divider {
-  height: 1px;
-  background: rgba(0, 77, 108, 0.06);
-  margin: 0 12px;
-}
-
 .layer-switcher-item {
   display: flex;
   align-items: center;
@@ -475,39 +469,6 @@ body,
 
 .layer-switcher-item--active {
   background: rgba(219, 139, 49, 0.08);
-}
-
-.layer-switcher-item--toggle-on {
-  background: rgba(0, 77, 108, 0.05);
-}
-
-.layer-switcher-toggle {
-  margin-left: auto;
-  width: 36px;
-  height: 20px;
-  border-radius: 10px;
-  background: var(--color-divider);
-  display: flex;
-  align-items: center;
-  padding: 2px;
-  flex-shrink: 0;
-  transition: background 0.2s;
-}
-.layer-switcher-toggle--on {
-  background: var(--color-secondary);
-}
-
-.layer-switcher-toggle-knob {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: white;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
-  transition: transform 0.2s;
-  transform: translateX(0);
-}
-.layer-switcher-toggle--on .layer-switcher-toggle-knob {
-  transform: translateX(16px);
 }
 
 /* ── Tides panel ──────────────────────────────────────────────────────── */

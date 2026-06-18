@@ -12,6 +12,8 @@ export function MapInner({
   onCenterChange,
   tidesVisible,
   onToggleTides,
+  markersVisible,
+  onToggleMarkers,
   focusTarget,
 }) {
   const map = useMap();
@@ -51,6 +53,8 @@ export function MapInner({
         onRecenter={handleRecenter}
         tidesVisible={tidesVisible}
         onToggleTides={onToggleTides}
+        markersVisible={markersVisible}
+        onToggleMarkers={onToggleMarkers}
       />
     </>
   );
