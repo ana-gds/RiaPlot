@@ -104,7 +104,11 @@ export default function MapPage() {
   const handleClearRoute = () => {
     setSimResults(null);
     setPickedRoute(null);
-    navigate("/map", { replace: true, state: {} });
+    if (gpxPoints?.length || gpxUrl || selectedRouteId) {
+      // Route loaded via navigation state (post or route detail) — go back to caller.
+      navigate(-1);
+    }
+    // Picker route: clearing local state above is enough, no navigation needed.
   };
 
   return (

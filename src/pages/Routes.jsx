@@ -154,76 +154,79 @@ export default function Routes() {
   return (
     <>
       <div className="px-4 pb-3 flex-shrink-0 bg-white sticky top-0 z-10">
-        <div className="flex items-center gap-2.5">
-          <CircularButton onClick={openSidebar} ariaLabel="Menu" className="md:hidden">
-            <MenuIcon />
-          </CircularButton>
-          <h1 className="hidden md:block text-xl font-bold text-dark shrink-0">Rotas</h1>
-          <SearchBar value={search} onChange={handleSearch} onClear={() => handleSearch("")} />
-          <button
-            type="button"
-            onClick={() => setShowFilters((s) => !s)}
-            className={[
-              "w-12 h-12 rounded-full flex items-center justify-center shrink-0 relative border transition-all",
-              showFilters || activeFilters.length > 0
-                ? "bg-primary/10 border-primary text-primary shadow-[0_6px_22px_rgba(219,139,49,0.22)]"
-                : "bg-cream border-primary/20 text-dark hover:border-primary/40 shadow-[0_2px_10px_rgba(0,77,108,0.05)]",
-            ].join(" ")}
-            aria-label="Mostrar filtros"
-            aria-expanded={showFilters}
-          >
-            <FilterIcon color="currentColor" />
-            {activeFilters.length > 0 && (
-              <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center bg-primary text-white text-[10px] font-bold border-2 border-white">
-                {activeFilters.length}
-              </span>
-            )}
-          </button>
-        </div>
-
-        {showFilters && (
-          <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pt-3 pb-1 scroll-x-hidden">
-            <Chip
-              active={activeFilters.includes("az")}
-              onClick={() => toggleFilter("az")}
-              icon={
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M7 4v15m0 0l-3-3m3 3l3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                  <path d="M13 6h7M13 11h5M13 16h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              }
+        <div className="max-w-6xl mx-auto">
+          <div className="flex items-center gap-2.5">
+            <CircularButton onClick={openSidebar} ariaLabel="Menu" className="md:hidden">
+              <MenuIcon />
+            </CircularButton>
+            <h1 className="hidden md:block text-xl font-bold text-dark shrink-0">Rotas</h1>
+            <SearchBar value={search} onChange={handleSearch} onClear={() => handleSearch("")} />
+            <button
+              type="button"
+              onClick={() => setShowFilters((s) => !s)}
+              className={[
+                "w-12 h-12 rounded-full flex items-center justify-center shrink-0 relative border transition-all",
+                showFilters || activeFilters.length > 0
+                  ? "bg-primary/10 border-primary text-primary shadow-[0_6px_22px_rgba(219,139,49,0.22)]"
+                  : "bg-cream border-primary/20 text-dark hover:border-primary/40 shadow-[0_2px_10px_rgba(0,77,108,0.05)]",
+              ].join(" ")}
+              aria-label="Mostrar filtros"
+              aria-expanded={showFilters}
             >
-              A-Z
-            </Chip>
-            {DIFFICULTY_FILTERS.map((d) => (
-              <Chip
-                key={d.key}
-                active={activeFilters.includes(d.key)}
-                onClick={() => toggleFilter(d.key)}
-                icon={<span className="w-2 h-2 rounded-full" style={{ background: d.color }} />}
-              >
-                {d.label}
-              </Chip>
-            ))}
-            <Chip
-              active={activeFilters.includes("guardadas")}
-              onClick={() => toggleFilter("guardadas")}
-              icon={<BookmarkIcon size={12} color="currentColor" strokeColor="currentColor" />}
-            >
-              Guardadas
-            </Chip>
+              <FilterIcon color="currentColor" />
+              {activeFilters.length > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center bg-primary text-white text-[10px] font-bold border-2 border-white">
+                  {activeFilters.length}
+                </span>
+              )}
+            </button>
           </div>
-        )}
+
+          {showFilters && (
+            <div className="flex gap-2 overflow-x-auto -mx-4 px-4 pt-3 pb-1 scroll-x-hidden">
+              <Chip
+                active={activeFilters.includes("az")}
+                onClick={() => toggleFilter("az")}
+                icon={
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                    <path d="M7 4v15m0 0l-3-3m3 3l3-3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M13 6h7M13 11h5M13 16h3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+                  </svg>
+                }
+              >
+                A-Z
+              </Chip>
+              {DIFFICULTY_FILTERS.map((d) => (
+                <Chip
+                  key={d.key}
+                  active={activeFilters.includes(d.key)}
+                  onClick={() => toggleFilter(d.key)}
+                  icon={<span className="w-2 h-2 rounded-full" style={{ background: d.color }} />}
+                >
+                  {d.label}
+                </Chip>
+              ))}
+              <Chip
+                active={activeFilters.includes("guardadas")}
+                onClick={() => toggleFilter("guardadas")}
+                icon={<BookmarkIcon size={12} color="currentColor" strokeColor="currentColor" />}
+              >
+                Guardadas
+              </Chip>
+            </div>
+          )}
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 pt-4 pb-6">
+        <div className="max-w-6xl mx-auto">
         {routesLoading && apiRoutes.length === 0 ? (
           <div className="flex items-center justify-center py-16">
             <span className="text-sm text-muted">A carregar…</span>
           </div>
         ) : filtered.length > 0 ? (
           <>
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {visible.map((route) => (
                 <RouteCard
                   key={route.id}
@@ -255,6 +258,7 @@ export default function Routes() {
             <p className="text-xs mt-1">Tenta ajustar os filtros ou a pesquisa</p>
           </div>
         )}
+        </div>
       </div>
     </>
   );

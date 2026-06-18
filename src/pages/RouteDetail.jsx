@@ -262,18 +262,25 @@ export default function RouteDetail() {
   const hasTrack = Array.isArray(route.trackpoints) && route.trackpoints.length > 1;
 
   return (
-    <div className="flex flex-col flex-1 -mt-6 md:mt-0">
-      <div className="relative w-full h-[328px] flex-shrink-0">
-        <img src={caisImage(route.cais_partida?.nome) || IMAGES.routes.detail} alt={title} className="w-full h-full object-cover" />
+    <div className="flex flex-col flex-1 -mt-6 md:mt-0 overflow-x-hidden">
+      {/* Hero — full-bleed via CSS breakout on desktop */}
+      <div className="relative flex-shrink-0">
+        <div
+          className="h-[328px] md:h-[420px] overflow-hidden"
+          style={{ marginLeft: "calc(50% - 50vw)", width: "100vw" }}
+        >
+          <img src={caisImage(route.cais_partida?.nome) || IMAGES.routes.detail} alt={title} className="w-full h-full object-cover" />
+        </div>
 
-        <div className="absolute left-4 top-4">
+        {/* Overlays are positioned relative to the content-width container (not the full-bleed image) */}
+        <div className="absolute left-4 top-4 z-10">
           <BackButton />
         </div>
 
         {route.video_url && (
           <button
             type="button"
-            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[60px] h-[60px] rounded-full flex items-center justify-center pl-1 bg-dark/70 shadow-[0_20px_25px_rgba(0,0,0,0.1)]"
+            className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[60px] h-[60px] rounded-full flex items-center justify-center pl-1 bg-dark/70 shadow-[0_20px_25px_rgba(0,0,0,0.1)] z-10"
             aria-label="Reproduzir vídeo"
           >
             <PlayIcon />
@@ -281,7 +288,7 @@ export default function RouteDetail() {
         )}
       </div>
 
-      <div className="-mt-4 rounded-t-2xl bg-white relative z-10 px-4 pt-6 pb-8 shadow-top-sheet">
+      <div className="-mt-4 rounded-t-2xl bg-white relative z-10 px-4 pt-6 pb-8 shadow-top-sheet md:mt-6 md:rounded-none md:shadow-none md:px-0 md:pb-12">
         <div className="flex justify-between items-start mb-1">
           <h1 className="text-2xl font-bold text-dark">{title}</h1>
           <div className="flex items-center gap-1 -mr-1">

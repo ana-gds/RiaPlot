@@ -246,7 +246,7 @@ export default function PublicProfile() {
         </div>
       )}
 
-      <div className="flex flex-col items-center px-4 gap-1">
+      <div className="flex flex-col items-center px-4 gap-1 md:max-w-2xl md:mx-auto md:w-full">
         <div className="w-[100px] h-[100px] rounded-full overflow-hidden border-[3px] border-primary shadow-[0_4px_16px_rgba(219,139,49,0.3)]">
           {photo ? (
             <img src={photo} alt={name} loading="lazy" decoding="async" className="w-full h-full object-cover" />
@@ -285,7 +285,7 @@ export default function PublicProfile() {
         )}
       </div>
 
-      <div className="border-b border-divider/70 mt-4" />
+      <div className="border-b border-divider/70 mt-4 md:max-w-2xl md:mx-auto" />
 
       <div className="py-4">
         {locked ? (
@@ -302,7 +302,7 @@ export default function PublicProfile() {
             <p className="text-sm">A carregar…</p>
           </div>
         ) : posts.length > 0 ? (
-          <div className="flex flex-col gap-4 md:max-w-xl md:mx-auto">
+          <div className="flex flex-col gap-4 md:max-w-2xl md:mx-auto">
             {posts.map((p) => (
               <FeedPostCard
                 key={p.id}
