@@ -27,6 +27,17 @@ RUN apt-get update && apt-get install -y \
     && docker-php-ext-enable mongodb \
     && rm -rf /var/lib/apt/lists/*
 
+# php artisan serve usa o memory_limit do CLI. O default de 128M rebenta
+# em respostas grandes (rotas com muitos trackpoints) e o crash é silencioso
+# — daí termos páginas 500 sem nada nos logs. Subir e mandar erros para stderr.
+RUN { \
+        echo "memory_limit=512M"; \
+        echo "log_errors=On"; \
+        echo "error_log=/dev/stderr"; \
+        echo "display_errors=Off"; \
+        echo "max_execution_time=120"; \
+    } > /usr/local/etc/php/conf.d/zz-app.ini
+
 WORKDIR /app
 COPY --from=vendor /app /app
 
