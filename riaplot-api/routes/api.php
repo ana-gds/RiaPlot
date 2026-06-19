@@ -46,23 +46,24 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::patch('/user',  [AuthController::class, 'update']);
     Route::delete('/user', [AuthController::class, 'destroy']);
 
-    // Upload de imagens
+    // Upload de imagens — guardado no disk configurado por UPLOADS_DISK
+    // (s3 em produção, local em dev). A URL devolvida é pública e direta
+    // ao storage; não passa pelo Laravel, por isso aguenta tráfego sem custo.
     Route::post('/upload', function(\Illuminate\Http\Request $request) {
         // Restringe a formatos de imagem rasterizada seguros. SVG é
-        // deliberadamente excluído porque permite JavaScript embebido (XSS)
-        // quando servido a partir do mesmo domínio.
+        // deliberadamente excluído porque permite JavaScript embebido (XSS).
         $request->validate([
             'image' => 'required|image|mimes:jpg,jpeg,png,webp,gif|max:5120',
         ]);
-        $dir = public_path('uploads');
-        if (!is_dir($dir)) mkdir($dir, 0755, true);
         // A extensão é derivada do conteúdo real do ficheiro (MIME), nunca do
-        // nome enviado pelo cliente — evita guardar ficheiros executáveis
-        // (ex.: .php) só por o cliente os nomear assim.
+        // nome enviado pelo cliente — evita guardar ficheiros executáveis.
         $ext      = $request->file('image')->extension() ?: 'jpg';
-        $filename = uniqid('img_', true) . '.' . $ext;
-        $request->file('image')->move($dir, $filename);
-        return response()->json(['url' => url('uploads/' . $filename)]);
+        $filename = 'uploads/' . uniqid('img_', true) . '.' . $ext;
+
+        $disk = \Illuminate\Support\Facades\Storage::disk(env('UPLOADS_DISK', 'public'));
+        $disk->put($filename, file_get_contents($request->file('image')->getRealPath()), 'public');
+
+        return response()->json(['url' => $disk->url($filename)]);
     });
 
     // Upload de ficheiro GPX (rota percorrida)
@@ -76,11 +77,12 @@ Route::middleware('auth:sanctum')->group(function () {
         if ($ext !== 'gpx') {
             return response()->json(['message' => 'O ficheiro tem de ter a extensão .gpx'], 422);
         }
-        $dir = public_path('uploads');
-        if (!is_dir($dir)) mkdir($dir, 0755, true);
-        $filename = uniqid('gpx_', true) . '.gpx';
-        $request->file('gpx')->move($dir, $filename);
-        return response()->json(['url' => url('uploads/' . $filename)]);
+        $filename = 'uploads/' . uniqid('gpx_', true) . '.gpx';
+
+        $disk = \Illuminate\Support\Facades\Storage::disk(env('UPLOADS_DISK', 'public'));
+        $disk->put($filename, file_get_contents($request->file('gpx')->getRealPath()), 'public');
+
+        return response()->json(['url' => $disk->url($filename)]);
     });
 
     // Embarcações
