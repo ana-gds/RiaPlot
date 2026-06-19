@@ -157,7 +157,6 @@ export default function RouteDetail() {
   const [boatCalado, setBoatCalado] = useState(null);
   const [tide, setTide] = useState(null);
   const [showDifficultyInfo, setShowDifficultyInfo] = useState(false);
-  const [showCaladoInfo, setShowCaladoInfo] = useState(false);
   const [descExpanded, setDescExpanded] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [toast, setToast] = useState(null);
@@ -321,13 +320,6 @@ export default function RouteDetail() {
 
         <div className="flex gap-3 mb-5">
           <StatCard value={distance} label="Distância" />
-          {route.calado_max && (
-            <StatCard
-              value={`${route.calado_max} m`}
-              label="Calado máx."
-              onInfo={() => setShowCaladoInfo(true)}
-            />
-          )}
         </div>
 
         <div className="flex items-center gap-1.5 mb-2">
@@ -367,15 +359,6 @@ export default function RouteDetail() {
         {showDifficultyInfo && (
           <InfoModal title="Como é calculada a dificuldade?" onClose={() => setShowDifficultyInfo(false)}>
             {DIFFICULTY_EXPLANATION}
-          </InfoModal>
-        )}
-
-        {showCaladoInfo && (
-          <InfoModal title="Calado máximo recomendado" onClose={() => setShowCaladoInfo(false)}>
-            É o calado máximo de embarcação aconselhado para percorrer esta rota com
-            segurança, dado que ela atravessa zonas pouco profundas. É uma referência
-            fixa e curada da rota, não reflete a maré atual. Para saber se passas
-            agora com a tua embarcação, vê a indicação de maré em tempo real abaixo.
           </InfoModal>
         )}
 
