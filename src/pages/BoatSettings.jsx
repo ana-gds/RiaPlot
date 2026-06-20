@@ -28,6 +28,11 @@ function validateForm(form) {
       errors[key] = true;
     }
   }
+  // Folgas são margens sob a quilha — travar engano clássico de meter a
+  // altura do barco (cabeça/mastro) nestes campos, que faria a simulação
+  // marcar quase tudo como amarelo.
+  if (form.folgaSuperior && parseFloat(form.folgaSuperior) > 2) errors.folgaSuperior = true;
+  if (form.folgaInferior && parseFloat(form.folgaInferior) > 2) errors.folgaInferior = true;
   return errors;
 }
 
@@ -185,12 +190,14 @@ export default function BoatSettings() {
             <Input {...numberProps} value={form.velocidade} onChange={set("velocidade")} className={errClass("velocidade")} />
           </div>
           <div>
-            <Label>Folga superior (m)</Label>
-            <Input {...numberProps} value={form.folgaSuperior} onChange={set("folgaSuperior")} className={errClass("folgaSuperior")} />
+            <Label>Folga ideal (m)</Label>
+            <Input {...numberProps} max="2" value={form.folgaSuperior} onChange={set("folgaSuperior")} className={errClass("folgaSuperior")} />
+            <p className="text-[10px] mt-1 text-muted leading-tight">Margem confortável sob a quilha. Típico 0.3–0.5m.</p>
           </div>
           <div>
-            <Label>Folga inferior (m)</Label>
-            <Input {...numberProps} value={form.folgaInferior} onChange={set("folgaInferior")} className={errClass("folgaInferior")} />
+            <Label>Folga mínima (m)</Label>
+            <Input {...numberProps} max="2" value={form.folgaInferior} onChange={set("folgaInferior")} className={errClass("folgaInferior")} />
+            <p className="text-[10px] mt-1 text-muted leading-tight">Margem mínima de segurança. Típico 0.1–0.2m.</p>
           </div>
         </div>
       </div>

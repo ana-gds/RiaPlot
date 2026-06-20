@@ -32,7 +32,9 @@ function validate(form) {
   if (!form.boca) e.boca = "Obrigatório.";
   if (!form.velocidade) e.velocidade = "Obrigatório.";
   if (!form.folgaSuperior) e.folgaSuperior = "Obrigatório.";
+  else if (parseFloat(form.folgaSuperior) > 2) e.folgaSuperior = "Máx 2m — é a margem debaixo da quilha, não a altura do barco.";
   if (!form.folgaInferior) e.folgaInferior = "Obrigatório.";
+  else if (parseFloat(form.folgaInferior) > 2) e.folgaInferior = "Máx 2m — é a margem debaixo da quilha, não a altura do barco.";
   return e;
 }
 
@@ -137,13 +139,15 @@ export default function BoatRegister() {
             <FieldError message={errors.velocidade} />
           </div>
           <div>
-            <Label>Folga superior (m)</Label>
-            <Input {...numberProps} value={form.folgaSuperior} onChange={set("folgaSuperior")} />
+            <Label>Folga ideal (m)</Label>
+            <Input {...numberProps} max="2" value={form.folgaSuperior} onChange={set("folgaSuperior")} />
+            <p className="text-[10px] mt-1 text-muted leading-tight">Margem confortável sob a quilha. Típico 0.3–0.5m.</p>
             <FieldError message={errors.folgaSuperior} />
           </div>
           <div>
-            <Label>Folga inferior (m)</Label>
-            <Input {...numberProps} value={form.folgaInferior} onChange={set("folgaInferior")} />
+            <Label>Folga mínima (m)</Label>
+            <Input {...numberProps} max="2" value={form.folgaInferior} onChange={set("folgaInferior")} />
+            <p className="text-[10px] mt-1 text-muted leading-tight">Margem mínima de segurança. Típico 0.1–0.2m.</p>
             <FieldError message={errors.folgaInferior} />
           </div>
         </div>
