@@ -323,7 +323,7 @@ function BoatInfo({ boat }) {
         <div className="text-[13px] font-semibold text-dark">{nome}</div>
         {boat && (
           <div className="text-[11px] text-muted mt-px">
-            Calado: {calado} · Folga sup: {folgaSup} · Folga inf: {folgaInf}
+            Calado: {calado} · Folga ideal: {folgaSup} · Folga mínima: {folgaInf}
           </div>
         )}
       </div>
