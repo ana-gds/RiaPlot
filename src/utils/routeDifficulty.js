@@ -77,49 +77,66 @@ export const DIFFICULTY_EXPLANATION =
   "janela mais curta) e a maré atual em tempo real (a mesma rota fica mais " +
   "fácil em águas altas e mais difícil em baixa-mar).";
 
+// Altura média típica da maré em Aveiro acima do Zero Hidrográfico. Usada como
+// proxy quando não há maré em tempo real disponível (endpoint /tides/current
+// indisponível) para evitar uma avaliação pessimista a 0m de maré, que daria
+// quase sempre "incompatível" e contradiria a simulação.
+const TIDE_MEAN_ZH_M = 1.9;
+
 /**
  * Compatibilidade da rota com o barco do utilizador.
  *
- * Compara o calado do barco registado com o calado máximo recomendado da rota.
- * Devolve null quando não há barco registado (ou sem calado definido), para a
- * UI poder cair na dificuldade intrínseca sem mostrar nada de personalizado.
+ * Aceita o objeto rota inteiro para poder usar `min_depth` (batimetria
+ * Hidromod) quando disponível — mais preciso do que `calado_max` curado.
+ * A avaliação assume uma maré média típica em vez do pior caso a 0m, para
+ * não contradizer a simulação (que considera maré real). Se o utilizador
+ * quiser certeza para uma hora específica, deve usar o simulador.
  *
- * @param {number} routeCalado  calado_max da rota (99 = sem restrição)
- * @param {number} boatCalado   calado do barco do utilizador, em metros
+ * @param {object|number} route  objeto rota OU (retrocompat.) calado_max em m
+ * @param {number} boatCalado    calado do barco do utilizador, em metros
  * @returns {{status: "ok"|"limite"|"incompativel", message: string}|null}
  */
-export function boatCompatibility(routeCalado, boatCalado) {
+export function boatCompatibility(route, boatCalado) {
   const boat = Number(boatCalado);
   if (!boat || boat <= 0) return null; // sem dados do barco
 
+  // Retrocompat: aceita um número (calado_max) como primeiro argumento.
+  const routeObj = typeof route === "object" && route !== null ? route : null;
+  const routeCalado = routeObj ? routeObj.calado_max : route;
+  const minDepth = typeof routeObj?.min_depth === "number" ? routeObj.min_depth : null;
+
   const boatStr = `${boat} m`;
 
-  // Rota sem restrição de calado: compatível com qualquer barco.
+  // Rota sem restrição de calado: cabe sem questões de profundidade.
   if (!routeCalado || routeCalado >= 99) {
     return {
       status: "ok",
-      message: `O teu barco (calado ${boatStr}) é compatível: esta rota não tem restrição de calado.`,
+      message: `Esta rota não tem restrição de profundidade — qualquer calado passa, incluindo o teu (${boatStr}).`,
     };
   }
 
-  const routeStr = `${routeCalado} m`;
-  const margin = routeCalado - boat;
+  // Profundidade real disponível assumindo maré média. Usa min_depth quando
+  // existe (mais fiável); recai em calado_max como aproximação.
+  const refDepth = minDepth !== null ? minDepth : routeCalado;
+  const realDepth = refDepth + TIDE_MEAN_ZH_M;
+  const margin = realDepth - boat;
+  const depthStr = `~${realDepth.toFixed(1)} m`;
 
   if (margin < 0) {
     return {
       status: "incompativel",
-      message: `O calado do teu barco (${boatStr}) excede o calado máximo desta rota (${routeStr}). Não é recomendável fazê-la com esta embarcação.`,
+      message: `No ponto mais raso, mesmo em maré média a profundidade é só ${depthStr} — não chega para o teu calado (${boatStr}). Em preia-mar pode ser viável; simula com a hora pretendida.`,
     };
   }
-  if (margin < 0.2) {
+  if (margin < 0.3) {
     return {
       status: "limite",
-      message: `O calado do teu barco (${boatStr}) está perto do limite desta rota (máx. ${routeStr}). Navega com atenção à maré.`,
+      message: `No ponto mais raso a profundidade em maré média é ${depthStr}, apertada para o teu calado (${boatStr}). Simula com a hora pretendida para confirmar.`,
     };
   }
   return {
     status: "ok",
-    message: `O teu barco (calado ${boatStr}) é compatível com esta rota (máx. ${routeStr}).`,
+    message: `No ponto mais raso há ${depthStr} em maré média — o teu calado (${boatStr}) cabe. A dificuldade da rota refere-se a outros fatores (maré exigida, canaletes apertados, técnica).`,
   };
 }
 

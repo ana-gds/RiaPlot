@@ -77,9 +77,9 @@ function WarningAlert({ text }) {
 }
 
 const COMPAT_STYLES = {
-  ok: { color: COLORS.success, label: "O teu barco" },
-  limite: { color: COLORS.warning, label: "Atenção ao calado" },
-  incompativel: { color: COLORS.danger, label: "Barco incompatível" },
+  ok:           { color: COLORS.success, label: "Profundidade OK para o teu calado" },
+  limite:       { color: COLORS.warning, label: "Profundidade no limite" },
+  incompativel: { color: COLORS.danger,  label: "Profundidade insuficiente" },
 };
 
 function CompatibilityNote({ status, message }) {
@@ -252,7 +252,7 @@ export default function RouteDetail() {
   const description = route.descricao_turistica ?? route.descricao ?? "";
   const distance = route.distancia_nm ? `${route.distancia_nm} nm` : "—";
   const difficulty = routeDifficulty(route.calado_max, route.condicoes_mare, tide);
-  const compatibility = boatCompatibility(route.calado_max, boatCalado);
+  const compatibility = boatCompatibility(route, boatCalado);
   const navigability = navigabilityNow(route, boatCalado, tide);
   const pois = route.pontos_interesse ?? [];
   const warnings = route.warnings ?? [];
