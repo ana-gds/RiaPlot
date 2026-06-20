@@ -30,13 +30,6 @@ export function DockMarkers({ docks, onSelect }) {
           {dock.estado === "condicional" && (
             <div className="dock-popup__warning">⚠ Acesso condicional</div>
           )}
-          <button
-            type="button"
-            onClick={() => onSelect?.(dock)}
-            className="dock-popup__cta"
-          >
-            Usar nesta rota
-          </button>
         </div>
       </Popup>
     </Marker>
