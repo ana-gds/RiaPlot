@@ -87,9 +87,29 @@ class ImportSimulationData extends Command
             $depths   = array_filter(array_column($positions, 'z'), 'is_numeric');
             $minDepth = $depths ? round((float) min($depths), 2) : null;
 
-            // Trackpoints sub-amostrados para a DB (mapa); JSON completo fica em disco
-            $trackpoints = [];
+            // Trackpoints sub-amostrados para a DB (mapa); JSON completo fica
+            // em disco. Garante que os pontos críticos da navegação entram
+            // sempre — sem isto, a sub-amostragem pode esconder os shallows,
+            // levando a simulação a pintar verde onde o utilizador encalharia.
+            $shallowIdx = [];
+            if ($depths) {
+                // Top 5% mais rasos (mínimo 3 pontos): cobre o pior spot e a
+                // sua vizinhança, mantendo o trackpoint denso só onde interessa.
+                $sortedIdx = array_keys($depths);
+                usort($sortedIdx, fn ($a, $b) => $positions[$a]['z'] <=> $positions[$b]['z']);
+                $keepN = max(3, (int) ceil(count($sortedIdx) * 0.05));
+                $shallowIdx = array_flip(array_slice($sortedIdx, 0, $keepN));
+            }
+
+            $kept = [];
             for ($i = 0; $i < count($positions); $i += $step) {
+                $kept[$i] = true;
+            }
+            $kept += $shallowIdx;
+            ksort($kept);
+
+            $trackpoints = [];
+            foreach (array_keys($kept) as $i) {
                 $p = $positions[$i];
                 $trackpoints[] = [
                     'lat' => (float) $p['x'],
